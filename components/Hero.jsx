@@ -4,7 +4,7 @@ import Image from "next/image"
 const Hero = ()=>{
     return(
         <>
-         <main className="px-4 py-8 lg:px-8 lg:py-16">
+         <main className="px-4 py-8 lg:py-16">
         <div className="max-w-7xl mx-auto">
           <div className="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center">
             {/* Content Column */}
@@ -13,7 +13,7 @@ const Hero = ()=>{
                 Manage Your Construction Project, <span className="text-primary">Anywhere in the World</span>
               </h1>
 
-              <p className="text-lg text-gray-600 mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-lg text-text md:text-xl mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed">
                 Accessible, reliable, and expert online construction management services for Nigerians at home and
                 abroad.
               </p>
@@ -24,7 +24,7 @@ const Hero = ()=>{
                   Request a Free Consultation
                 </button>
                 <button
-                  className="border-2 border-primary text-primary hover:bg-orange-50 px-8 py-3 rounded-lg font-medium text-lg flex items-center gap-2 bg-transparent"
+                  className="border-2  border-primary text-primary hover:bg-orange-50 px-8 py-3 rounded-lg font-medium text-lg flex items-center gap-2 bg-transparent"
                 >
                   <Play className="h-5 w-5" />
                   Play Demo

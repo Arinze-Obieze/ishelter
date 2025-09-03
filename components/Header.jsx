@@ -13,7 +13,6 @@ const Header = () => {
   return (
     <>
       <div className='flex justify-between md:mx-12 mx-4 mt-4'>
-
         {/* logo with text  */}
         <div className='flex place-items-center space-x-2 '>
           <img src='/logo.svg' alt='logo' className='md:w-8 md:h-8 w-4 h-4'/>
@@ -21,7 +20,7 @@ const Header = () => {
         </div>
 
         {/* Desktop navigation - hidden on mobile */}
-        <div className='flex place-items-center space-x-12 md:flex hidden'>
+        <div className=' place-items-center space-x-12 md:flex hidden'>
           <nav className='space-x-8'>
             <a href='#' className='text-xl text-secondary hover:text-primary'>Home</a>
             <a href='#' className='text-xl text-secondary hover:text-primary'>Services</a>
