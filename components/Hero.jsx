@@ -24,7 +24,7 @@ const Hero = ()=>{
                   Request a Free Consultation
                 </button>
                 <button
-                  className="border-2  border-primary text-primary hover:bg-orange-50 px-8 py-3 rounded-lg font-medium text-lg flex items-center gap-2 bg-transparent"
+                  className="justify-center border-2 border-primary text-primary hover:bg-orange-50 px-8 py-3 rounded-lg font-medium text-lg flex items-center gap-2 bg-transparent"
                 >
                   <Play className="h-5 w-5" />
                   Play Demo

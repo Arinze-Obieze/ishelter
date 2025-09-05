@@ -40,7 +40,7 @@ export default function Solution() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
+    <div className="md:max-w-7xl mx-auto px-6 py-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 md:pb-[80px]">
         {/* The Challenge Section */}
         <SectionCard 
