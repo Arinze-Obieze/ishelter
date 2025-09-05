@@ -22,8 +22,8 @@ const Header = () => {
         {/* Desktop navigation - hidden on mobile */}
         <div className=' place-items-center space-x-12 md:flex hidden'>
           <nav className='space-x-8'>
-            <a href='#' className='text-xl text-secondary hover:text-primary'>Home</a>
-            <a href='#' className='text-xl text-secondary hover:text-primary'>Services</a>
+            <a href='/' className='text-xl text-secondary hover:text-primary'>Home</a>
+            <a href='#' className='text-xl text-secondary hover:text-primary'>Service</a>
             <a href='#' className='text-xl text-secondary hover:text-primary'>About Us</a>
             <a href='#' className='text-xl text-secondary hover:text-primary'>Testimonials</a>
             <a href='#' className='text-xl text-secondary hover:text-primary'>Contact</a>
