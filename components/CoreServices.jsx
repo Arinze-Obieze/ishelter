@@ -29,7 +29,7 @@ export default function CoreServices() {
     ]
   
     return (
-      <section className="bg-background py-16 px-4">
+      <section className="bg-background md:pt-24 py-20 md:pb-24 px-4">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">

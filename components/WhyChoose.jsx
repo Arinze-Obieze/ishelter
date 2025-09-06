@@ -3,7 +3,7 @@ import { MdMonitor } from "react-icons/md";
 
 export default function Why() {
   return (
-    <section className="bg-white pb-16 px-6 ">
+    <section className="bg-white pb-16 md:pb-20 md:pt-24 px-6 ">
       {/* Heading */}
       <div className="text-center max-w-3xl mx-auto mb-12">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">

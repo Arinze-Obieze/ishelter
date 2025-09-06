@@ -1,4 +1,4 @@
-import { FaClipboardList } from "react-icons/fa";
+import { FaArrowRight, FaClipboardList } from "react-icons/fa";
 import { HiCheck } from "react-icons/hi";
 
 export default function Step2() {
@@ -32,19 +32,26 @@ export default function Step2() {
 <p className="text-[#6B7280] font-light text-lg"> <span className="font-bold text-3xl text-primary ">$299</span> one-time</p>
 <p className="font-medium text-lg italic">Is my land and idea viable?</p>
 </div>
-<div className="bg-white rounded-xl">
+<div className="bg-white max-w-md rounded-xl p-8">
     <div className="flex place-items-center"><FaClipboardList className="text-primary w-5 h-5 mr-2"/> <p className="font-bold text-lg">What You Get:</p></div>
 
 <div>
 {LandFitFeatures.map((feature,id)=>{
     return(
-        <div key={id}>
-            <div className="flex place-items-center"><HiCheck className="text-primary w-5 h-5 mr-2"/> <p className="font-bold text-lg">{feature}</p></div>
+        <div key={id} className="">
+            <div className="flex place-items-center">
+                <HiCheck className="text-primary w-5 h-5 mr-2"/> 
+                <p className="font-light text-base text-text">{feature}</p>
+                </div>
         </div>
     )
 })}
 </div>
 
+<button className="bg-gray-100 flex mx-auto justify-center text-center px-4 py-2 font-bold text-base">
+    <p>Select This Plan</p>
+    <span><FaArrowRight /></span>
+     </button>
 </div>
     </div>
  </div>
