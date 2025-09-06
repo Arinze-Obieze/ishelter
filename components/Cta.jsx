@@ -18,7 +18,7 @@ export default function CTASection() {
             href="#"
             className="inline-block text-lg bg-white text-primary font-semibold px-8 py-4 rounded-lg shadow hover:bg-gray-100 transition"
           >
-            Request a Free Consultation
+            Request Consultation
           </a>
         </div>
       </section>

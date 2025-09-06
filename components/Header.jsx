@@ -28,7 +28,7 @@ const Header = () => {
             <a href='#' className='text-xl text-secondary hover:text-primary'>Testimonials</a>
             <a href='#' className='text-xl text-secondary hover:text-primary'>Contact</a>
           </nav>
-          <button className='bg-primary text-white py-2 px-4 rounded'>Request a Free Consultation</button>
+          <button className='bg-primary cursor-pointer text-white py-2 px-4 rounded'>Request Consultation</button>
         </div>
 
         {/* Mobile menu button - visible only on small screens */}

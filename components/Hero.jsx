@@ -21,7 +21,7 @@ const Hero = ()=>{
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <button className="bg-primary hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-medium text-lg">
-                  Request a Free Consultation
+                  Request Consultation
                 </button>
                 <button
                   className="justify-center border-2 border-primary text-primary hover:bg-orange-50 px-8 py-3 rounded-lg font-medium text-lg flex items-center gap-2 bg-transparent"
