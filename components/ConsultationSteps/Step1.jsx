@@ -109,7 +109,7 @@ export default function Step1({ formData, updateFormData, onSubmit }) {
           <ul className="list-none space-y-3">
             <li className="flex items-start">
               <span className="text-primary mt-1 mr-2">
-                <FaCircle className="w-3 h-3 " />
+                <FaCircle className="w-3 h-3   " />
               </span>
               <span className="text-gray-700">Get expert guidance tailored to your specific construction needs</span>
             </li>
