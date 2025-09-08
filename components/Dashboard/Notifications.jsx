@@ -59,8 +59,8 @@ const Notifications = () => {
             <p className="font-medium text-gray-800 flex items-center gap-2">
               <span className={notification.color}>{notification.icon}</span> {notification.title}
             </p>
-            <p className="text-text font-light text-xs ml-2 mt-1">{notification.description}</p>
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <p className="text-text font-light text-xs  mt-1 px-6">{notification.description}</p>
+            <div className="flex justify-between text-xs text-gray-400 mt-1 px-6">
               <span>{notification.time}</span>
               <span className="text-primary font-medium ">{notification.project}</span>
             </div>

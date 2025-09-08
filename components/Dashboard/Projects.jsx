@@ -53,15 +53,15 @@ export default function Projects() {
   ];
 
   return (
-    <div className=" px-6">
+    <div className="px-6">
       {/* Header Section */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-semibold text-gray-800">All Projects</h2>
+        <h2 className="md:text-lg text-sm font-semibold text-gray-800">All Projects</h2>
         <div className="flex gap-3">
-          <select className="bg-white shadow-md  rounded-lg px-8 py-2 text-sm">
+          <select className="bg-white shadow-md  rounded-lg md:px-8 px-4 py-2 text-sm">
             <option>All Projects</option>
           </select>
-          <select className="bg-white shadow-md rounded-lg px-8 py-2 text-sm">
+          <select className="bg-white shadow-md rounded-lg md:px-8 px-4 py-2 text-sm">
             <option>Sort by: Recent</option>
           </select>
         </div>

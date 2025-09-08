@@ -3,13 +3,13 @@ import { FiGrid } from "react-icons/fi";
 
 const StatsOverview = () => {
   return (
-   <section className="bg-white rounded-lg p-6 w-full max-w-[1248px] mx-auto mt-6">
+   <section className="bg-white rounded-lg p-6 w-full md:max-w-[1248px] mx-auto mt-6">
          <h2 className="flex items-center mb-6 text-gray-800 font-semibold text-lg">
            <FiGrid  className="text-primary mr-2 font-bold" />
            Your Projects
          </h2>
    
-         <div className="grid grid-cols-4 gap-6">
+         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 justify-items-center">
            {/* Total Projects */}
            <div className="bg-white rounded-lg p-4 shadow-sm">
              <div className="p-2 rounded-md bg-blue-100 inline-block mb-3">

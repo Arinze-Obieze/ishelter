@@ -11,7 +11,7 @@ const Header = () => {
         </div>
   
         {/* Navigation */}
-        <nav className="flex items-center gap-8 text-xs">
+        <nav className="md:flex items-center gap-8 text-xs hidden">
           <a href="#" className="flex items-center text-primary font-medium">
             <FaHome className="mr-1 text-base" />
             Dashboard
