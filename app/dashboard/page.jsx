@@ -3,16 +3,24 @@ import Projects from '@/components/Dashboard/Projects';
 import StatsOverview from '@/components/Dashboard/StatsOverview';
 
 
-
 const Dashboard = () => {
   return (
 <>
 <StatsOverview/>
 
-<div className='flex justify-center mt-8'>
-<Projects/>
-<ManagerCard/>
-</div>
+<div className="flex justify-center mt-8 mb-7">
+        <div className="flex gap-8 max-w-7xl w-full ">
+          {/* Projects Section */}
+          <div className="flex-1">
+            <Projects />
+          </div>
+
+          {/* Manager Section */}
+          <div className="w-full max-w-sm">
+            <ManagerCard />
+          </div>
+        </div>
+      </div>
 
 </>
   )

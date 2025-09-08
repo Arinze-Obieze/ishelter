@@ -1,6 +1,7 @@
 import {  FaFileInvoice, FaClipboardCheck, FaEnvelope, FaBoxOpen, FaPlus, FaFileAlt, FaCreditCard, FaHeadset, FaCalendarAlt } from "react-icons/fa";
 import { IoNotificationsOutline } from "react-icons/io5";
 import SuccessManagerCard from "./SuccessManagerCard";
+import Notifications from "./Notifications";
 
 export default function ManagerCard() {
   return (
@@ -9,68 +10,7 @@ export default function ManagerCard() {
      <SuccessManagerCard />
 
       {/* Notifications */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-            <IoNotificationsOutline className="text-orange-500" /> Notifications
-          </h3>
-          <span className="text-xs bg-primary text-white px-2 py-1 rounded-full">
-            4
-          </span>
-        </div>
-
-        <div className="space-y-4 text-sm">
-          <div>
-            <p className="font-medium text-gray-800 flex items-center gap-2">
-              <FaFileInvoice className="text-orange-500" /> New invoice available
-            </p>
-            <p className="text-gray-500">Invoice #2034 for Lekki Duplex is ready for review</p>
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>2 hours ago</span>
-              <span className="text-orange-500">Duplex at Lekki</span>
-            </div>
-          </div>
-
-          <div>
-            <p className="font-medium text-gray-800 flex items-center gap-2">
-              <FaClipboardCheck className="text-orange-500" /> Approval needed
-            </p>
-            <p className="text-gray-500">Design plan for Ikeja property requires your approval</p>
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>Yesterday</span>
-              <span className="text-orange-500">Ikeja Commercial Property</span>
-            </div>
-          </div>
-
-          <div>
-            <p className="font-medium text-gray-800 flex items-center gap-2">
-              <FaEnvelope className="text-orange-500" /> Message from Project Manager
-            </p>
-            <p className="text-gray-500">Lisa: Updates on Highland Park project timeline</p>
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>2 days ago</span>
-              <span className="text-orange-500">Modern Residence - Highland Park</span>
-            </div>
-          </div>
-
-          <div>
-            <p className="font-medium text-gray-800 flex items-center gap-2">
-              <FaBoxOpen className="text-orange-500" /> Material selection required
-            </p>
-            <p className="text-gray-500">
-              Please select flooring options for Abuja Office Complex
-            </p>
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>3 days ago</span>
-              <span className="text-orange-500">Abuja Office Complex</span>
-            </div>
-          </div>
-        </div>
-
-        <button className="w-full text-orange-600 text-sm font-medium mt-3 hover:underline">
-          View All Notifications
-        </button>
-      </div>
+   <Notifications/>
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm p-4  space-y-3">

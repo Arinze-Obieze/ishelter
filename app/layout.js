@@ -1,3 +1,4 @@
+import Footer from "@/components/Dashboard/Footer";
 import "./globals.css";
 import { Montserrat } from "next/font/google"
 
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
         className={`${montserrat.variable}`}
       >
         {children}
+        <Footer/>
       </body>
     </html>
   );

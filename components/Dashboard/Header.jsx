@@ -16,19 +16,19 @@ const Header = () => {
             <FaHome className="mr-1 text-base" />
             Dashboard
           </a>
-          <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
+          <a href="#" className="flex items-center text-gray-700 hover:text-primary">
             <FaVideo className="mr-1 text-base" />
             Live Feed
           </a>
-          <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
+          <a href="#" className="flex items-center text-gray-700 hover:text-primary">
             <FaFileAlt className="mr-1 text-base" />
             Documents
           </a>
-          <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
+          <a href="#" className="flex items-center text-gray-700 hover:text-primary">
             <FaCreditCard className="mr-1 text-base" />
             Billing
           </a>
-          <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
+          <a href="#" className="flex items-center text-gray-700 hover:text-primary">
             <FaRegCommentDots className="mr-1 text-base" />
             Chat
           </a>
