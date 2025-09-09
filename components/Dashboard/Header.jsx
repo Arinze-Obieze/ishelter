@@ -1,16 +1,17 @@
-import { FaHome, FaVideo, FaFileAlt, FaCreditCard, FaRegCommentDots, FaBell, FaUser } from 'react-icons/fa';
-
+import { FaHome, FaVideo, FaFileAlt, FaCreditCard, FaRegCommentDots, FaUser} from 'react-icons/fa';
+import { FaRegBell } from "react-icons/fa6";
+import { RiMenu3Fill } from 'react-icons/ri';
 const Header = () => {
   return (
     <div>
       <header className="bg-white place-items-center flex items-center justify-between px-6 py-2 md:mt-4">
         {/* Logo */}
         <div className="flex items-center">
-          <span className="font-bold text-2xl text-primary tracking-wide">i</span>
-          <span className="font-bold text-2xl ml-0.5">SHELTER</span>
+          <span className="font-bold text-base md:text-2xl text-primary tracking-wide">i</span>
+          <span className="font-bold text-base md:text-2xl ml-0.5">SHELTER</span>
         </div>
   
-        {/* Navigation */}
+        {/* Navigation */}                                    
         <nav className="md:flex items-center gap-8 text-xs hidden">
           <a href="#" className="flex items-center text-primary font-medium">
             <FaHome className="mr-1 text-base" />
@@ -35,10 +36,10 @@ const Header = () => {
         </nav>
   
         {/* Notification & Profile */}
-        <div className="flex items-center gap-4">
-          <button>
-            <FaBell className="text-xl text-gray-700 hover:text-gray-900" />
-          </button>
+        <div className="md:flex hidden items-center gap-4 ">
+          <span>
+            <FaRegBell className="text-xl text-gray-700 hover:text-gray-900" />
+          </span>
           <div className="flex items-center gap-2">
             <span className="bg-gray-200 rounded-full p-2">
               <FaUser className="text-md text-gray-500" />
@@ -46,9 +47,16 @@ const Header = () => {
             <span className="text-gray-700 font-medium">John Smith</span>
           </div>
         </div>
+
+        <button className="md:hidden flex space-x-4 text-gray-700 text-2xl py-4">
+        <span>
+            <FaRegBell className="text-gray-700 hover:text-gray-900" />
+          </span>
+          <RiMenu3Fill />
+        </button>
       </header>
     
-    <div className='bg-[#FDF2E5] w-full text-center py-3'>
+    <div className='bg-[#FDF2E5] w-full text-center py-3 max-md:hidden'>
       <h1 className='text-[#F07D00] text-base font-semibold'>iSHELTER is a product of Everything Shelter</h1>
     </div>
       </div>

@@ -55,7 +55,7 @@ export default function Projects() {
   return (
     <div className="px-6">
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row  max-md:space-y-2  justify-between items-center mb-6">
         <h2 className="md:text-lg text-sm font-semibold text-gray-800">All Projects</h2>
         <div className="flex gap-3">
           <select className="bg-white shadow-md  rounded-lg md:px-8 px-4 py-2 text-sm">
