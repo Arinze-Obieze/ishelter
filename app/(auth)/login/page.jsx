@@ -74,7 +74,7 @@ export default function LoginPage() {
       {/* Form Section - Takes 2/3 of screen */}
       <div className="flex flex-col w-full md:w-2/3 shadow-lg overflow-y-auto">
         {/* Header at top */}
-        <div className="flex justify-between items-center px-6 max-w-lg md:px-16 py-6">
+        <div className="flex w-full justify-between items-center px-6  md:px-16 py-6">
           <h1 className="text-2xl font-bold text-gray-900">
             <span className="text-primary">i</span>SHELTER
           </h1>
@@ -84,7 +84,7 @@ export default function LoginPage() {
         </div>
 
         {/* Content Wrapper - Vertically centered form */}
-        <div className="flex bg-white flex-1 items-center max-md:mx-4 justify-center px-6 md:px-16 pb-10">
+        <div className="flex bg-white flex-1 items-center max-md:mx-4 justify-center px-6 md:px-6 pb-10">
           <div className="w-full max-w-md">
             {/* Form */}
             <form className="space-y-5 " onSubmit={handleLogin}>
