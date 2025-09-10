@@ -1,6 +1,10 @@
-import { FaHome, FaVideo, FaFileAlt, FaCreditCard, FaRegCommentDots, FaUser} from 'react-icons/fa';
+import { FaHome,FaRegCommentDots, FaUser} from 'react-icons/fa';
 import { FaRegBell } from "react-icons/fa6";
 import { RiMenu3Fill } from 'react-icons/ri';
+import { LuVideo } from "react-icons/lu";
+import { IoDocumentTextOutline } from 'react-icons/io5';
+import { FiCreditCard } from 'react-icons/fi';
+
 const Header = () => {
   return (
     <div>
@@ -18,15 +22,15 @@ const Header = () => {
             Dashboard
           </a>
           <a href="#" className="flex items-center text-gray-700 hover:text-primary">
-            <FaVideo className="mr-1 text-base" />
+            <LuVideo className="mr-1 text-base" />
             Live Feed
           </a>
           <a href="#" className="flex items-center text-gray-700 hover:text-primary">
-            <FaFileAlt className="mr-1 text-base" />
+            <IoDocumentTextOutline className="mr-1 text-base" />
             Documents
           </a>
           <a href="#" className="flex items-center text-gray-700 hover:text-primary">
-            <FaCreditCard className="mr-1 text-base" />
+            <FiCreditCard className="mr-1 text-base" />
             Billing
           </a>
           <a href="#" className="flex items-center text-gray-700 hover:text-primary">

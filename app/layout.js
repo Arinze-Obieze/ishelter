@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
         className={`${montserrat.variable}`}
       >
         {children}
-        <Footer/>
+      
       </body>
     </html>
   );
