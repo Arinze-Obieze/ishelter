@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster, toast } from 'react-hot-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,42 +24,19 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Check role in Firestore
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const role = userDoc.exists() ? userDoc.data().role : null;
       
-      // Show success toast
       if (role === "admin") {
-        toast.success("Successfully logged in as admin!", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        setTimeout(() => router.push("/admin"), 1000);
+        toast.success("Successfully logged in as admin!", { duration: 3000 });
+        router.push("/admin");
       } else {
-        toast.success("Successfully logged in!", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        setTimeout(() => router.push("/dashboard"), 1000);
+        toast.success("Successfully logged in!", { duration: 3000 });
+        router.push("/dashboard");
       }
     } catch (err) {
       setError(err.message || "Login failed");
-      toast.error(err.message || "Login failed", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.error(err.message || "Login failed", { duration: 3000 });
     } finally {
       setLoading(false);
     }
@@ -69,12 +45,11 @@ export default function LoginPage() {
   return (
     <div className="h-screen flex bg-gray-100 overflow-hidden">
       {/* Toast Container */}
-      <ToastContainer />
+      <Toaster position="top-right" />
       
-      {/* Form Section - Takes 2/3 of screen */}
+      {/* Form Section */}
       <div className="flex flex-col w-full md:w-2/3 shadow-lg overflow-y-auto">
-        {/* Header at top */}
-        <div className="flex w-full justify-between items-center px-6  md:px-16 py-6">
+        <div className="flex w-full justify-between items-center px-6 md:px-16 py-6">
           <h1 className="text-2xl font-bold text-gray-900">
             <span className="text-primary">i</span>SHELTER
           </h1>
@@ -83,32 +58,28 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Content Wrapper - Vertically centered form */}
         <div className="flex bg-white flex-1 items-center max-md:mx-4 justify-center px-6 md:px-6 pb-10">
           <div className="w-full max-w-md">
-            {/* Form */}
             <form className="space-y-5 " onSubmit={handleLogin}>
               <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
               <p className="text-text text-base font-light mb-6">
                 Log in to access your iSHELTER dashboard and manage your projects
               </p>
 
-              {/* Email */}
               <div>
-                <label className="block  text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-gray-100  outline-none  rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  className="w-full bg-gray-100 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   placeholder="Enter your email"
                   required
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
@@ -117,7 +88,7 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-gray-100  rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  className="w-full bg-gray-100 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   placeholder="Enter your password"
                   required
                 />
@@ -132,7 +103,6 @@ export default function LoginPage() {
                 <div className="text-red-600 text-sm mb-2">{error}</div>
               )}
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
@@ -159,7 +129,6 @@ export default function LoginPage() {
               </div>
             </form>
 
-            {/* Google Login */}
             <div className="my-6 flex items-center">
               <div className="flex-grow border-t border-gray-300"></div>
               <span className="mx-3 text-gray-400 text-sm">Or continue with</span>
@@ -180,8 +149,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Image Section - Takes exactly 1/3 of screen */}
-      <div className="hidden md:flex w-1/3 h-screen p-0 m-0">
+      <div className="hidden md:flex w-1/3 h-screen">
         <img
           src="/login-bg.png"
           alt="Login background"
