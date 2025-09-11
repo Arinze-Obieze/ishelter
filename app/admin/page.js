@@ -10,8 +10,13 @@ import {
   FiMenu,
   FiX,
   FiChevronDown,
-  FiSearch
+  FiSearch,
+  FiSend
 } from 'react-icons/fi';
+import { getAuth, sendSignInLinkToEmail, sendPasswordResetEmail } from 'firebase/auth';
+import firebaseApp from '@/lib/firebase';
+import toast from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
 
 // Navigation items array
 const navItems = [
@@ -33,15 +38,91 @@ const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [sendWelcome, setSendWelcome] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(`Invitation sent to ${email}`);
-    setEmail("");
+    if (!email) {
+      toast.error('Please enter an email address');
+      return;
+    }
+    
+    setIsLoading(true);
+    const toastId = toast.loading('Sending invitation...');
+
+    try {
+      // Call API to check user and get action
+      const res = await fetch('/api/invite-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      const data = await res.json();
+      const auth = getAuth(firebaseApp);
+      
+      if (data.status === 'send-magic-link') {
+        // Send magic link
+        await sendSignInLinkToEmail(auth, email, {
+          url: `${window.location.origin}/finishSignIn`,
+          handleCodeInApp: true,
+        });
+        window.localStorage.setItem('emailForSignIn', email);
+        toast.success('Magic sign-in link sent!', { id: toastId });
+      } else if (data.status === 'send-password-reset') {
+        await sendPasswordResetEmail(auth, email);
+        toast.success('Password reset link sent!', { id: toastId });
+      } else {
+        toast.error('Unknown response from server.', { id: toastId });
+      }
+      
+      setEmail("");
+    } catch (err) {
+      toast.error('Error: ' + err.message, { id: toastId });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {/* Toaster component for notifications */}
+      <Toaster
+        position="top-center"
+        gutter={8}
+        containerClassName=""
+        containerStyle={{}}
+        toastOptions={{
+          duration: 5000,
+          className: '',
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#10B981',
+              secondary: 'white',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#EF4444',
+              secondary: 'white',
+            },
+          },
+          loading: {
+            duration: Infinity,
+            iconTheme: {
+              primary: '#3B82F6',
+              secondary: 'white',
+            },
+          },
+        }}
+      />
+      
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div 
@@ -60,7 +141,7 @@ const AdminDashboard = () => {
             <h1 className="ml-3 text-xl font-bold text-gray-900">Admin Panel</h1>
           </div>
           <button 
-            className="md:hidden text-gray-500"
+            className="md:hidden text-gray-500 hover:text-gray-700 transition-colors duration-200"
             onClick={() => setSidebarOpen(false)}
           >
             <FiX className="w-6 h-6" />
@@ -92,7 +173,7 @@ const AdminDashboard = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div className="flex items-center">
               <button 
-                className="md:hidden mr-3 text-gray-500"
+                className="md:hidden mr-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
                 onClick={() => setSidebarOpen(true)}
               >
                 <FiMenu className="w-6 h-6" />
@@ -102,16 +183,16 @@ const AdminDashboard = () => {
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
                 />
               </div>
             </div>
             <div className="flex items-center">
               <div className="mr-4 relative">
-                <FiBell className="w-6 h-6 text-gray-500" />
+                <FiBell className="w-6 h-6 text-gray-500 hover:text-gray-700 transition-colors duration-200 cursor-pointer" />
                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors duration-200">
                 <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2">
                   <span className="text-indigo-800 font-medium">A</span>
                 </div>
@@ -130,7 +211,7 @@ const AdminDashboard = () => {
                 <div className="bg-white rounded-lg shadow-sm p-6">
                   <div className="mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Create New User</h2>
-                    <p className="text-gray-600 mt-2">Enter the user's email address to send them an   invitation or password reset link.</p>
+                    <p className="text-gray-600 mt-2">Enter the user's email address to send them an invitation or password reset link.</p>
                   </div>
 
                   <form className="space-y-6" onSubmit={handleSubmit}>
@@ -143,30 +224,29 @@ const AdminDashboard = () => {
                         id="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
                         placeholder="user@example.com"
                         required
+                        disabled={isLoading}
                       />
                     </div>
 
-                    {/* <div className="flex items-center">
-                      <input
-                        id="send-welcome-email"
-                        type="checkbox"
-                        checked={sendWelcome}
-                        onChange={(e) => setSendWelcome(e.target.checked)}
-                        className="h-4 w-4 text-primary focus:ring-indigo-500 border-gray-300 rounded"
-                      />
-                      <label htmlFor="send-welcome-email" className="ml-2 block text-sm text-gray-700">
-                        Send welcome email with instructions
-                      </label>
-                    </div> */}
-
                     <button
                       type="submit"
-                      className="px-6 py-3 rounded-lg bg-primary text-white font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                      disabled={isLoading || !email}
+                      className="w-full md:w-auto px-6 py-3 rounded-lg bg-primary text-white font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      Send Invitation
+                      {isLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <FiSend className="w-4 h-4" />
+                          Send Invitation
+                        </>
+                      )}
                     </button>
                   </form>
                 </div>
