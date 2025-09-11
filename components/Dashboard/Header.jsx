@@ -1,70 +1,38 @@
-import { FaHome,FaRegCommentDots, FaUser} from 'react-icons/fa';
-import { FaRegBell } from "react-icons/fa6";
-import { RiMenu3Fill } from 'react-icons/ri';
-import { LuVideo } from "react-icons/lu";
-import { IoDocumentTextOutline } from 'react-icons/io5';
-import { FiCreditCard } from 'react-icons/fi';
+import { FaBell, FaBars } from 'react-icons/fa';
+import Image from 'next/image';
 
-const Header = () => {
+export default function Header({ onMenuClick }) {
   return (
-    <div>
-      <header className="bg-white place-items-center flex items-center justify-between px-6 py-2 md:mt-4">
+    <header className="bg-gray-100 h-fit border-b border-gray-300 px-4 md:px-8 w-full pb-4 pt-5 flex items-center justify-between">
+      {/* Left: Menu Icon + Logo */}
+      <div className="flex items-center gap-3">
+     
         {/* Logo */}
-        <div className="flex items-center">
-          <span className="font-bold text-base md:text-2xl text-primary tracking-wide">i</span>
-          <span className="font-bold text-base md:text-2xl ml-0.5">SHELTER</span>
-        </div>
-  
-        {/* Navigation */}                                    
-        <nav className="md:flex items-center gap-8 text-xs hidden">
-          <a href="#" className="flex items-center text-primary font-medium">
-            <FaHome className="mr-1 text-base" />
-            Dashboard
-          </a>
-          <a href="#" className="flex items-center text-gray-700 hover:text-primary">
-            <LuVideo className="mr-1 text-base" />
-            Live Feed
-          </a>
-          <a href="#" className="flex items-center text-gray-700 hover:text-primary">
-            <IoDocumentTextOutline className="mr-1 text-base" />
-            Documents
-          </a>
-          <a href="#" className="flex items-center text-gray-700 hover:text-primary">
-            <FiCreditCard className="mr-1 text-base" />
-            Billing
-          </a>
-          <a href="#" className="flex items-center text-gray-700 hover:text-primary">
-            <FaRegCommentDots className="mr-1 text-base" />
-            Chat
-          </a>
-        </nav>
-  
-        {/* Notification & Profile */}
-        <div className="md:flex hidden items-center gap-4 ">
-          <span>
-            <FaRegBell className="text-xl text-gray-700 hover:text-gray-900" />
+        <div className="flex items-center ">
+          <span className="text-xl font-bold tracking-tight text-gray-900">
+            <span className="text-primary font-bold">i</span>SHELTER
           </span>
-          <div className="flex items-center gap-2">
-            <span className="bg-gray-200 rounded-full p-2">
-              <FaUser className="text-md text-gray-500" />
-            </span>
-            <span className="text-gray-700 font-medium">John Smith</span>
-          </div>
         </div>
-
-        <button className="md:hidden flex space-x-4 text-gray-700 text-2xl py-4">
-        <span>
-            <FaRegBell className="text-gray-700 hover:text-gray-900" />
-          </span>
-          <RiMenu3Fill />
-        </button>
-      </header>
-    
-    <div className='bg-[#FDF2E5] w-full text-center py-3 max-md:hidden'>
-      <h1 className='text-[#F07D00] text-base font-semibold'>iSHELTER is a product of Everything Shelter</h1>
-    </div>
       </div>
-  )
-}
+   
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          <FaBell className="text-2xl text-gray-600" />
+          <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-red-500 text-white text-xs font-bold">
+            3
+          </span>
+        </div>
 
-export default Header
+           {/* Hamburger for mobile */}
+           <button
+          className="md:hidden p-2 rounded hover:bg-gray-200 focus:outline-none"
+          onClick={onMenuClick}
+          aria-label="Open menu"
+        >
+          <FaBars className="text-2xl text-gray-700" />
+        </button>
+      </div>
+
+    </header>
+  );
+}

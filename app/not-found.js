@@ -101,7 +101,7 @@ export default function NotFound() {
 
       {/* Footer Note */}
       <p className="text-gray-500 text-sm mt-6 text-center">
-        © {new Date().getFullYear()} Construction Company. All rights reserved.
+        © 2023 Construction Company. All rights reserved.
       </p>
     </div>
   );
