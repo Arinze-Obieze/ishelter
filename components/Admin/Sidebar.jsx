@@ -2,7 +2,6 @@
 import { usePathname } from 'next/navigation';
 import { FaChartBar, FaUsers, FaFileInvoiceDollar, FaHandshake, FaCog, FaShieldAlt } from 'react-icons/fa';
 import { FiX } from 'react-icons/fi';
-import Image from 'next/image';
 
 export default function Sidebar({ isOpen = false, onClose }) {
   const pathname = usePathname();
@@ -41,42 +40,42 @@ export default function Sidebar({ isOpen = false, onClose }) {
     <>
       {/* Mobile Drawer */}
       {isOpen && (
-        <div
-          className="fixed inset-0 z-40 md:hidden bg-black/40 backdrop-blur-sm"
-          onClick={onClose}
-        >
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden" onClick={onClose}>
           <aside
             className="absolute left-0 top-0 h-full w-64 bg-white shadow-lg flex flex-col"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Close Icon */}
             <div className="flex items-center justify-between px-6 py-4 border-b">
-              <div className="flex items-center">
-                <span className="text-xl font-bold tracking-tight text-gray-900">
-                  <span className="text-primary font-bold">i</span>SHELTER
-                </span>
-              </div>
+              <span className="text-xl font-bold tracking-tight text-gray-900">
+                <span className="text-primary font-bold">i</span>SHELTER
+              </span>
               <button onClick={onClose} className="text-gray-700 hover:text-gray-900">
                 <FiX className="w-6 h-6" />
               </button>
             </div>
 
+            {/* Nav */}
             <nav className="flex-1 px-4 overflow-y-auto">
-              {navSections.map((section, sectionIndex) => (
-                <div key={sectionIndex}>
+              {navSections.map((section, i) => (
+                <div key={i}>
                   <div className="text-xs font-bold text-text mb-2 mt-6">{section.title}</div>
                   <ul>
-                    {section.items.map((item, itemIndex) => {
-                      const IconComponent = item.icon;
+                    {section.items.map((item, j) => {
+                      const Icon = item.icon;
                       const active = isActive(item.href);
                       return (
-                        <li key={itemIndex} className="space-y-4">
+                        <li key={j}>
                           <a
                             href={item.href}
-                            className={`flex items-center px-3 py-2 text-text whitespace-nowrap transition-colors ${active ? 'bg-[#fdf3e4] text-primary font-bold' : 'hover:bg-gray-100 hover:text-gray-900'}`}
+                            className={`flex items-center px-3 py-2 whitespace-nowrap transition-colors ${
+                              active
+                                ? 'bg-[#fdf3e4] text-primary font-bold'
+                                : 'hover:bg-gray-100 hover:text-gray-900'
+                            }`}
                             onClick={onClose}
                           >
-                            <IconComponent className="mr-3 text-base" />
+                            <Icon className="mr-3 text-base" />
                             {item.name}
                           </a>
                         </li>
@@ -91,27 +90,32 @@ export default function Sidebar({ isOpen = false, onClose }) {
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex max-w-sm bg-white h-screen shadow flex-col">
+      <aside className="hidden md:flex w-64 bg-white h-screen shadow flex-col">
         <div className="flex items-center px-6 py-8">
           <span className="text-2xl font-bold tracking-tight text-gray-900">
             <span className="text-primary font-bold">i</span>SHELTER
           </span>
         </div>
+
         <nav className="flex-1 px-4">
-          {navSections.map((section, sectionIndex) => (
-            <div key={sectionIndex}>
+          {navSections.map((section, i) => (
+            <div key={i}>
               <div className="text-xs font-bold text-text mb-2 mt-6">{section.title}</div>
               <ul>
-                {section.items.map((item, itemIndex) => {
-                  const IconComponent = item.icon;
+                {section.items.map((item, j) => {
+                  const Icon = item.icon;
                   const active = isActive(item.href);
                   return (
-                    <li key={itemIndex} className="space-y-4">
+                    <li key={j}>
                       <a
                         href={item.href}
-                        className={`flex items-center px-3 py-2 text-text whitespace-nowrap transition-colors ${active ? 'bg-[#fdf3e4] text-primary font-bold' : 'hover:bg-gray-100 hover:text-gray-900'}`}
+                        className={`flex items-center px-3 py-2 whitespace-nowrap transition-colors ${
+                          active
+                            ? 'bg-[#fdf3e4] text-primary font-bold'
+                            : 'hover:bg-gray-100 hover:text-gray-900'
+                        }`}
                       >
-                        <IconComponent className="mr-3 text-base" />
+                        <Icon className="mr-3 text-base" />
                         {item.name}
                       </a>
                     </li>
