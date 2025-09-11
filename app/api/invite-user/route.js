@@ -1,10 +1,21 @@
 import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, applicationDefault } from 'firebase-admin/app';
-import { getApp, getApps } from 'firebase-admin/app';
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getApps } from 'firebase-admin/app';
+
+// Read the Base64 service account key and projectId from environment variables
+const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
+const projectId = process.env. NEXT_PUBLIC_FIREBASE_PROJECTID;
+if (!base64) {
+  throw new Error('Missing FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 environment variable');
+}
+if (!projectId) {
+  throw new Error('Missing FIREBASE_PROJECT_ID environment variable');
+}
+const serviceAccount = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
-  initializeApp({ credential: applicationDefault() });
+  initializeApp({ credential: cert(serviceAccount), projectId });
 }
 
 export async function POST(req) {

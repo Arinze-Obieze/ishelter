@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuth, updatePassword } from 'firebase/auth';
-import firebaseApp from '@/lib/firebase';
+import {app as firebaseApp} from '@/lib/firebase';
 
 export default function SetPasswordPage() {
   const [password, setPassword] = useState('');

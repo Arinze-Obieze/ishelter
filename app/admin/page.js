@@ -14,7 +14,7 @@ import {
   FiSend
 } from 'react-icons/fi';
 import { getAuth, sendSignInLinkToEmail, sendPasswordResetEmail } from 'firebase/auth';
-import firebaseApp from '@/lib/firebase';
+import { app as firebaseApp} from '@/lib/firebase';
 import toast from 'react-hot-toast';
 import { Toaster } from 'react-hot-toast';
 
@@ -28,16 +28,12 @@ const navItems = [
 
 // Sample user data
 const users = [
-  { id: 1, email: "alex.johnson@example.com", status: "Pending", date: "May 15, 2023" },
-  { id: 2, email: "sarah.williams@example.com", status: "Completed", date: "May 12, 2023" },
-  { id: 3, email: "michael.brown@example.com", status: "Pending", date: "May 10, 2023" },
-  { id: 4, email: "emma.davis@example.com", status: "Completed", date: "May 8, 2023" }
+ 
 ];
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [sendWelcome, setSendWelcome] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -60,11 +56,17 @@ const AdminDashboard = () => {
       
       const data = await res.json();
       const auth = getAuth(firebaseApp);
-      
+
+      if (data.error) {
+        toast.error(`Server error: ${data.error}`, { id: toastId });
+        setIsLoading(false);
+        return;
+      }
+
       if (data.status === 'send-magic-link') {
         // Send magic link
         await sendSignInLinkToEmail(auth, email, {
-          url: `${window.location.origin}/finishSignIn`,
+          url: `${process.env.NEXT_PUBLIC_APP_URL}/finishSignIn`,
           handleCodeInApp: true,
         });
         window.localStorage.setItem('emailForSignIn', email);
@@ -76,7 +78,7 @@ const AdminDashboard = () => {
         toast.error('Unknown response from server.', { id: toastId });
       }
       
-      setEmail("");
+      setEmail(""); 
     } catch (err) {
       toast.error('Error: ' + err.message, { id: toastId });
     } finally {
