@@ -23,6 +23,17 @@ export default function Header({ onMenuClick }) {
           </span>
         </div>
 
+       {/* User Avatar + Info */}
+       {/* <div className="flex items-center gap-3">
+         <div className="h-9 w-9 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold text-lg">
+           JS
+         </div>
+         <div className="flex flex-col">
+           <span className="font-semibold text-gray-800">John Smith</span>
+           <span className="text-xs text-gray-500">System Admin</span>
+         </div>
+       </div> */}
+
            {/* Hamburger for mobile */}
            <button
           className="md:hidden p-2 rounded hover:bg-gray-200 focus:outline-none"
@@ -31,6 +42,9 @@ export default function Header({ onMenuClick }) {
         >
           <FaBars className="text-2xl text-gray-700" />
         </button>
+
+
+    
       </div>
 
     </header>
