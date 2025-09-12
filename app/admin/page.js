@@ -1,11 +1,24 @@
+import AdminStats from '@/components/Admin/AdminStats'
+import  QuickActions  from '@/components/Admin/QuickActions'
+import SystemAlerts from '@/components/Admin/SystemAlerts'
+import RecentActivity from '@/components/Admin/RecentActivity'
+import ConsultationLeads from '@/components/Admin/ConsultationLeads'
 
-import React from 'react'
 
 function AdminDashboard() {
   return (
     <div>
+<AdminStats/>                                                 
+<SystemAlerts/>
 
+<div className='flex flex-col md:flex-row gap-4 mt-4'> 
+  <RecentActivity className='flex-1'/>
+<div className="space-y-8">
+<QuickActions/>
+<ConsultationLeads/>
+</div>
 
+</div>
     </div>
   )
 }

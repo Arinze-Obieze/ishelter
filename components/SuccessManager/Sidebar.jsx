@@ -10,16 +10,16 @@ export default function Sidebar({ isOpen = false, onClose }) {
     {
       title: "MAIN",
       items: [
-        { name: "Dashboard", icon: FaChartBar, href: "/admin" },
-        { name: "Clients", icon: FaChartBar, href: "/admin/project" },
-        { name: "Schedule", icon: FaUsers, href: "/admin/user-management" }
+        { name: "Dashboard", icon: FaChartBar, href: "/success-manager" },
+        { name: "Clients", icon: FaChartBar, href: "/success-manager/project" },
+        { name: "Schedule", icon: FaUsers, href: "/success-manager/user-management" }
       ]
     },
     {
       title: "MANAGE",
       items: [
-        { name: "Inovoices", icon: FaFileInvoiceDollar, href: "/admin/billing" },
-        { name: "Reports", icon: FaHandshake, href: "/admin/consultation" },
+        { name: "Invoices", icon: FaFileInvoiceDollar, href: "/success-manager/billing" },
+        { name: "Reports", icon: FaHandshake, href: "/success-manager/consultation" },
          { name: "System Settings", icon: FaCog, href: "/settings" },
       ]
     },
@@ -27,8 +27,8 @@ export default function Sidebar({ isOpen = false, onClose }) {
   ];
 
   const isActive = (href) => {
-    if (href === '/admin') return pathname === '/admin';
-    return pathname.startsWith(href) && href !== '/admin';
+    if (href === '/success-manager') return pathname === '/success-manager';
+    return pathname.startsWith(href) && href !== '/success-manager';
   };
 
   return (
@@ -85,7 +85,7 @@ export default function Sidebar({ isOpen = false, onClose }) {
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 bg-white h-screen shadow flex-col">
+      <aside className="hidden md:flex w-64 bg-white h-screen md:fixed shadow flex-col">
         <div className="flex items-center px-6 py-8">
           <span className="text-2xl font-bold tracking-tight text-gray-900">
             <span className="text-primary font-bold">i</span>SHELTER
@@ -120,6 +120,14 @@ export default function Sidebar({ isOpen = false, onClose }) {
             </div>
           ))}
         </nav>
+
+        <div className="flex space-x-4 cursor-pointer items-center px-6 pb-5 pt-8 border-t border-gray-100 ">
+          <img src="/testimonial/1.png" alt="Michael Adebayo" className="w-10  h-10"/>
+          <div className=''>
+            <h2 className="font-bold text-base">Sarah Johnson</h2>
+            <h6 className="text-text text-xs">Success Manager</h6>
+          </div>
+        </div>
       </aside>
     </>
   );
