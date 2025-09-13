@@ -1,7 +1,7 @@
 import Footer from "@/components/Dashboard/Footer";
 import "./globals.css";
 import { Montserrat } from "next/font/google"
-
+import { InvitationsProvider } from "@/components/InvitationsContext";
 
 
 const montserrat = Montserrat({
@@ -18,11 +18,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`${montserrat.variable}`}
-      >
-        {children}
-      
+      <body className={`${montserrat.variable}`}>
+        <InvitationsProvider>
+          {children}
+        </InvitationsProvider>
       </body>
     </html>
   );

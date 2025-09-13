@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuth, updatePassword } from 'firebase/auth';
 import {app as firebaseApp} from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 
 export default function SetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -17,6 +19,16 @@ export default function SetPasswordPage() {
     setError('');
     try {
       await updatePassword(auth.currentUser, password);
+      // Update Firestore user document
+      const userRef = collection(db, 'users');
+      await updateDoc(userRef.doc(auth.currentUser.uid), { password: true });
+      // Update invitation status to Success
+      const invitationsRef = collection(db, 'invitations');
+      const q = query(invitationsRef, where('email', '==', auth.currentUser.email));
+      const snapshot = await getDocs(q);
+      for (const docSnap of snapshot.docs) {
+        await updateDoc(docSnap.ref, { status: 'Success' });
+      }
       router.replace('/dashboard');
     } catch (err) {
       setError(err.message);

@@ -11,9 +11,27 @@ import { Toaster, toast } from 'react-hot-toast';
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [error, setError] = useState("");
+
+  const isDisabled = loading || !email || !password;
+
+  function getErrorMessage(code) {
+    switch (code) {
+      case "auth/user-not-found":
+        return "No account found with this email.";
+      case "auth/wrong-password":
+        return "Incorrect password. Try again.";
+      case "auth/invalid-email":
+        return "Please enter a valid email address.";
+      case "auth/too-many-requests":
+        return "Too many failed attempts. Please try again later.";
+      default:
+        return "Login failed. Please try again.";
+    }
+  }
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -35,8 +53,9 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch (err) {
-      setError(err.message || "Login failed");
-      toast.error(err.message || "Login failed", { duration: 3000 });
+      const friendlyMessage = getErrorMessage(err.code);
+      setError(friendlyMessage);
+      toast.error(friendlyMessage, { duration: 3000 });
     } finally {
       setLoading(false);
     }
@@ -80,18 +99,25 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
                 </label>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-gray-100 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  className="w-full bg-gray-100 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary transition-all pr-10"
                   placeholder="Enter your password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-9 text-gray-500 text-sm"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
                 <div className="text-right mt-1">
                   <a href="#" className="text-primary text-sm hover:underline">
                     Forgot your password?
@@ -105,8 +131,8 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-primary hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                disabled={isDisabled}
+                className="w-full  cursor-pointer bg-primary hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (
                   <>

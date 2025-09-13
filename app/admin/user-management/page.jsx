@@ -5,16 +5,14 @@ import { getAuth, sendSignInLinkToEmail, sendPasswordResetEmail } from 'firebase
 import { app as firebaseApp} from '@/lib/firebase';
 import toast from 'react-hot-toast';
 import { Toaster } from 'react-hot-toast';
-
-
-// Sample user data
-const users = [
- 
-];
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useInvitations } from '@/components/InvitationsContext';
 
 const UserManagement = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const invitations = useInvitations();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,9 +49,19 @@ const UserManagement = () => {
         });
         window.localStorage.setItem('emailForSignIn', email);
         toast.success('Magic sign-in link sent!', { id: toastId });
+        await addDoc(collection(db, 'invitations'), {
+          email,
+          status: 'Pending',
+          createdAt: serverTimestamp(),
+        });
       } else if (data.status === 'send-password-reset') {
         await sendPasswordResetEmail(auth, email);
         toast.success('Password reset link sent!', { id: toastId });
+        await addDoc(collection(db, 'invitations'), {
+          email,
+          status: 'Pending',
+          createdAt: serverTimestamp(),
+        });
       } else {
         toast.error('Unknown response from server.', { id: toastId });
       }
@@ -174,7 +182,7 @@ const UserManagement = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {users.map((user) => (
+                        {invitations.map((user) => (
                           <tr key={user.id}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -186,7 +194,7 @@ const UserManagement = () => {
                                 {user.status}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.date}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.createdAt?.toDate ? user.createdAt.toDate().toLocaleString() : "-"}</td>
                           </tr>
                         ))}
                       </tbody>

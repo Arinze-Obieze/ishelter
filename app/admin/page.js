@@ -7,7 +7,7 @@ import ConsultationLeads from '@/components/Admin/ConsultationLeads'
 
 function AdminDashboard() {
   return (
-    <div>
+    <div className=''>
 <AdminStats/>                                                 
 <SystemAlerts/>
 

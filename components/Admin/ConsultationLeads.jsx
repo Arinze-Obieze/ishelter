@@ -23,10 +23,10 @@ const leads = [
 
 export default function ConsultationLeads() {
   return (
-    <div className="bg-white rounded-lg px-4 md:p-6 shadow-sm">
+    <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Consultation Leads</h2>
+        <h2 className="md:text-xl text-base font-semibold text-gray-900">Consultation Leads</h2>
         <button className="text-orange-500 hover:text-orange-600 font-medium text-sm">
           View All Leads
         </button>

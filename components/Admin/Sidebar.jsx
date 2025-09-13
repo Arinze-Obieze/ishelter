@@ -1,7 +1,8 @@
 'use client';
 import { usePathname } from 'next/navigation';
-import { FaChartBar, FaUsers, FaFileInvoiceDollar, FaHandshake, FaCog, FaShieldAlt } from 'react-icons/fa';
+import { FaChartBar, FaUsers, FaFileInvoiceDollar, FaHandshake, FaCog, FaShieldAlt, FaSignOutAlt } from 'react-icons/fa';
 import { FiX } from 'react-icons/fi';
+import { getAuth, signOut } from 'firebase/auth';
 
 export default function Sidebar({ isOpen = false, onClose }) {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export default function Sidebar({ isOpen = false, onClose }) {
       title: "BUSINESS",
       items: [
         { name: "Billing Reports", icon: FaFileInvoiceDollar, href: "/admin/billing" },
-        { name: "Consultation Leads", icon: FaHandshake, href: "/admin/consultation" }
+        { name: "Consultation Leads", icon: FaHandshake, href: "/admin/consultation-leads" }
       ]
     },
     {
@@ -36,6 +37,16 @@ export default function Sidebar({ isOpen = false, onClose }) {
     return pathname.startsWith(href) && href !== '/admin';
   };
 
+  const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+      await signOut(auth);
+      window.location.href = '/login'; // redirect after logout
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   return (
     <>
       {/* Mobile Drawer */}
@@ -46,7 +57,7 @@ export default function Sidebar({ isOpen = false, onClose }) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Close Icon */}
-            <div className="flex items-center justify-between px-6 py-4 border-b">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <span className="text-xl font-bold tracking-tight text-gray-900">
                 <span className="text-primary font-bold">i</span>SHELTER
               </span>
@@ -84,13 +95,24 @@ export default function Sidebar({ isOpen = false, onClose }) {
                   </ul>
                 </div>
               ))}
+
+              {/* Logout button */}
+              <div className="mt-6 border-t pt-4 border-gray-200">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full px-3 py-2 text-left text-red-600 hover:bg-gray-100 transition-colors"
+                >
+                  <FaSignOutAlt className="mr-3" />
+                  Logout
+                </button>
+              </div>
             </nav>
           </aside>
         </div>
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 bg-white h-screen shadow flex-col">
+      <aside className="hidden md:flex w-64 bg-white h-screen md:fixed shadow flex-col">
         <div className="flex items-center px-6 py-8">
           <span className="text-2xl font-bold tracking-tight text-gray-900">
             <span className="text-primary font-bold">i</span>SHELTER
@@ -124,6 +146,17 @@ export default function Sidebar({ isOpen = false, onClose }) {
               </ul>
             </div>
           ))}
+
+          {/* Logout button for desktop */}
+          <div className="mt-6 border-t border-gray-200 pt-4">
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-3 py-2 text-left text-red-600 hover:bg-gray-100 transition-colors"
+            >
+              <FaSignOutAlt className="mr-3" />
+              Logout
+            </button>
+          </div>
         </nav>
       </aside>
     </>
