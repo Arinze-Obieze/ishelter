@@ -25,7 +25,7 @@ const Header = () => {
             <LuVideo className="mr-1 text-base" />
             Live Feed
           </a>
-          <a href="#" className="flex items-center text-gray-700 hover:text-primary">
+          <a href="/dashboard/documents" className="flex items-center text-gray-700 hover:text-primary">
             <IoDocumentTextOutline className="mr-1 text-base" />
             Documents
           </a>

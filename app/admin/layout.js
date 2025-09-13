@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import withAdminProtection from "@/components/Admin/withAdminProtection";
 import Sidebar from '@/components/Admin/Sidebar'
-import Header from '@/components/Dashboard/Header'
+import Header from '@/components/Admin/Header'
 
 function AdminLayoutContent({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -18,6 +18,7 @@ function AdminLayoutContent({ children }) {
         <main className="flex-1 p-6 ">
           {children}
         </main>
+        
       </div>
     </div>
   );
