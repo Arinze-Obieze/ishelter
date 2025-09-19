@@ -1,10 +1,9 @@
 "use client"
-
-import { useState, useEffect } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { FaEye, FaEyeSlash, FaCheck } from "react-icons/fa"
 
-export default function CompleteProfilePage() {
+function CompleteProfileInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
@@ -273,5 +272,13 @@ export default function CompleteProfilePage() {
         <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-orange-600/30 to-transparent"></div>
       </div>
     </div>
+  )
+}
+
+export default function CompleteProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <CompleteProfileInner />
+    </Suspense>
   )
 }

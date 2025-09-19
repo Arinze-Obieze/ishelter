@@ -1,5 +1,5 @@
 // /app/api/admin/invite-user/route.js
-import { auth, db } from "@/lib/firebaseAdmin";
+import { auth, adminDb as db } from "@/lib/firebaseAdmin";
 
 export async function POST(req) {
   try {
