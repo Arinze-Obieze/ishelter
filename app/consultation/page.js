@@ -1,6 +1,7 @@
 'use client';
 import Step1 from "@/components/ConsultationSteps/Step1";
 import Step2 from "@/components/ConsultationSteps/Step2";
+import Step3 from "@/components/ConsultationSteps/Step3";
 import { useState } from "react";
 
 export default function ConsultationForm() {
@@ -51,9 +52,9 @@ export default function ConsultationForm() {
       case 2:
         return <Step2 />;
       case 3:
-        return <div>Step 3 Content</div>;
+        return <Step3/>
       default:
-        return null;
+        return null
     }
   };
 
