@@ -1,7 +1,8 @@
 import { FaArrowRight, FaClipboardList } from "react-icons/fa";
 import { HiCheck } from "react-icons/hi";
 import { FaCheck} from "react-icons/fa"
-
+import { FaArrowLeftLong, FaArrowRightLong } from "react-icons/fa6";
+import { IoInformationCircleSharp } from "react-icons/io5";
 
 export default function Step2() {
    
@@ -9,8 +10,8 @@ export default function Step2() {
  <>
  <div className="mt-28 bg-100 px-4">
     <div className="max-w-3xl mb-2">
-        <h1 className="text-4xl font-bold text-center text-primary mb-4">Choose Your Consultation Package</h1>
-   <p className="text-center text-text text-base mb-8">
+        <h1 className="md:text-4xl  text-3xl  font-bold text-center text-black md:text-primary mb-4">Choose Your Consultation Package</h1>
+   <p className="text-center text-text md:text-base text-sm md:mb-8 mb-6">
    Our consultation packages are designed to give you clarity, uncover hidden costs, and prepare 
    you for a smooth transition into full Design or Construction Management. These are not design 
    services, but pre-project advisory solutions that recover costs while giving you just enough 
@@ -21,7 +22,7 @@ export default function Step2() {
 
 
 
- <div className="min-h-screen bg-gray-100 py-12 ">
+ <div className=" bg-gray-100 max-md:px-2 md:py-12 ">
       <div className="md:max-w-7xl mx-auto">
         <div className="grid md:grid-cols-2 gap-8">
           {/* LandFit Consultation */}
@@ -151,7 +152,26 @@ export default function Step2() {
         </div>
       </div>
     </div>
+    <div  className="bg-[#fff8ec] md:border-l-3 md:border-primary md:max-w-[1005.5866088867188px] mt-6 mb-12 text-[#9A3412] text-sm p-5 mx-4 flex">
+    <IoInformationCircleSharp className="text-primary mr-2 text-2xl"/>
+<p className="md:text-base">
+These consultations are advisory and conceptual only. 
+Working drawings, structural designs, moodboards, and detailed BoQs are 
+only available in the Design Stage.
+</p>
+    </div>
    
+   <div className="flex max-md:px-8 max-md:w-full text-nowrap place-items-center text-text md:min-w-7xl justify-between mx-auto">
+<button className="flex rounded-md place-items-center bg-white border-gray-100 border px-4 py-2">
+<FaArrowLeftLong className="mr-2"/> <p className="text-sm md:text-base font-bold"> Back  <span className="hidden md:flex"> to Information</span></p>
+  </button>   
+
+
+  <button className="flex  bg-gradient-to-r from-[#FDBA74] to-[#FED7AA] rounded-md text-white px-4 py-2">
+   <p className="text-sm md:text-base font-bold">Continue <span className="hidden md:flex">to Payment</span></p>
+   <FaArrowRightLong className="ml-2"/> 
+    </button>   
+   </div>
    </>
   )
   }
