@@ -1,18 +1,31 @@
 "use client"
 
-import { useState } from "react"
-import { FaGoogle, FaFacebook, FaEye, FaEyeSlash, FaHome, FaGlobe, FaCode, FaCheck } from "react-icons/fa"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { FaEye, FaEyeSlash, FaCheck } from "react-icons/fa"
 
-export default function SignupPage() {
+export default function CompleteProfilePage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [selectedRole, setSelectedRole] = useState("")
   const [formData, setFormData] = useState({
-    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
+    role: ""
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
+
+  // Get email from query params (magic link)
+  useEffect(() => {
+    const email = searchParams.get("email")
+    if (email) {
+      setFormData((prev) => ({ ...prev, email }))
+    }
+  }, [searchParams])
 
   const handleInputChange = (e) => {
     setFormData({
@@ -28,6 +41,50 @@ export default function SignupPage() {
     { text: "At least one special character", met: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) },
   ]
 
+  const allRequirementsMet = passwordRequirements.every((req) => req.met)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError("")
+    if (!allRequirementsMet) {
+      setError("Password does not meet requirements.")
+      return
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.")
+      return
+    }
+    if (!formData.role) {
+      setError("Please select a role.")
+      return
+    }
+    setLoading(true)
+    try {
+      // Call your API to complete profile and set password
+      const res = await fetch("/api/complete-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.message || "Failed to set password.")
+      }
+      setSuccess(true)
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 1500)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Form */}
@@ -38,64 +95,27 @@ export default function SignupPage() {
             <div className="w-6 h-6 bg-orange-500 rounded"></div>
             <span className="text-xl font-bold text-gray-800">iSHELTER</span>
           </div>
-          <button className="text-orange-500 text-sm font-medium flex items-center space-x-1">
-            <span>Log In</span>
-            <span>→</span>
-          </button>
         </div>
 
         {/* Title and Description */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Create Your Account</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">Set Your Password</h1>
           <p className="text-gray-600">
-            Manage your construction project with expert guidance, from anywhere in the world.
+            Complete your profile to start using iSHELTER.
           </p>
         </div>
 
-        {/* Social Login Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <button className="flex items-center justify-center space-x-2 border border-gray-300 rounded-lg py-3 px-4 hover:bg-gray-50 transition-colors">
-            <FaGoogle className="text-red-500" />
-            <span className="text-sm font-medium text-gray-700">Sign up with Google</span>
-          </button>
-          <button className="flex items-center justify-center space-x-2 border border-gray-300 rounded-lg py-3 px-4 hover:bg-gray-50 transition-colors">
-            <FaFacebook className="text-blue-600" />
-            <span className="text-sm font-medium text-gray-700">Sign up with Facebook</span>
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className="flex items-center mb-6">
-          <div className="flex-1 border-t border-gray-300"></div>
-          <span className="px-4 text-sm text-gray-500">or continue with email</span>
-          <div className="flex-1 border-t border-gray-300"></div>
-        </div>
-
-        {/* Form */}
-        <form className="space-y-6 flex-1">
-          {/* Full Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-            />
-          </div>
-
-          {/* Email */}
+        <form className="space-y-6 flex-1" onSubmit={handleSubmit}>
+          {/* Email (read-only) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
             <input
               type="email"
               name="email"
               value={formData.email}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+              readOnly
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500"
             />
-            <p className="text-red-500 text-xs mt-1">Please enter a valid email address</p>
           </div>
 
           {/* Password */}
@@ -117,7 +137,6 @@ export default function SignupPage() {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
-
             {/* Password Requirements */}
             <div className="mt-3 space-y-1">
               {passwordRequirements.map((req, index) => (
@@ -156,66 +175,50 @@ export default function SignupPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button
                 type="button"
-                onClick={() => setSelectedRole("local")}
+                onClick={() => setFormData({ ...formData, role: "local" })}
                 className={`p-4 border rounded-lg text-center transition-colors ${
-                  selectedRole === "local" ? "border-orange-500 bg-orange-50" : "border-gray-300 hover:border-gray-400"
+                  formData.role === "local" ? "border-orange-500 bg-orange-50" : "border-gray-300 hover:border-gray-400"
                 }`}
               >
-                <FaHome className="mx-auto mb-2 text-2xl text-orange-500" />
-                <div className="font-medium text-gray-800">Local Client</div>
+                <span className="font-medium text-gray-800">Local Client</span>
                 <div className="text-xs text-gray-500 mt-1">I'm based in Nigeria</div>
               </button>
-
               <button
                 type="button"
-                onClick={() => setSelectedRole("diaspora")}
+                onClick={() => setFormData({ ...formData, role: "diaspora" })}
                 className={`p-4 border rounded-lg text-center transition-colors ${
-                  selectedRole === "diaspora"
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-gray-300 hover:border-gray-400"
+                  formData.role === "diaspora" ? "border-orange-500 bg-orange-50" : "border-gray-300 hover:border-gray-400"
                 }`}
               >
-                <FaGlobe className="mx-auto mb-2 text-2xl text-orange-500" />
-                <div className="font-medium text-gray-800">Diaspora Client</div>
+                <span className="font-medium text-gray-800">Diaspora Client</span>
                 <div className="text-xs text-gray-500 mt-1">I'm based abroad</div>
               </button>
-
               <button
                 type="button"
-                onClick={() => setSelectedRole("developer")}
+                onClick={() => setFormData({ ...formData, role: "developer" })}
                 className={`p-4 border rounded-lg text-center transition-colors ${
-                  selectedRole === "developer"
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-gray-300 hover:border-gray-400"
+                  formData.role === "developer" ? "border-orange-500 bg-orange-50" : "border-gray-300 hover:border-gray-400"
                 }`}
               >
-                <FaCode className="mx-auto mb-2 text-2xl text-orange-500" />
-                <div className="font-medium text-gray-800">Developer</div>
+                <span className="font-medium text-gray-800">Developer</span>
                 <div className="text-xs text-gray-500 mt-1">Real estate developer</div>
               </button>
             </div>
           </div>
 
-          {/* Create Account Button */}
+          {/* Error Message */}
+          {error && <div className="text-red-500 text-sm">{error}</div>}
+          {/* Success Message */}
+          {success && <div className="text-green-600 text-sm">Profile completed! Redirecting...</div>}
+
+          {/* Set Password Button */}
           <button
             type="submit"
-            className="w-full bg-orange-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors"
+            className="w-full bg-orange-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-60"
+            disabled={loading}
           >
-            Create Account
+            {loading ? "Saving..." : "Set Password & Complete Profile"}
           </button>
-
-          {/* Terms */}
-          <p className="text-xs text-gray-500 text-center">
-            By creating an account, you agree to our{" "}
-            <a href="#" className="text-orange-500 hover:underline">
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a href="#" className="text-orange-500 hover:underline">
-              Privacy Policy
-            </a>
-            . Your data is secure with us.
-          </p>
         </form>
       </div>
 

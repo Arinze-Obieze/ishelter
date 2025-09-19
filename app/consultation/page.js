@@ -69,30 +69,30 @@ export default function ConsultationForm() {
         onClick={() => setStep(stepNumber)}
       >
         <div className={`
-          w-7 h-7 rounded-full flex items-center justify-center font-bold
+          md:w-7 md:h-7  w-5 h-5 rounded-full flex items-center justify-center font-bold
           ${isActive ? 'bg-primary text-white' : ''}
           ${isCompleted ? 'bg-green-500 text-white' : ''}
           ${!isActive && !isCompleted ? 'bg-background' : ''}
         `}>
           {isCompleted ? '✓' : stepNumber}
         </div>
-        <span className={`ml-2 font-semibold text-sm ${isActive ? 'text-primary' : ''}`}>
+        <span className={`md:ml-2 ml-1 font-semibold md:text-sm text-xs text-nowrap ${isActive ? 'text-primary' : ''}`}>
           {label}
         </span>
       </div>
-    );
+    ); 
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-start py-6">
       {/* Header */}
-      <div className="flex max-w-7xl justify-between items-center w-full px-6 mb-8">
+      <div className="flex md:flex-row max-md:space-y-4 flex-col max-w-7xl justify-between items-center w-full px-6 mb-8">
         <div className="bg-white px-4 py-2 rounded shadow flex items-center">
           <span className="text-primary font-bold text-lg">i</span>
           <span className="text-black font-bold text-lg ml-1">SHELTER</span>
         </div>
         
-        <div className="flex items-center space-x-6 bg-white py-2 px-4 rounded-xl text-sm">
+        <div className="flex items-center space-x-6 md:space-x-6 bg-white py-2 px-1 md:px-4 rounded-xl text-sm">
           <StepButton stepNumber={1} label="Your Information" />
           <StepButton stepNumber={2} label="Select Plan" />
           <StepButton stepNumber={3} label="Payment" />

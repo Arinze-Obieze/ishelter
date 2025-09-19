@@ -10,9 +10,9 @@ export default function Step1({ formData, updateFormData, onSubmit }) {
 
   return (
     <>
-      <div className="flex w-full space-x-12 justify-center">
+      <div className="flex flex-col  md:flex-row w-full space-x-12 justify-center">
         {/* Form Section */}
-        <div className="flex items-center justify-center py-8">
+        <div className="flex max-md:mx-auto   max-md:px-4 items-center justify-center py-8">
           <div className="bg-white rounded-xl shadow-sm p-8 w-full border border-gray-100 mt-2 relative">
             {/* Orange top border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-orange-200 rounded-t-xl"></div>
@@ -101,7 +101,7 @@ export default function Step1({ formData, updateFormData, onSubmit }) {
           </div>
         </div>
         {/* Info Sidebar */}
-        <div className="bg-white rounded-lg shadow-md p-6 m-9 w-96 ">
+        <div className="bg-white rounded-lg shadow-md p-6 m-3 md:m-9 md:w-96 ">
           <h3 className="font-bold text-xl text-gray-900 mb-3">Why Request a Consultation?</h3>
           <p className="text-gray-500 mb-4">
             Our expert consultation provides valuable insights to help you make informed decisions.
