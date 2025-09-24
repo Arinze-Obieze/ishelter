@@ -2,59 +2,167 @@
 import Step1 from "@/components/ConsultationSteps/Step1";
 import Step2 from "@/components/ConsultationSteps/Step2";
 import Step3 from "@/components/ConsultationSteps/Step3";
-import { useState } from "react";
+import {  useState } from "react";
+import toast from 'react-hot-toast';
+
 
 export default function ConsultationForm() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    phone: ''
+    phone: '',
+    plan: '',
   });
+  const [registrationId, setRegistrationId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const updateFormData = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
 
-  const handleSubmitFormData = async (data) => {
+  // Step 1: Save user info to DB
+  const handleStep1Submit = async () => {
+    if (!formData.fullName || !formData.email || !formData.phone) return;
+    setIsSubmitting(true);
     try {
-      // Submit to Firebase
-      const response = await fetch('/api/submit-consultation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        console.log('Data submitted successfully');
-        setStep(2); 
+      let res, data;
+      if (!registrationId) {
+        // Create new registration
+        res = await fetch('/api/consultation/registration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            ...formData, 
+            plan: formData.plan || 'LandFit Consultation' 
+          }),
+        });
+        data = await res.json();
+        if (res.ok && data.id) {
+          setRegistrationId(data.id);
+        }
       } else {
-        console.error('Submission failed');
+        // Update existing registration
+        res = await fetch('/api/consultation/registration', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            registrationId, 
+            ...formData, 
+            plan: formData.plan || 'LandFit Consultation',
+            status: "pending_payment" 
+          }),
+        });
+        data = await res.json();
       }
-    } catch (error) {
-      console.error('Error submitting data:', error);
+      if ((res.ok && (data.id || data.message))) {
+        setStep(2);
+      } else {
+        toast.error(data.error || 'Submission failed');
+      }
+    } catch (e) {
+      toast.error('Error submitting data');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  // Step 2: Select plan and update registration
+  const handlePlanSelect = async (plan) => {
+    if (!registrationId) return;
+    setIsSubmitting(true);
+    setFormData(prev => ({ ...prev, plan }));
+    try {
+      // Update all form data in DB
+      const res = await fetch('/api/consultation/registration', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          registrationId, 
+          ...formData,
+          plan,
+          status: "pending_payment" 
+        }),
+      });
+      if (res.ok) {
+        setStep(3);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update plan');
+      }
+    } catch (e) {
+      toast.error('Error updating plan');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Step 3: Payment success handler
+  const handlePaymentSuccess = async () => {
+    if (!registrationId) return;
+    setIsSubmitting(true);
+    try {
+      // Update all form data and mark as paid
+      const res = await fetch('/api/consultation/registration', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          registrationId, 
+          ...formData,
+          status: 'paid' 
+        }),
+      });
+      if (res.ok) {
+        toast.success('Registration complete.');
+        // Optionally redirect or reset form
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update payment status');
+      }
+    } catch (e) {
+      toast.error('Error updating payment status');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Navigation
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
+  // Step renderers
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <Step1 
-                 formData={formData} 
-                 updateFormData={updateFormData} 
-                 onSubmit={() => handleSubmitFormData(formData)}
-               />;
+        return (
+          <Step1
+            formData={formData}
+            updateFormData={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+            onSubmit={handleStep1Submit}
+            isSubmitting={isSubmitting}
+          />
+        );
       case 2:
-        return <Step2 />;
+        return (
+          <Step2
+            selectedPlan={formData.plan}
+            onSelectPlan={handlePlanSelect}
+            onBack={handleBack}
+            isSubmitting={isSubmitting}
+          />
+        );
       case 3:
-        return <Step3/>
+        return (
+          <Step3
+            user={formData}
+            amount={formData.plan === 'BuildPath Consultation' ? 498 : 299}
+            email={formData.email}
+            onPaymentSuccess={handlePaymentSuccess}
+            onBack={handleBack}
+            isSubmitting={isSubmitting}
+            registrationId={registrationId}
+          />
+        );
       default:
-        return null
+        return null;
     }
   };
 
@@ -67,7 +175,6 @@ export default function ConsultationForm() {
         className={`flex items-center cursor-pointer transition-colors duration-200 ${
           isActive || isCompleted ? 'text-black' : 'text-gray-400'
         }`}
-        onClick={() => setStep(stepNumber)}
       >
         <div className={`
           md:w-7 md:h-7  w-5 h-5 rounded-full flex items-center justify-center font-bold

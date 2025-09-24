@@ -2,6 +2,7 @@ import Footer from "@/components/Dashboard/Footer";
 import "./globals.css";
 import { Montserrat } from "next/font/google"
 import { InvitationsProvider } from "@/components/InvitationsContext";
+import ToastProvider from "@/components/ui/ToastProvider";
 
 
 const montserrat = Montserrat({
@@ -19,6 +20,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${montserrat.variable}`}>
+      <ToastProvider position="top-right" />
         <InvitationsProvider>
           {children}
         </InvitationsProvider>
