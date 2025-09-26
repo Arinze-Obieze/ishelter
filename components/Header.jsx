@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { RiMenu3Fill } from "react-icons/ri";
 import { IoMdClose } from "react-icons/io";
-
+import Link from 'next/link'
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -41,7 +41,8 @@ const Header = () => {
           </a>
         ))}
       </nav>
-          <button className='bg-primary cursor-pointer text-white py-2 px-4 rounded'>Request Consultation</button>
+<Link href='/consultation'>          <button className='bg-primary cursor-pointer text-white py-2 px-4 rounded'>Request Consultation</button>
+</Link>
         </div>
 
         {/* Mobile menu button - visible only on small screens */}
@@ -73,7 +74,7 @@ const Header = () => {
             <a href='#' className='text-lg text-secondary hover:text-primary py-2'>Testimonials</a>
             <a href='#' className='text-lg text-secondary hover:text-primary py-2'>Contact</a>
             <div className='pt-2'>
-              <button className='w-full justify-center'>Get Started</button>
+              <button className='w-full justify-center'>Request Consultation</button>
             </div>
           </nav>
         </div>

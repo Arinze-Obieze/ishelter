@@ -27,11 +27,11 @@ export default function withAdminProtection(WrappedComponent) {
           if (userDoc.exists() && userDoc.data().role === "admin") {
             setIsAdmin(true);
           } else {
-            router.replace("/");
+            router.replace("/admin");
           }
         } catch (error) {
           console.error("Error checking admin status:", error);
-          router.replace("/");
+          router.replace("/login");
         } finally {
           setLoading(false);
         }

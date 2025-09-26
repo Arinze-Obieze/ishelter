@@ -1,43 +1,29 @@
 'use client'
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { app, db } from "@/lib/firebase";
+import { app } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
 export default function withAuthProtection(WrappedComponent) {
   return function ProtectedComponent(props) {
     const [loading, setLoading] = useState(true);
-    const [allowed, setAllowed] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
-      const unsubscribe = onAuthStateChanged(getAuth(app), async (user) => {
+      const auth = getAuth(app);
+      
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (!user) {
+          // User is not logged in, redirect to login page
           router.replace("/login");
           return;
         }
-        // Check if user doc exists
-        const userRef = doc(db, "users", user.uid);
-        let userDoc = await getDoc(userRef);
-        if (!userDoc.exists()) {
-          // Create user doc with password: false
-          await setDoc(userRef, {
-            email: user.email,
-            password: false,
-            createdAt: new Date(),
-          });
-          router.replace("/complete-profile");
-          return;
-        }
-        // Check if password is set
-        if (!userDoc.data().password) {
-          router.replace("/complete-profile");
-          return;
-        }
-        setAllowed(true);
+        
+        // User is logged in, allow access to the component
         setLoading(false);
       });
+
+      // Cleanup subscription
       return () => unsubscribe();
     }, [router]);
 
@@ -48,7 +34,7 @@ export default function withAuthProtection(WrappedComponent) {
         </div>
       );
     }
-    if (!allowed) return null;
+
     return <WrappedComponent {...props} />;
   };
 }

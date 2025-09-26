@@ -1,5 +1,3 @@
-import {  FaFileInvoice, FaClipboardCheck, FaEnvelope, FaBoxOpen, FaPlus, FaFileAlt, FaCreditCard, FaHeadset, FaCalendarAlt } from "react-icons/fa";
-import { IoNotificationsOutline } from "react-icons/io5";
 import SuccessManagerCard from "./SuccessManagerCard";
 import Notifications from "./Notifications";
 import QuickActions from "./QuickActions";

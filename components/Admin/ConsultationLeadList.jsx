@@ -1,6 +1,296 @@
 'use client'
 import { useState, useEffect } from "react"
-import { FiSearch, FiPlus, FiMoreVertical, FiChevronDown, FiChevronLeft, FiChevronRight } from "react-icons/fi"
+import { FiSearch, FiPlus, FiMoreVertical, FiChevronDown, FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi"
+
+// AddLeadModal Component with Frosted Glass Background
+function AddLeadModal({ isOpen, onClose, onLeadAdded }) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    plan: "LandFit Consultation",
+    notes: ""
+  })
+  const [errors, setErrors] = useState({})
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
+
+  const validateForm = () => {
+    const newErrors = {}
+    
+    if (!formData.name.trim()) newErrors.name = "Name is required"
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required"
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid"
+    }
+    if (!formData.phone.trim()) newErrors.phone = "Phone is required"
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+    setIsSubmitting(true)
+    setErrors({})
+    try {
+      // 1. Add to consultation-registration via API
+      const leadData = {
+        email: formData.email,
+        fullName: formData.name,
+        phone: formData.phone,
+        plan: formData.plan,
+        status: "success",
+        createdAt: new Date().toISOString(),
+      }
+      const regRes = await fetch("/api/consultation/registration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(leadData),
+      })
+      if (!regRes.ok) {
+        const err = await regRes.json().catch(() => ({}))
+        throw new Error("Failed to save lead: " + (err.error || regRes.statusText))
+      }
+
+      // 2. Create Firebase user via API
+      const createRes = await fetch("/api/create-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      })
+      const createData = await createRes.json().catch(() => ({}))
+      if (!createRes.ok || !createData.success) {
+        throw new Error("Failed to create user account: " + (createData.error || createRes.statusText))
+      }
+
+      // 3. Send login details via email
+      const sendEmailRes = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: formData.email,
+          subject: "Your ishelter Login Details",
+          message: `Hello ${formData.name},<br>Your account has been created.<br>Email: ${formData.email}<br>Password: ${createData.password}<br>Login at: <a href='https://ishelter.everythingshelter.com.ng/login'>ishelter.everythingshelter.com.ng/login</a>`
+        }),
+      })
+      const sendEmailData = await sendEmailRes.json().catch(() => ({}))
+      if(sendEmailRes.ok){
+        toast.success("Login details sent to lead's email")
+      }else{
+        throw new Error("Failed to send login email: " + (sendEmailData.error || sendEmailRes.statusText))
+      }
+      
+    
+
+      // Reset form and close modal
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        plan: "LandFit Consultation",
+        notes: ""
+      })
+      setErrors({})
+      onLeadAdded && onLeadAdded(leadData)
+      onClose()
+    } catch (error) {
+      setErrors({ submit: error.message })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }))
+    }
+  }
+
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose()
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={handleOverlayClick}
+    >
+      {/* Frosted Glass Backdrop */}
+      <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-md backdrop-filter" />
+      
+      {/* Modal Container */}
+      <div className="relative bg-white bg-opacity-90 backdrop-blur-lg backdrop-filter rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden border border-white border-opacity-20">
+        {/* Enhanced Header with Glass Effect */}
+        <div className="bg-white bg-opacity-70 backdrop-blur-md border-b border-white border-opacity-20">
+          <div className="flex items-center justify-between p-6">
+            <h2 className="text-xl font-semibold text-gray-900">Add New Lead</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-full hover:bg-white hover:bg-opacity-50 backdrop-blur-sm"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto bg-transparent">
+          {errors.submit && (
+            <div className="bg-red-50 bg-opacity-80 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm backdrop-blur-sm">
+              {errors.submit}
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 ${
+                errors.name ? 'border-red-300 bg-red-50 bg-opacity-50' : 'border-gray-300 bg-white bg-opacity-70'
+              } backdrop-blur-sm`}
+              placeholder="Enter full name"
+            />
+            {errors.name && <p className="mt-2 text-sm text-red-600">{errors.name}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address *
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 ${
+                errors.email ? 'border-red-300 bg-red-50 bg-opacity-50' : 'border-gray-300 bg-white bg-opacity-70'
+              } backdrop-blur-sm`}
+              placeholder="Enter email address"
+            />
+            {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number *
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 ${
+                errors.phone ? 'border-red-300 bg-red-50 bg-opacity-50' : 'border-gray-300 bg-white bg-opacity-70'
+              } backdrop-blur-sm`}
+              placeholder="Enter phone number"
+            />
+            {errors.phone && <p className="mt-2 text-sm text-red-600">{errors.phone}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="plan" className="block text-sm font-medium text-gray-700 mb-2">
+              Requested Plan
+            </label>
+            <select
+              id="plan"
+              name="plan"
+              value={formData.plan}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white bg-opacity-70 backdrop-blur-sm"
+            >
+              <option value="LandFit Consultation">LandFit Consultation</option>
+              <option value="BuildPath Consultation">BuildPath Consultation</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+              Additional Notes
+            </label>
+            <textarea
+              id="notes"
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              rows={3}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white bg-opacity-70 backdrop-blur-sm resize-none"
+              placeholder="Any additional information..."
+            />
+          </div>
+        </form>
+
+        {/* Enhanced Footer with Glass Effect */}
+        <div className="bg-white bg-opacity-70 backdrop-blur-md border-t border-white border-opacity-20">
+          <div className="flex gap-3 justify-end p-6">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-6 py-3 text-gray-700 bg-white bg-opacity-80 border border-gray-300 rounded-xl hover:bg-opacity-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 backdrop-blur-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="px-6 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 flex items-center gap-2 font-medium shadow-lg shadow-orange-500/25"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <FiPlus className="w-4 h-4" />
+                  Add Lead
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function ConsultationLeadList() {
   const [currentPage, setCurrentPage] = useState(1)
@@ -11,15 +301,15 @@ export default function ConsultationLeadList() {
   const [assignedSMFilter, setAssignedSMFilter] = useState("ALL")
   const [planFilter, setPlanFilter] = useState("ALL")
   const [dateFilter, setDateFilter] = useState("ALL")
-
-  const leads = [
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [leads, setLeads] = useState([
     {
       id: 1,
       name: "James Wilson",
       email: "james.wilson@example.com",
       phone: "(555) 123-4567",
       plan: "LandFit Consultation",
-      status: "NEW",
+      payment: "success",
       assignedSM: null,
       submissionDate: "Jul 12, 2023",
     },
@@ -29,82 +319,22 @@ export default function ConsultationLeadList() {
       email: "emily.j@example.com",
       phone: "(555) 234-5678",
       plan: "BuildPath Consultation",
-      status: "ASSIGNED",
+      payment: "pending",
       assignedSM: "Sarah Parker",
       submissionDate: "Jul 10, 2023",
     },
-    {
-      id: 3,
-      name: "Michael Brown",
-      email: "mbrown@example.com",
-      phone: "(555) 345-6789",
-      plan: "LandFit Consultation",
-      status: "SCHEDULED",
-      assignedSM: "John Smith",
-      submissionDate: "Jul 8, 2023",
-    },
-    {
-      id: 4,
-      name: "Jessica Lee",
-      email: "jlee@example.com",
-      phone: "(555) 456-7890",
-      plan: "BuildPath Consultation",
-      status: "COMPLETED",
-      assignedSM: "Mike Johnson",
-      submissionDate: "Jul 5, 2023",
-    },
-    {
-      id: 5,
-      name: "Robert Davis",
-      email: "rdavis@example.com",
-      phone: "(555) 567-8901",
-      plan: "LandFit Consultation",
-      status: "CANCELLED",
-      assignedSM: "Sarah Parker",
-      submissionDate: "Jul 3, 2023",
-    },
-    {
-      id: 6,
-      name: "Amanda Wilson",
-      email: "awilson@example.com",
-      phone: "(555) 678-9012",
-      plan: "BuildPath Consultation",
-      status: "NEW",
-      assignedSM: null,
-      submissionDate: "Jul 12, 2023",
-    },
-    {
-      id: 7,
-      name: "Thomas Clark",
-      email: "tclark@example.com",
-      phone: "(555) 789-0123",
-      plan: "LandFit Consultation",
-      status: "ASSIGNED",
-      assignedSM: "John Smith",
-      submissionDate: "Jul 11, 2023",
-    },
-    {
-      id: 8,
-      name: "Sarah Martinez",
-      email: "smartinez@example.com",
-      phone: "(555) 890-1234",
-      plan: "BuildPath Consultation",
-      status: "SCHEDULED",
-      assignedSM: "Mike Johnson",
-      submissionDate: "Jul 9, 2023",
-    },
-    // Add more sample data to test pagination
+    // ... rest of your sample data
     ...Array.from({ length: 15 }, (_, i) => ({
       id: i + 9,
       name: `Sample Lead ${i + 9}`,
       email: `lead${i + 9}@example.com`,
       phone: `(555) ${100 + i}-${1000 + i}`,
       plan: i % 2 === 0 ? "LandFit Consultation" : "BuildPath Consultation",
-      status: ["NEW", "ASSIGNED", "SCHEDULED", "COMPLETED", "CANCELLED"][i % 5],
+      payment: ["NEW", "ASSIGNED", "SCHEDULED", "COMPLETED", "CANCELLED"][i % 5],
       assignedSM: i % 3 === 0 ? null : ["Sarah Parker", "John Smith", "Mike Johnson"][i % 3],
       submissionDate: `Jul ${15 - (i % 15)}, 2023`,
     }))
-  ]
+  ])
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth)
@@ -112,23 +342,33 @@ export default function ConsultationLeadList() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (payment) => {
     const baseClasses = "px-2 py-1 rounded-md text-xs font-medium"
 
-    switch (status) {
-      case "NEW":
-        return `${baseClasses} bg-blue-100 text-blue-800`
-      case "ASSIGNED":
-        return `${baseClasses} bg-yellow-100 text-yellow-800`
-      case "SCHEDULED":
-        return `${baseClasses} bg-green-100 text-green-800`
-      case "COMPLETED":
-        return `${baseClasses} bg-purple-100 text-purple-800`
-      case "CANCELLED":
-        return `${baseClasses} bg-red-100 text-red-800`
+    switch (payment) {
+      case "success":
+        return `${baseClasses} bg-green-100 text-blue-800`
+      case "pending":
+        return `${baseClasses} bg-red-100 text-yellow-800`
       default:
-        return `${baseClasses} bg-gray-100 text-gray-800`
+        return `${baseClasses} bg-red-100 text-gray-800`
     }
+  }
+
+  // Handle new lead addition
+  const handleLeadAdded = (newLead) => {
+    const leadWithId = {
+      ...newLead,
+      id: Math.max(...leads.map(l => l.id)) + 1,
+      submissionDate: new Date().toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      })
+    }
+    
+    setLeads(prev => [leadWithId, ...prev])
+    setCurrentPage(1)
   }
 
   // Filter leads based on search and filters
@@ -138,11 +378,11 @@ export default function ConsultationLeadList() {
       lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (lead.assignedSM && lead.assignedSM.toLowerCase().includes(searchTerm.toLowerCase()))
 
-    const matchesStatus = statusFilter === "ALL" || lead.status === statusFilter
+    const matchesStatus = statusFilter === "ALL" || lead.payment === statusFilter
     const matchesAssignedSM = assignedSMFilter === "ALL" || 
       (assignedSMFilter === "UNASSIGNED" ? !lead.assignedSM : lead.assignedSM === assignedSMFilter)
     const matchesPlan = planFilter === "ALL" || lead.plan === planFilter
-    const matchesDate = dateFilter === "ALL" // Simplified date filter
+    const matchesDate = dateFilter === "ALL"
 
     return matchesSearch && matchesStatus && matchesAssignedSM && matchesPlan && matchesDate
   })
@@ -191,13 +431,13 @@ export default function ConsultationLeadList() {
   // Responsive column configuration
   const getVisibleColumns = () => {
     if (windowWidth < 640) {
-      return ['name', 'status', 'actions'] // Mobile: Only essential columns
+      return ['name', 'payment', 'actions']
     } else if (windowWidth < 768) {
-      return ['name', 'email', 'status', 'actions'] // Small tablets
+      return ['name', 'email', 'payment', 'actions']
     } else if (windowWidth < 1024) {
-      return ['name', 'email', 'plan', 'status', 'actions'] // Tablets
+      return ['name', 'email', 'plan', 'payment', 'actions']
     } else {
-      return ['name', 'email', 'phone', 'plan', 'status', 'assignedSM', 'submissionDate', 'actions'] // Desktop: All columns
+      return ['name', 'email', 'phone', 'plan', 'payment', 'assignedSM', 'submissionDate', 'actions']
     }
   }
 
@@ -208,7 +448,7 @@ export default function ConsultationLeadList() {
     email: "Email Address",
     phone: "Phone Number",
     plan: "Requested Plan",
-    status: "Status",
+    payment: "Payment",
     assignedSM: "Assigned SM",
     submissionDate: "Submission Date",
     actions: "Actions"
@@ -224,8 +464,8 @@ export default function ConsultationLeadList() {
         return <span className="text-gray-600">{lead.phone}</span>
       case 'plan':
         return <span className="text-gray-600">{lead.plan}</span>
-      case 'status':
-        return <span className={getStatusBadge(lead.status)}>{lead.status}</span>
+      case 'payment':
+        return <span className={getStatusBadge(lead.payment)}>{lead.payment}</span>
       case 'assignedSM':
         return lead.assignedSM ? (
           <span className="text-gray-600">{lead.assignedSM}</span>
@@ -248,7 +488,7 @@ export default function ConsultationLeadList() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-2">
       <div className="bg-white rounded-lg shadow-sm">
         {/* Header Section */}
         <div className="p-4 sm:p-6 border-b border-gray-200">
@@ -266,7 +506,10 @@ export default function ConsultationLeadList() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
-            <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md flex items-center gap-2 font-medium transition-colors w-full sm:w-auto justify-center">
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md flex items-center gap-2 font-medium transition-colors w-full sm:w-auto justify-center"
+            >
               <FiPlus className="w-4 h-4" />
               Add New Lead
             </button>
@@ -427,6 +670,13 @@ export default function ConsultationLeadList() {
           </div>
         )}
       </div>
+
+      {/* Add Lead Modal with Frosted Glass Effect */}
+      <AddLeadModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onLeadAdded={handleLeadAdded}
+      />
     </div>
   )
 }

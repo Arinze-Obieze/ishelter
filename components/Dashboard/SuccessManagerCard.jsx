@@ -53,7 +53,7 @@ const SuccessManagerCard = () => {
             className="w-12 h-12 rounded-full object-cover opacity-70"
           />
           <p className="text-xs text-center max-w-[200px] text-gray-500">
-            A success manager will be assigned to you when you have a project.
+            A success manager will be assigned to you shortly.
           </p>
          </div>
           <button

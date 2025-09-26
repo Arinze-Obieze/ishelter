@@ -42,13 +42,26 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
+      // Check if it's the first login by comparing creationTime and lastSignInTime
+      const creationTime = new Date(user.metadata.creationTime).getTime();
+      const lastSignInTime = new Date(user.metadata.lastSignInTime).getTime();
+      
+      // If creation time and last sign-in time are the same (or very close), it's first login
+      const isFirstLogin = (lastSignInTime - creationTime) < 5000; // 5 second threshold
+      
+      // Always check for admin role first
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const role = userDoc.exists() ? userDoc.data().role : null;
       
       if (role === "admin") {
         toast.success("Successfully logged in as admin!", { duration: 3000 });
         router.push("/admin");
+      } else if (isFirstLogin) {
+        // First login for regular users
+        toast.success("Welcome! Please complete your profile", { duration: 3000 });
+        router.push("/dashboard");
       } else {
+        // Returning regular user
         toast.success("Successfully logged in!", { duration: 3000 });
         router.push("/dashboard");
       }

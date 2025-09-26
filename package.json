@@ -17,6 +17,7 @@
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
+    "zeptomail": "^6.2.1",
     "zod": "^4.1.5"
   },
   "devDependencies": {
