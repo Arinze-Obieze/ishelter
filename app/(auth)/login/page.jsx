@@ -42,28 +42,28 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Check if it's the first login by comparing creationTime and lastSignInTime
-      const creationTime = new Date(user.metadata.creationTime).getTime();
-      const lastSignInTime = new Date(user.metadata.lastSignInTime).getTime();
-      
-      // If creation time and last sign-in time are the same (or very close), it's first login
-      const isFirstLogin = (lastSignInTime - creationTime) < 5000; // 5 second threshold
-      
-      // Always check for admin role first
+      // Check user role from Firestore (matches your current setup)
       const userDoc = await getDoc(doc(db, "users", user.uid));
-      const role = userDoc.exists() ? userDoc.data().role : null;
       
-      if (role === "admin") {
-        toast.success("Successfully logged in as admin!", { duration: 3000 });
-        router.push("/admin");
-      } else if (isFirstLogin) {
-        // First login for regular users
-        toast.success("Welcome! Please complete your profile", { duration: 3000 });
-        router.push("/dashboard");
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const role = userData.role;
+        
+        if (role === "admin") {
+          toast.success("Successfully logged in as admin!", { duration: 3000 });
+          router.push("/admin");
+        } else if (role === "success manager") {
+          toast.success("Successfully logged in as success manager!", { duration: 3000 });
+          router.push("/success-manager");
+        } else {
+          // Client users and any other roles go to dashboard
+          toast.success("Successfully logged in!", { duration: 3000 });
+          router.push("/dashboard");
+        }
       } else {
-        // Returning regular user
-        toast.success("Successfully logged in!", { duration: 3000 });
-        router.push("/dashboard");
+        // User document doesn't exist in Firestore
+        toast.error("User account not properly configured. Please contact support.", { duration: 3000 });
+        setError("Account configuration error. Please contact support.");
       }
     } catch (err) {
       const friendlyMessage = getErrorMessage(err.code);

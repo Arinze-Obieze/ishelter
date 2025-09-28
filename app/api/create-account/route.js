@@ -1,19 +1,33 @@
 import { NextResponse } from "next/server";
-import { adminAuth } from "@/lib/firebaseAdmin";
+import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 
 function generatePassword(length = 12) {
-  const chars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
-  let password = "";
-  for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  const lowercase = "abcdefghijklmnopqrstuvwxyz";
+  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const numbers = "0123456789";
+  const symbols = "!@#$%^&*()";
+  
+  // Ensure at least one character from each category
+  let password = [
+    lowercase[Math.floor(Math.random() * lowercase.length)],
+    uppercase[Math.floor(Math.random() * uppercase.length)],
+    numbers[Math.floor(Math.random() * numbers.length)],
+    symbols[Math.floor(Math.random() * symbols.length)]
+  ].join('');
+  
+  // Fill remaining characters
+  const allChars = lowercase + uppercase + numbers + symbols;
+  for (let i = password.length; i < length; i++) {
+    password += allChars.charAt(Math.floor(Math.random() * allChars.length));
   }
-  return password;
+  
+  // Shuffle the password
+  return password.split('').sort(() => Math.random() - 0.5).join('');
 }
 
 export async function POST(req) {
   try {
-    const { email } = await req.json();
+    const { email, displayName, role } = await req.json();
 
     if (!email) {
       return NextResponse.json(
@@ -22,29 +36,68 @@ export async function POST(req) {
       );
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid email format" },
+        { status: 400 }
+      );
+    }
+
     const password = generatePassword();
 
+    // 1. Create user in Firebase Auth
     const userRecord = await adminAuth.createUser({
       email,
       password,
+      displayName: displayName || '',
+    });
+
+    // 2. Add user to Firestore
+    await adminDb.collection('users').doc(userRecord.uid).set({
+      uid: userRecord.uid,
+      email,
+      displayName: displayName || '',
+      role: role || 'client',
+      status: 'Active',
+      createdAt: new Date().toISOString(),
+      lastLogin: null
     });
 
     return NextResponse.json({
       success: true,
+      uid: userRecord.uid,
       email: userRecord.email,
-      password, 
+      password, // Only for development
     });
   } catch (error) {
     console.error("Firebase createUser error:", error);
 
     let message = "Failed to create account";
-    if (error.code === "auth/email-already-exists") {
-      message = "Email already exists in Firebase";
+    let status = 500;
+
+    if (error.code === "auth/email-already-exists" || error.code === "auth/email-already-in-use") {
+      message = "An account with this email already exists";
+      status = 409;
+    } else if (error.code === "auth/invalid-email") {
+      message = "Invalid email address";
+      status = 400;
+    } else if (error.code === "auth/operation-not-allowed") {
+      message = "Email/password accounts are not enabled";
+      status = 403;
+    } else if (error.code === "auth/weak-password") {
+      message = "The password is too weak";
+      status = 400;
     }
 
     return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 }
+      { 
+        success: false,
+        error: message,
+        code: error.code 
+      },
+      { status }
     );
   }
 }
