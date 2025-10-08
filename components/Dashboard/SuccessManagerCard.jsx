@@ -15,7 +15,7 @@ const SuccessManagerCard = () => {
       <div className="flex items-center gap-3 mb-3">
         <FaUserTie className="text-yellow-500 text-xl" />
         <div>
-          <p className="text-lg font-bold">Success Manager</p>
+          <p className="text-lg font-bold">Project Manager</p>
         </div>
       </div>
 

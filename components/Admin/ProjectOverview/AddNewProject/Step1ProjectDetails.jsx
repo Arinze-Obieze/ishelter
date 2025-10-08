@@ -1,3 +1,4 @@
+import { email } from 'zod';
 import FormField from './FormField'
 import ProjectUserSearchBox from "./ProjectUserSearchBox";
 import { useState } from "react";
@@ -9,7 +10,7 @@ export default function Step1ProjectDetails({ formData, setFormData, isSubmittin
   // Keep formData in sync with selected users
   const handleUsersChange = (users) => {
     setSelectedUsers(users);
-    setFormData({ ...formData, projectUsers: users.map(u => ({ name: u.displayName || u.name || u.email, id: u.id })) });
+    setFormData({ ...formData, projectUsers: users.map(u => ({ email: u.email, id: u.id || u.uid })) });
   };
 
   return (

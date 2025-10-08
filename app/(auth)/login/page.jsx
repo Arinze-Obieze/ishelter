@@ -5,7 +5,12 @@ import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, 
+  getDoc,  
+  collection, 
+  query, 
+  where, 
+  getDocs  } from "firebase/firestore";
 import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -18,20 +23,7 @@ export default function LoginPage() {
 
   const isDisabled = loading || !email || !password;
 
-  function getErrorMessage(code) {
-    switch (code) {
-      case "auth/user-not-found":
-        return "No account found with this email.";
-      case "auth/wrong-password":
-        return "Incorrect password. Try again.";
-      case "auth/invalid-email":
-        return "Please enter a valid email address.";
-      case "auth/too-many-requests":
-        return "Too many failed attempts. Please try again later.";
-      default:
-        return "Login failed. Please try again.";
-    }
-  }
+
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -42,31 +34,44 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Check user role from Firestore (matches your current setup)
+      // Check user role from Firestore (users collection)
       const userDoc = await getDoc(doc(db, "users", user.uid));
-      
       if (userDoc.exists()) {
         const userData = userDoc.data();
         const role = userData.role;
-        
         if (role === "admin") {
           toast.success("Successfully logged in as admin!", { duration: 3000 });
           router.push("/admin");
         } else if (role === "project manager") {
           toast.success("Successfully logged in as project manager!", { duration: 3000 });
           router.push("/success-manager");
+        } else if (role === "success manager") {
+          toast.success("Successfully logged in as success manager!", { duration: 3000 });
+          router.push("/success-manager");
         } else {
-          // Client users and any other roles go to dashboard
           toast.success("Successfully logged in!", { duration: 3000 });
           router.push("/dashboard");
         }
       } else {
-        // User document doesn't exist in Firestore
-        toast.error("User account not properly configured. Please contact support.", { duration: 3000 });
-        setError("Account configuration error. Please contact support.");
+        // Query consultation-registrations by email using the new rules
+        const consultQuery = query(
+          collection(db, "consultation-registrations"), 
+          where("email", "==", email)
+        );
+        const consultSnapshot = await getDocs(consultQuery);
+        
+        if (!consultSnapshot.empty) {
+          // User exists in consultation-registrations
+          toast.success("Successfully logged in!", { duration: 3000 });
+          router.push("/dashboard");
+        } else {
+          // User document doesn't exist in either collection
+          toast.error("User account not properly configured. Please contact support.", { duration: 3000 });
+          setError("Account configuration error. Please contact support.");
+        }
       }
     } catch (err) {
-      const friendlyMessage = getErrorMessage(err.code);
+      const friendlyMessage = err.code;
       setError(friendlyMessage);
       toast.error(friendlyMessage, { duration: 3000 });
     } finally {
@@ -197,4 +202,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
