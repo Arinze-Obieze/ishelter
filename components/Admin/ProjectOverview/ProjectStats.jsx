@@ -1,27 +1,52 @@
+"use client"
+
 import React from "react";
 import { FaFolder, FaSpinner, FaCheckCircle, FaPauseCircle } from "react-icons/fa";
+import { useProjects } from "@/contexts/ProjectContext";
+
+const useProjectsFallback = () => {
+  return {
+    projects: [],
+    loading: false,
+    error: null
+  };
+};
 
 const ProjectStats = () => {
+  let projectsContext;
+  try {
+    projectsContext = useProjects();
+  } catch (error) {
+    projectsContext = useProjectsFallback();
+  }
+
+  const { projects } = projectsContext;
+
+  const totalProjects = projects.length;
+  const inProgress = projects.filter(project => project.projectStatus === "inProgress").length;
+  const completed = projects.filter(project => project.projectStatus === "completed").length;
+  const onHold = projects.filter(project => project.projectStatus === "onHold").length;
+
   const stats = [
     {
       icon: <FaFolder className="text-primary text-2xl" />,
       title: "Total Projects",
-      value: 0,
+      value: totalProjects,
     },
     {
       icon: <FaSpinner className="text-primary text-2xl" />,
       title: "In Progress",
-      value: 0,
+      value: inProgress,
     },
     {
       icon: <FaCheckCircle className="text-primary text-2xl" />,
       title: "Completed",
-      value: 0,
+      value: completed,
     },
     {
       icon: <FaPauseCircle className="text-primary text-2xl" />,
       title: "On Hold",
-      value: 0,
+      value: onHold,
     },
   ];
 

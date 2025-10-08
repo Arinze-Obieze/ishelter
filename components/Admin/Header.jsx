@@ -8,11 +8,11 @@ export default function Header({ onMenuClick }) {
       <div className="flex items-center gap-3">
      
         {/* Logo */}
-        <div className="flex items-center ">
+        {/* <div className="flex items-center ">
           <span className="text-xl font-bold tracking-tight text-gray-900">
             <span className="text-primary font-bold">i</span>SHELTER
           </span>
-        </div>
+        </div> */}
       </div>
    
       <div className="flex items-center gap-4">
