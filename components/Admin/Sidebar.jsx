@@ -102,7 +102,7 @@ export default function Sidebar({ isOpen = false, onClose }) {
                   onClick={handleLogout}
                   className="flex items-center w-full px-3 py-2 text-left text-red-600 hover:bg-gray-100 transition-colors"
                 >
-                  <FaSignOutAlt className="mr-3" />
+                  <FaSignOutAlt className="mr-3 cursor-pointer" />
                   Logout
                 </button>
               </div>
@@ -151,9 +151,9 @@ export default function Sidebar({ isOpen = false, onClose }) {
           <div className="mt-6 border-t border-gray-200 pt-4">
             <button
               onClick={handleLogout}
-              className="flex items-center w-full px-3 py-2 text-left text-red-600 hover:bg-gray-100 transition-colors"
+              className="flex cursor-pointer items-center w-full px-3 py-2 text-left text-red-600 hover:bg-gray-100 transition-colors"
             >
-              <FaSignOutAlt className="mr-3" />
+              <FaSignOutAlt className="mr-3 " />
               Logout
             </button>
           </div>

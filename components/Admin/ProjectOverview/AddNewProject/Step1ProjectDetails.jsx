@@ -1,6 +1,17 @@
 import FormField from './FormField'
+import ProjectUserSearchBox from "./ProjectUserSearchBox";
+import { useState } from "react";
 
 export default function Step1ProjectDetails({ formData, setFormData, isSubmitting }) {
+  // Add state for selected users
+  const [selectedUsers, setSelectedUsers] = useState(formData.projectUsers || []);
+
+  // Keep formData in sync with selected users
+  const handleUsersChange = (users) => {
+    setSelectedUsers(users);
+    setFormData({ ...formData, projectUsers: users.map(u => ({ name: u.displayName || u.name || u.email, id: u.id })) });
+  };
+
   return (
     <div>
       <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 pb-2 border-b-2 border-orange-500">
@@ -8,6 +19,12 @@ export default function Step1ProjectDetails({ formData, setFormData, isSubmittin
       </h2>
 
       <div className="space-y-4 sm:space-y-6">
+        <ProjectUserSearchBox
+          selectedUsers={selectedUsers}
+          setSelectedUsers={handleUsersChange}
+          disabled={isSubmitting}
+        />
+
         <FormField
           label="Project Name"
           required

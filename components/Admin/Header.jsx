@@ -24,7 +24,7 @@ export default function Header({ onMenuClick }) {
         </div>
 
        {/* User Avatar + Info */}
-       {/* <div className="flex items-center gap-3">
+       <div className="flex items-center gap-3">
          <div className="h-9 w-9 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold text-lg">
            JS
          </div>
@@ -32,7 +32,7 @@ export default function Header({ onMenuClick }) {
            <span className="font-semibold text-gray-800">John Smith</span>
            <span className="text-xs text-gray-500">System Admin</span>
          </div>
-       </div> */}
+       </div>
 
            {/* Hamburger for mobile */}
            <button

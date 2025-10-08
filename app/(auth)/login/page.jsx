@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -76,9 +76,8 @@ export default function LoginPage() {
 
   return (
     <div className="h-screen flex bg-gray-100 overflow-hidden">
-      {/* Toast Container */}
-      <Toaster position="top-right" />
-      
+     
+     
       {/* Form Section */}
       <div className="flex flex-col w-full md:w-2/3 shadow-lg overflow-y-auto">
         <div className="flex w-full justify-between items-center px-6 md:px-16 py-6">
