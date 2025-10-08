@@ -12,8 +12,8 @@ export default function Sidebar({ isOpen = false, onClose }) {
       title: "MAIN",
       items: [
         { name: "Dashboard", icon: FaChartBar, href: "/admin" },
-        { name: "Project Oversight", icon: FaChartBar, href: "/admin/project" },
-        { name: "User Management", icon: FaUsers, href: "/admin/user-management" }
+        { name: "Project Overview", icon: FaChartBar, href: "/admin/project-overview" },
+        { name: "User Management", icon: FaUsers, href: "/admin/user-management" },
       ]
     },
     {

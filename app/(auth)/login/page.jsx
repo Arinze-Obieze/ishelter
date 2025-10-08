@@ -52,8 +52,8 @@ export default function LoginPage() {
         if (role === "admin") {
           toast.success("Successfully logged in as admin!", { duration: 3000 });
           router.push("/admin");
-        } else if (role === "success manager") {
-          toast.success("Successfully logged in as success manager!", { duration: 3000 });
+        } else if (role === "project manager") {
+          toast.success("Successfully logged in as project manager!", { duration: 3000 });
           router.push("/success-manager");
         } else {
           // Client users and any other roles go to dashboard
@@ -198,3 +198,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

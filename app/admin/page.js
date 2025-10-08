@@ -9,7 +9,11 @@ function AdminDashboard() {
   return (
     <div className=''>
       
-<AdminStats/>                                                 
+<div className="max-md:grid grid-cols-2 "> 
+<AdminStats/>  
+</div>
+
+
 <SystemAlerts/>
 
 <div className='flex flex-col md:flex-row gap-4 mt-4'> 

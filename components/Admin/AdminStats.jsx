@@ -14,7 +14,7 @@ const stats = [
     trendType: 'up'
   },
   {
-    label: 'New Consultation Leads',
+    label: 'Consultation Leads',
     value: 15,
     trend: '+5% this week',
     trendType: 'up'
