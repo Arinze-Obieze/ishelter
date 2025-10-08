@@ -6,22 +6,22 @@ const ProjectStats = () => {
     {
       icon: <FaFolder className="text-primary text-2xl" />,
       title: "Total Projects",
-      value: 75,
+      value: 0,
     },
     {
       icon: <FaSpinner className="text-primary text-2xl" />,
       title: "In Progress",
-      value: 50,
+      value: 0,
     },
     {
       icon: <FaCheckCircle className="text-primary text-2xl" />,
       title: "Completed",
-      value: 15,
+      value: 0,
     },
     {
       icon: <FaPauseCircle className="text-primary text-2xl" />,
       title: "On Hold",
-      value: 10,
+      value: 0,
     },
   ];
 

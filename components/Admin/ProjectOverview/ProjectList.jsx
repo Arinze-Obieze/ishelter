@@ -1,11 +1,12 @@
 "use client"
 
-import Link from "next/link"
 import { useState } from "react"
 import { FiSearch, FiChevronDown, FiPlus, FiMoreVertical, FiChevronLeft, FiChevronRight } from "react-icons/fi"
+import AddNewProjectModal from "@/components/modals/AddNewProjectModal"
 
 export default function ProjectOverview() {
   const [currentPage, setCurrentPage] = useState(1)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const itemsPerPage = 6
 
   const projects = [
@@ -191,6 +192,9 @@ export default function ProjectOverview() {
     return pages
   }
 
+  const openModal = () => setIsModalOpen(true)
+  const closeModal = () => setIsModalOpen(false)
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
       <div className="mx-auto max-w-8xl">
@@ -225,11 +229,12 @@ export default function ProjectOverview() {
             </div>
 
             {/* Add New Project Button */}
-            <Link href="/admin/project-overview/add-new-project" className="lg:w-auto">
-              <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-orange-600 lg:w-auto lg:py-2">
-                <FiPlus /> Add New Project
-              </button>
-            </Link>
+            <button 
+              onClick={openModal}
+              className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-orange-600 lg:w-auto lg:py-2"
+            >
+              <FiPlus /> Add New Project
+            </button>
           </div>
         </div>
 
@@ -360,6 +365,12 @@ export default function ProjectOverview() {
             </button>
           </div>
         </div>
+
+        {/* Modal */}
+        <AddNewProjectModal 
+          isOpen={isModalOpen} 
+          onClose={closeModal} 
+        />
       </div>
     </div>
   )
