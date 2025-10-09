@@ -17,8 +17,11 @@ function AdminDashboard() {
 <SystemAlerts/>
 
 <div className='flex flex-col md:flex-row gap-4 mt-4'> 
-  <RecentActivity className='flex-1'/>
-<div className="space-y-8">
+ <div className='md:flex-[2] flex-1'>
+ <RecentActivity />
+ </div>
+
+<div className="space-y-8 md:flex-1">
 <QuickActions/>
 <ConsultationLeads/>
 </div>

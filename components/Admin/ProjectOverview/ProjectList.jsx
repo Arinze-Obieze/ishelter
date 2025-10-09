@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FiSearch, FiChevronDown, FiPlus, FiMoreVertical, FiChevronLeft, FiChevronRight } from "react-icons/fi"
 import AddNewProjectModal from "@/components/modals/AddNewProjectModal"
 import { useProjects } from "@/contexts/ProjectContext"
+import { getDoc } from "firebase/firestore"
 
 const useProjectsFallback = () => {
   return {
@@ -16,6 +17,7 @@ const useProjectsFallback = () => {
 export default function ProjectOverview() {
   const [currentPage, setCurrentPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [managerNames, setManagerNames] = useState({})
   const itemsPerPage = 6
 
   // Use projects from context with fallback
@@ -37,6 +39,33 @@ export default function ProjectOverview() {
   const currentProjects = projects.slice(startIndex, endIndex)
   const startItem = startIndex + 1
   const endItem = Math.min(endIndex, totalItems)
+
+  useEffect(() => {
+    // Fetch display names for projectManager references
+    const fetchManagerNames = async () => {
+      const names = {}
+      for (const project of currentProjects) {
+        let manager = project.projectManager
+        if (manager && typeof manager === 'object' && manager.path) {
+          try {
+            const snap = await getDoc(manager)
+            if (snap.exists()) {
+              names[project.id] = snap.data().displayName || snap.data().email || 'Unknown'
+            } else {
+              names[project.id] = 'Unknown'
+            }
+          } catch {
+            names[project.id] = 'Unknown'
+          }
+        } else {
+          names[project.id] = manager || 'Unknown'
+        }
+      }
+      setManagerNames(names)
+    }
+    fetchManagerNames()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProjects])
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -228,7 +257,7 @@ export default function ProjectOverview() {
                     <tr key={project.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{project.projectName}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{project.projectAddress}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{project.projectManager}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{managerNames[project.id] || 'Loading...'}</td>
                       <td className="px-6 py-4">
                         <span
                           className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(project.projectStatus)}`}
@@ -292,7 +321,7 @@ export default function ProjectOverview() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Manager:</span>
-                        <span className="text-gray-900">{project.projectManager}</span>
+                        <span className="text-gray-900">{managerNames[project.id] || 'Loading...'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Budget:</span>

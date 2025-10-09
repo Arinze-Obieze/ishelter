@@ -2,6 +2,8 @@ import { email } from 'zod';
 import FormField from './FormField'
 import ProjectUserSearchBox from "./ProjectUserSearchBox";
 import { useState } from "react";
+import { doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function Step1ProjectDetails({ formData, setFormData, isSubmitting }) {
   // Add state for selected users
@@ -10,7 +12,12 @@ export default function Step1ProjectDetails({ formData, setFormData, isSubmittin
   // Keep formData in sync with selected users
   const handleUsersChange = (users) => {
     setSelectedUsers(users);
-    setFormData({ ...formData, projectUsers: users.map(u => ({ email: u.email, id: u.id || u.uid })) });
+    setFormData({
+      ...formData,
+      projectUsers: users.map(u =>
+        doc(db, u._type === 'lead' ? 'consultation-registrations' : 'users', u.id || u.uid)
+      )
+    });
   };
 
   return (

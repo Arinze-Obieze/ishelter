@@ -2,10 +2,10 @@
 import { useState, useEffect } from "react"
 import { toast } from 'react-hot-toast'
 import { db } from '@/lib/firebase'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, query, where, doc } from 'firebase/firestore'
 import { addProjectToFirestore } from '@/utils/addProjectToFirestore'
 import StepIndicator from "../Admin/ProjectOverview/AddNewProject/StepIndicator"
-import ModalContainer from "../Admin/ProjectOverview/AddNewProject/ModalContainer"
+import ModalContainer from "./ModalContainer"
 import ModalHeader from "../Admin/ProjectOverview/AddNewProject/ModalHeader"
 import Step1ProjectDetails from "../Admin/ProjectOverview/AddNewProject/Step1ProjectDetails"
 import Step2TeamFinancial from "../Admin/ProjectOverview/AddNewProject/Step2TeamFinancial"
@@ -35,6 +35,7 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
     completionDate: "",
     sendNotification: true,
     projectStatus: "pending",
+    projectUsers: [], // <-- use projectUsers, not projectUserIds
   })
 
   const steps = [
@@ -105,6 +106,7 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
       completionDate: "",
       sendNotification: true,
       projectStatus: "pending",
+      projectUsers: [], // <-- use projectUsers
     })
     setCurrentStep(1)
     onClose()
@@ -112,16 +114,27 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
 
   const handleSubmit = async () => {
     // Basic validation
-    if (!formData.projectName || !formData.projectAddress || !formData.projectManager) {
+    if (!formData.projectName || !formData.projectAddress || !formData.projectManagerId) {
       toast.error('Please fill in all required fields')
       return
     }
 
     setIsSubmitting(true)
-    
     try {
-      console.log('Submitting project data:', formData)
-      await addProjectToFirestore(formData)
+      // Build Firestore references
+      const projectManagerRef = doc(db, 'users', formData.projectManagerId)
+      const successManagerRefs = formData.successManagerIds.map(id => doc(db, 'users', id))
+      // Use projectUsers directly (already DocumentReferences)
+      const projectDataWithRefs = {
+        ...formData,
+        projectManager: projectManagerRef,
+        successManagers: successManagerRefs,
+        // projectUsers is already an array of DocumentReferences
+      }
+      delete projectDataWithRefs.projectManagerId
+      delete projectDataWithRefs.successManagerIds
+
+      await addProjectToFirestore(projectDataWithRefs)
       toast.success('Project created successfully!')
       
       // Reset form and close modal
@@ -139,6 +152,7 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
         completionDate: "",
         sendNotification: true,
         projectStatus: "pending",
+        projectUsers: [],
       })
       setCurrentStep(1)
       onClose()
@@ -241,3 +255,6 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
     </ModalContainer>
   )
 }
+
+
+c

@@ -1,7 +1,15 @@
 "use client";
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const PersonalProjectsContext = createContext();
@@ -10,55 +18,76 @@ export const PersonalProjectsProvider = ({ children }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [userEmail, setUserEmail] = useState(null);
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
+  // ✅ Watch authentication state
   useEffect(() => {
-    // Listen for auth state
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      setUserId(user ? user.uid : null);
-      setUserEmail(user ? user.email : null);
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        setUser(null);
+        setIsAdmin(false);
+        setProjects([]);
+        setLoading(false);
+        return;
+      }
+
+      console.log("UID:", firebaseUser.uid);
+      console.log("Email:", firebaseUser.email);
+
+      setUser(firebaseUser);
+
+      // ✅ Check user role in /users collection
+      try {
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const snap = await getDoc(userDocRef);
+        if (snap.exists()) {
+          const role = snap.data().role;
+          const adminRoles = ["admin", "projectManager", "successManager"];
+          setIsAdmin(adminRoles.includes(role));
+        } else {
+          setIsAdmin(false); // Normal user (may exist in consultation-registrations)
+        }
+      } catch (err) {
+        console.error("Error fetching user role:", err);
+        setIsAdmin(false);
+      }
     });
+
     return () => unsubscribeAuth();
   }, []);
 
+  // ✅ Fetch projects
   useEffect(() => {
-    if (!userId || !userEmail) {
+    if (!user) {
       setProjects([]);
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
     const projectsRef = collection(db, "projects");
-    
+    const q = isAdmin
+      ? query(projectsRef) // Admins/managers see all projects
+      : query(projectsRef, where("ownerId", "==", user.uid)); // Normal users see only their own
+
     const unsubscribe = onSnapshot(
-      projectsRef,
+      q,
       (snapshot) => {
-        const userProjects = snapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((project) => {
-            // Check if user is project manager
-            const isManager = project.projectManagerId === userId;
-            
-            // Check if user is success manager
-            const isSuccessManager = Array.isArray(project.successManagerIds) && 
-              project.successManagerIds.includes(userId);
-            
-            // Check if user is in projectUsers array by email
-            const isProjectUser = Array.isArray(project.projectUsers) && 
-              project.projectUsers.some(user => user.email === userEmail);
-            
-            return isManager || isSuccessManager || isProjectUser;
-          });
-        
+        const userProjects = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
         setProjects(userProjects);
-        setLoading(false);
         setError(null);
+        setLoading(false);
       },
       (err) => {
-        if (err.code === 'permission-denied') {
-          setError("You don't have permission to view projects. Please contact an administrator.");
+        console.error("Firestore error:", err);
+        if (err.code === "permission-denied") {
+          setError(
+            "You don't have permission to view projects. Please contact an administrator."
+          );
           setProjects([]);
         } else {
           setError(err.message);
@@ -66,12 +95,15 @@ export const PersonalProjectsProvider = ({ children }) => {
         setLoading(false);
       }
     );
-    
+    console.log(projects)
+
     return () => unsubscribe();
-  }, [userId, userEmail]);
+  }, [user, isAdmin]);
 
   return (
-    <PersonalProjectsContext.Provider value={{ projects, loading, error }}>
+    <PersonalProjectsContext.Provider
+      value={{ projects, loading, error, isAdmin }}
+    >
       {children}
     </PersonalProjectsContext.Provider>
   );
@@ -79,8 +111,10 @@ export const PersonalProjectsProvider = ({ children }) => {
 
 export const usePersonalProjects = () => {
   const context = useContext(PersonalProjectsContext);
-  if (context === undefined) {
-    throw new Error("usePersonalProjects must be used within a PersonalProjectsProvider");
+  if (!context) {
+    throw new Error(
+      "usePersonalProjects must be used within a PersonalProjectsProvider"
+    );
   }
   return context;
 };
