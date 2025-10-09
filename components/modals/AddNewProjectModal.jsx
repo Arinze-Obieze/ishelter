@@ -255,6 +255,3 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
     </ModalContainer>
   )
 }
-
-
-c

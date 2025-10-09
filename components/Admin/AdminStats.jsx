@@ -3,32 +3,32 @@ import StatCard from './StatsCard';
 const stats = [
   {
     label: 'Active Clients',
-    value: 120,
+    value: 0,
     trend: '+8% from last month',
     trendType: 'up'
   },
   {
     label: 'Active Projects',
-    value: 75,
+    value: 2,
     trend: '+12% from last month',
     trendType: 'up'
   },
   {
     label: 'Consultation Leads',
-    value: 15,
+    value: 2,
     trend: '+5% this week',
     trendType: 'up'
   },
   {
     label: 'Revenue This Month',
-    value: '$15,000',
-    trend: '-3% from last month',
+    value: '$0',
+    trend: '0% from last month',
     trendType: 'down'
   },
   {
     label: 'Pending Approvals',
-    value: 25,
-    trend: '+10% from last week',
+    value: 0,
+    trend: '0% from last week',
     trendType: 'up'
   }
 ];

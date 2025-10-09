@@ -1,16 +1,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { db, auth } from "@/lib/firebase";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  doc,
-  getDoc,
-} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { collection, query, onSnapshot, where, doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const PersonalProjectsContext = createContext();
 
@@ -19,14 +13,12 @@ export const PersonalProjectsProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   // ✅ Watch authentication state
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
         setUser(null);
-        setIsAdmin(false);
         setProjects([]);
         setLoading(false);
         return;
@@ -36,22 +28,6 @@ export const PersonalProjectsProvider = ({ children }) => {
       console.log("Email:", firebaseUser.email);
 
       setUser(firebaseUser);
-
-      // ✅ Check user role in /users collection
-      try {
-        const userDocRef = doc(db, "users", firebaseUser.uid);
-        const snap = await getDoc(userDocRef);
-        if (snap.exists()) {
-          const role = snap.data().role;
-          const adminRoles = ["admin", "projectManager", "successManager"];
-          setIsAdmin(adminRoles.includes(role));
-        } else {
-          setIsAdmin(false); // Normal user (may exist in consultation-registrations)
-        }
-      } catch (err) {
-        console.error("Error fetching user role:", err);
-        setIsAdmin(false);
-      }
     });
 
     return () => unsubscribeAuth();
@@ -67,17 +43,45 @@ export const PersonalProjectsProvider = ({ children }) => {
 
     setLoading(true);
     const projectsRef = collection(db, "projects");
-    const q = isAdmin
-      ? query(projectsRef) // Admins/managers see all projects
-      : query(projectsRef, where("ownerId", "==", user.uid)); // Normal users see only their own
+    const userRef = doc(db, "users", user.uid);
+    const q = query(projectsRef, where("projectUsers", "array-contains", userRef));
 
     const unsubscribe = onSnapshot(
       q,
-      (snapshot) => {
-        const userProjects = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+      async (snapshot) => {
+        // Process each project and resolve references
+        const projectPromises = snapshot.docs.map(async (docSnapshot) => {
+          const data = docSnapshot.data();
+          
+          // Resolve projectManager reference if it exists
+          let managerName = 'N/A';
+          if (data.projectManager && typeof data.projectManager === 'object' && data.projectManager.path) {
+            try {
+              const managerDoc = await getDoc(data.projectManager);
+              if (managerDoc.exists()) {
+                const managerData = managerDoc.data();
+                managerName = managerData.name || managerData.email || 'Unknown';
+              }
+            } catch (err) {
+              console.error("Error fetching manager:", err);
+            }
+          } else if (typeof data.projectManager === 'string') {
+            managerName = data.projectManager;
+          }
+
+          return {
+            id: docSnapshot.id,
+            projectName: data.projectName || 'Untitled Project',
+            shortDescription: data.shortDescription || '',
+            projectStatus: data.projectStatus || 'N/A',
+            projectManager: managerName,
+            startDate: data.startDate || 'N/A',
+            initialBudget: data.initialBudget || 'N/A',
+           status: data.status
+          };
+        });
+
+        const userProjects = await Promise.all(projectPromises);
         setProjects(userProjects);
         setError(null);
         setLoading(false);
@@ -95,14 +99,13 @@ export const PersonalProjectsProvider = ({ children }) => {
         setLoading(false);
       }
     );
-    console.log(projects)
 
     return () => unsubscribe();
-  }, [user, isAdmin]);
+  }, [user]);
 
   return (
     <PersonalProjectsContext.Provider
-      value={{ projects, loading, error, isAdmin }}
+      value={{ projects, loading, error }}
     >
       {children}
     </PersonalProjectsContext.Provider>

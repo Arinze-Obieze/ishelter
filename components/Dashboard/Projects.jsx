@@ -1,56 +1,71 @@
+"use client";
+
 import { FaMapMarkerAlt, FaClock, FaCheckCircle, FaArrowRight } from "react-icons/fa";
+import { usePersonalProjects } from "@/contexts/PersonalProjectsContext";
 
 export default function Projects() {
-  const projects = [
-    // {
-    //   id: 1,
-    //   title: "Duplex at Lekki",
-    //   location: "Lekki, Lagos",
-    //   status: "In Progress",
-    //   statusColor: "bg-blue-100 text-blue-600",
-    //   image:
-    //     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
-    //   completion: 65,
-    //   lastUpdate: "Today, 9:30 AM",
-    //   note: "Foundation work started",
-    // },
-    // {
-    //   id: 2,
-    //   title: "Modern Residence - Highland Park",
-    //   location: "Highland Park, IL",
-    //   status: "In Progress",
-    //   statusColor: "bg-blue-100 text-blue-600",
-    //   image:
-    //     "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80",
-    //   completion: 42,
-    //   lastUpdate: "Yesterday",
-    //   note: "Roofing materials delivered",
-    // },
-    // {
-    //   id: 3,
-    //   title: "Ikeja Commercial Property",
-    //   location: "Ikeja, Lagos",
-    //   status: "Awaiting Approval",
-    //   statusColor: "bg-pink-100 text-pink-600",
-    //   image:
-    //     "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80",
-    //   completion: 15,
-    //   lastUpdate: "2 days ago",
-    //   note: "Awaiting permit approval",
-    // },
-    // {
-    //   id: 4,
-    //   title: "Victoria Island Apartment",
-    //   location: "Victoria Island, Lagos",
-    //   status: "Completed",
-    //   statusColor: "bg-green-100 text-green-600",
-    //   image:
-    //     "https://images.unsplash.com/photo-1600585152900-bf87c2939c86?auto=format&fit=crop&w=800&q=80",
-    //   completion: 100,
-    //   lastUpdate: "Aug 15, 2023",
-    //   note: "Final inspection passed",
-    // },
-  ];
+  const { projects, loading, error } = usePersonalProjects();
+
+  // Helper function to get status color
+  const getStatusColor = (status) => {
+    const statusLower = status?.toLowerCase() || '';
+    if (statusLower.includes('progress') || statusLower.includes('active')) {
+      return "bg-blue-100 text-blue-600";
+    } else if (statusLower.includes('completed') || statusLower.includes('done')) {
+      return "bg-green-100 text-green-600";
+    } else if (statusLower.includes('pending') || statusLower.includes('awaiting')) {
+      return "bg-pink-100 text-pink-600";
+    } else {
+      return "bg-gray-100 text-gray-600";
+    }
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    if (!dateString || dateString === 'N/A') return 'Not set';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Helper function to calculate completion (placeholder logic)
+  const getCompletion = (status) => {
+    const statusLower = status?.toLowerCase() || '';
+    if (statusLower.includes('completed')) return 100;
+    if (statusLower.includes('progress')) return 50;
+    if (statusLower.includes('planning')) return 10;
+    return 25;
+  };
+
+  // Placeholder image
+  const placeholderImage = "/home-placeholder.jpg";
+
+  if (loading) {
+    return (
+      <div className="px-6">
+        <div className="text-center text-gray-600 py-10">
+          <p className="text-lg font-medium">Loading your projects...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-6">
+        <div className="text-center text-red-600 py-10">
+          <p className="text-lg font-medium">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-6">
@@ -75,66 +90,73 @@ export default function Projects() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="bg-white rounded-lg shadow-sm overflow-hidden"
-            >
-              {/* Project Image + Status */}
-              <div className="relative">
-                <img
-                  src={project.image}
-                  alt={project.title}
-                  className="w-full h-48 object-cover"
-                />
-                <span
-                  className={`absolute top-3 right-3 px-3 py-1 text-xs font-medium rounded-full ${project.statusColor}`}
-                >
-                  {project.status}
-                </span>
-              </div>
+          {projects.map((project) => {
+            const completion = getCompletion(project.projectStatus);
+            const statusColor = getStatusColor(project.projectStatus);
+            
+            return (
+              <div
+                key={project.id}
+                className="bg-white rounded-lg shadow-sm overflow-hidden"
+              >
+                {/* Project Image + Status */}
+                <div className="relative">
+                  <img
+                    src={project.image || placeholderImage}
+                    alt={project.projectName}
+                    className="w-full h-48 object-cover"
+                  />
+                  <span
+                    className={`absolute top-3 right-3 px-3 py-1 text-xs font-medium rounded-full ${statusColor}`}
+                  >
+                    {project.projectStatus}
+                  </span>
+                </div>
 
-              {/* Project Info */}
-              <div className="p-4 md:mt-6">
-                <h3 className="font-semibold text-gray-900 text-lg mb-1">
-                  {project.title}
-                </h3>
-                <p className="flex items-center md:mt-2 text-gray-600 text-sm mb-3">
-                  <FaMapMarkerAlt className="mr-2 text-gray-500" />
-                  {project.location}
-                </p>
-
-                {/* Progress */}
-                <div className="mb-4 md:mt-4">
-                  <p className="text-sm text-gray-700 mb-1">
-                    Project Completion {project.completion}%
+                {/* Project Info */}
+                <div className="p-4 md:mt-6">
+                  <h3 className="font-semibold text-gray-900 text-lg mb-1">
+                    {project.projectName}
+                  </h3>
+                  <p className="flex items-center md:mt-2 text-gray-600 text-sm mb-3">
+                    <FaMapMarkerAlt className="mr-2 text-gray-500" />
+                    {project.location || 'Location not specified'}
                   </p>
-                  <div className="w-full bg-gray-200 h-2 rounded-full">
-                    <div
-                      className="h-2 bg-orange-500 rounded-full"
-                      style={{ width: `${project.completion}%` }}
-                    ></div>
+
+                  {/* Progress */}
+                  <div className="mb-4 md:mt-4">
+                    <p className="text-sm text-gray-700 mb-1">
+                      Project Completion {completion}%
+                    </p>
+                    <div className="w-full bg-gray-200 h-2 rounded-full">
+                      <div
+                        className="h-2 bg-orange-500 rounded-full"
+                        style={{ width: `${completion}%` }}
+                      ></div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Last Update */}
-                <div className="text-sm text-gray-600 flex md:mt-8 items-center mb-1">
-                  <FaClock className="mr-2 text-gray-500" /> Last update:{" "}
-                  {project.lastUpdate}
-                </div>
-                <p className="text-sm text-gray-500 mb-4 md:mt-4">{project.note}</p>
+                  {/* Last Update */}
+                  <div className="text-sm text-gray-600 flex md:mt-8 items-center mb-1">
+                    <FaClock className="mr-2 text-gray-500" /> Last update:{" "}
+                    {formatDate(project.startDate)}
+                  </div>
+                  <p className="text-sm text-gray-500 mb-4 md:mt-4">
+                    {project.shortDescription || 'No description available'}
+                  </p>
 
-                {/* Button */}
-                <button
-                  type="button"
-                  className="w-full border border-primary md:mt-4 text-primary font-medium rounded-lg py-2 hover:bg-orange-50 flex items-center justify-center gap-2"
-                >
-                  <p>View Details </p>
-                  <FaArrowRight />
-                </button>
+                  {/* Button */}
+                  <button
+                    type="button"
+                    className="w-full border border-primary md:mt-4 text-primary font-medium rounded-lg py-2 hover:bg-orange-50 flex items-center justify-center gap-2"
+                  >
+                    <p>View Details </p>
+                    <FaArrowRight />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
