@@ -3,9 +3,10 @@ import { useState } from 'react';
 import Sidebar from '@/components/SuccessManager/Sidebar'
 import Header from '@/components/SuccessManager/Header'
 import { ProjectManagerProvider } from '@/contexts/ProjectManagerProjectsContext';
+import withProjectManagerProtection from '@/components/SuccessManager/withProjectManagerProtection';
 
 
-export default function SuccessManagerLayout({ children }) {
+function ProjectManagerLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleMenuClick = () => setSidebarOpen(true);
@@ -28,3 +29,6 @@ export default function SuccessManagerLayout({ children }) {
   </ProjectManagerProvider>
 );
 }
+
+const ProtectedProjectManagerLayout = withProjectManagerProtection(ProjectManagerLayout);
+export default ProtectedProjectManagerLayout;
