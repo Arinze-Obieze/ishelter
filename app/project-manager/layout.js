@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Sidebar from '@/components/SuccessManager/Sidebar'
 import Header from '@/components/SuccessManager/Header'
+import { ProjectManagerProvider } from '@/contexts/ProjectManagerProjectsContext';
 
 
 export default function SuccessManagerLayout({ children }) {
@@ -11,7 +12,8 @@ export default function SuccessManagerLayout({ children }) {
   const handleCloseSidebar = () => setSidebarOpen(false);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+<ProjectManagerProvider> 
+<div className="min-h-screen bg-gray-100">
     <div className="flex">
     <Sidebar isOpen={sidebarOpen} onClose={handleCloseSidebar} />
     
@@ -23,5 +25,6 @@ export default function SuccessManagerLayout({ children }) {
       </div>
     </div>
   </div>
+  </ProjectManagerProvider>
 );
 }

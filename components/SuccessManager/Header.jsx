@@ -3,16 +3,16 @@ import Image from 'next/image';
 
 export default function Header({ onMenuClick }) {
   return (
-    <header className="bg-gray-100 h-fit border-b border-gray-300 px-4 md:px-8 w-full pb-4 pt-5 flex items-center justify-between">
+    <header className="bg-gray-100 h-fit  border-gray-300 px-4 md:px-8 w-full pb-4 pt-5 flex items-center justify-between">
       {/* Left: Menu Icon + Logo */}
       <div className="flex items-center gap-3">
      
         {/* Logo */}
-        <div className="flex items-center ">
+        {/* <div className="flex items-center ">
           <span className="text-xl font-bold tracking-tight text-gray-900">
             <span className="text-primary font-bold">i</span>SHELTER
           </span>
-        </div>
+        </div> */}
       </div>
    
       <div className="flex items-center gap-4">

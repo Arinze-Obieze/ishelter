@@ -44,7 +44,7 @@ export default function LoginPage() {
           router.push("/admin");
         } else if (role === "project manager") {
           toast.success("Successfully logged in as project manager!", { duration: 3000 });
-          router.push("/success-manager");
+          router.push("/project-manager");
         } else if (role === "success manager") {
           toast.success("Successfully logged in as success manager!", { duration: 3000 });
           router.push("/success-manager");
