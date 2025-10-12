@@ -48,7 +48,7 @@ export default function ProjectDashboard() {
         </div>
 
         {/* Main Navigation Tabs - Desktop */}
-        <nav className="hidden md:flex gap-6 mt-6">
+        <nav className="hidden md:flex gap-6 mt-6 md:[&>*]:text-base">
           <button className="bg-orange-500 text-white font-medium px-4 py-2 rounded-md text-sm">Overview</button>
           <button className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2 text-sm transition-colors">
             Task Timeline
@@ -65,8 +65,9 @@ export default function ProjectDashboard() {
         </nav>
       </header>
 
-      {/* Sub Navigation Icons */}
-      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4">
+    <div className="bg-white">
+        {/* Sub Navigation Icons */}
+        <div className=" px-4 md:px-8 py-4">
         <div className="flex items-center gap-6 md:gap-8 overflow-x-auto">
           <button className="flex items-center gap-2 text-orange-500 font-medium text-sm whitespace-nowrap pb-2 border-b-2 border-orange-500">
             <FaHome className="text-base" />
@@ -194,6 +195,9 @@ export default function ProjectDashboard() {
           </div>
         </div>
       </main>
+    </div>
+
+      
     </div>
   )
 }
