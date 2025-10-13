@@ -28,7 +28,7 @@ export default function Cards() {
                 id: project.id,
                 title: project.projectName,
                 location: project.shortDescription,
-                image: "/ph/v.png",
+                image: "/home-placeholder.jpg",
                 stats: [
                   { 
                     label: "Pending Approval", 
