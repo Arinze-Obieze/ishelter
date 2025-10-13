@@ -1,19 +1,21 @@
 import React from 'react'
-import StatCards from '@/components/SuccessManager/StatCards'
-import ActionRequired from  "@/components/SuccessManager/ActionRequired"
-import MyProjects from '@/components/SuccessManager/MyProjects'
+import StatCards from '@/components/ProjectManager/StatCards'
+import ActionRequired from "@/components/ProjectManager/ActionRequired"
+import MyProjects from '@/components/ProjectManager/MyProjects'
 
 
-const SuccessManager = () => {
+
+const ProjectManager = () => {
   return (
     <div>
       <StatCards />
       <ActionRequired/>
       <MyProjects/>
     </div>
+
   )
 }
 
-export default SuccessManager
+export default ProjectManager
 
 

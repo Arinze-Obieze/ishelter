@@ -21,8 +21,8 @@ const ProjectOverview = () => {
     { name: "Final", status: "Pending" },
   ]
   return (
-    <div>
-    <header className="py-4 md:px-8 ">
+    <div className='md:px-8'>
+    <header className="py-4">
 
               <div className="bg-white px-4 py-4 md:pt-13 md:pb-5 md:px-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                
@@ -46,23 +46,6 @@ const ProjectOverview = () => {
                   </button>
                 </div>
               </div>
-      
-              {/* Main Navigation Tabs - Desktop */}
-              <nav className="bg-white md:p-4 hidden md:flex gap-6 mt-4 [&>*]:cursor-pointer md:[&>*]:text-base [&>*]:text-gray-400">
-                <button className="bg-orange-500 !text-white font-medium px-4 py-2 rounded-md  text-sm">Overview</button>
-                <button className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2 text-sm transition-colors">
-                  Task Timeline
-                </button>
-                <button className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2 text-sm transition-colors">
-                  Live Feed & Updates
-                </button>
-                <button className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2 text-sm transition-colors">
-                  Bills & Invoices
-                </button>
-                <button className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2 text-sm transition-colors">
-                  Documents
-                </button>
-              </nav>
             </header>
 
            <div className='bg-white'>

@@ -1,10 +1,11 @@
 'use client'
 import { useState } from 'react';
-import Sidebar from '@/components/SuccessManager/Sidebar'
-import Header from '@/components/SuccessManager/Header'
+import Sidebar from '@/components/ProjectManager/Sidebar'
+import Header from '@/components/ProjectManager/Header'
 import { ProjectManagerProvider } from '@/contexts/ProjectManagerProjectsContext';
-import withProjectManagerProtection from '@/components/SuccessManager/withProjectManagerProtection';
-
+import withProjectManagerProtection from '@/components/ProjectManager/withProjectManagerProtection';
+import { ProjectsProvider } from '@/contexts/ProjectContext'
+import { UserProvider } from '@/contexts/UserContext';
 
 function ProjectManagerLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -13,6 +14,8 @@ function ProjectManagerLayout({ children }) {
   const handleCloseSidebar = () => setSidebarOpen(false);
 
   return (
+    <UserProvider> 
+    <ProjectsProvider>
 <ProjectManagerProvider> 
 <div className="min-h-screen bg-gray-100">
     <div className="flex">
@@ -27,6 +30,9 @@ function ProjectManagerLayout({ children }) {
     </div>
   </div>
   </ProjectManagerProvider>
+  </ProjectsProvider>
+  </UserProvider>
+
 );
 }
 

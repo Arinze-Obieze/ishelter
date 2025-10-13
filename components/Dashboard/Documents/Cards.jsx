@@ -1,63 +1,52 @@
+'use client'
 import { FiMapPin, FiFileText } from "react-icons/fi"
+import { useDocuments } from "@/contexts/DocumentsContext"
+import { usePersonalProjects } from "@/contexts/PersonalProjectsContext"
 
 export default function Cards() {
-  const properties = [
-    {
-      id: 1,
-      title: "Duplex at Lekki",
-      location: "Lekki Phase 1, Lagos",
-      image: "/ph/v.png",
-      stats: [
-        { label: "Pending Approval", value: "2" },
-        { label: "New Files", value: "3" },
-        { label: "Total Files", value: "12" },
-      ],
-      hasDocuments: true,
-      hasNotification: true,
-    },
-    {
-      id: 2,
-      title: "Sunset Apartments",
-      location: "Victoria Island, Lagos",
-      image: "/ph/v.png",
-      stats: [
-        { label: "Pending Approval", value: "0" },
-        { label: "New Files", value: "2" },
-        { label: "Total Files", value: "8" },
-      ],
-      hasDocuments: true,
-      hasNotification: false,
-    },
-    {
-      id: 3,
-      title: "Tech Park Offices",
-      location: "Ikeja, Lagos",
-      image: "/ph/v.png",
-      stats: [
-        { label: "Pending Approval", value: "0" },
-        { label: "New Files", value: "0" },
-        { label: "Total Files", value: "4" },
-      ],
-      hasDocuments: true,
-      hasNotification: false,
-    },
-    {
-      id: 4,
-      title: "Marina Retail Center",
-      location: "",
-      image: null,
-      stats: [],
-      hasDocuments: false,
-      hasNotification: false,
-    },
-  ]
+  const { projects } = usePersonalProjects();
+  const { projectDocuments, loading } = useDocuments();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-6 mb-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-8">Loading documents...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 mb-6">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-          {properties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
+          {projects.map((project) => (
+            <PropertyCard 
+              key={project.id} 
+              property={{
+                id: project.id,
+                title: project.projectName,
+                location: project.shortDescription,
+                image: "/ph/v.png",
+                stats: [
+                  { 
+                    label: "Pending Approval", 
+                    value: projectDocuments[project.id]?.pendingApproval.length || "0" 
+                  },
+                  { 
+                    label: "New Files", 
+                    value: projectDocuments[project.id]?.newCount || "0" 
+                  },
+                  { 
+                    label: "Total Files", 
+                    value: projectDocuments[project.id]?.totalCount || "0" 
+                  },
+                ],
+                hasDocuments: Boolean(projectDocuments[project.id]?.documents.length),
+                hasNotification: Boolean(projectDocuments[project.id]?.pendingApproval.length)
+              }}
+            />
           ))}
         </div>
       </div>
@@ -100,7 +89,7 @@ function PropertyCard({ property }) {
       <div className="relative h-48">
         <img src={image || "/placeholder.svg"} alt={title} className="w-full h-full object-cover" />
         {hasNotification && (
-          <div className="absolute top-3 right-3 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+          <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
             <span className="text-white text-xs font-bold">!</span>
           </div>
         )}
@@ -127,7 +116,7 @@ function PropertyCard({ property }) {
           ))}
         </div>
 
-        <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded font-medium text-sm flex items-center justify-center gap-2 transition-colors">
+        <button className="w-full cursor-pointer bg-primary hover:bg-orange-600 text-white py-2 px-4 rounded font-medium text-sm flex items-center justify-center gap-2 transition-colors">
           <FiFileText className="w-4 h-4" />
           View Documents
         </button>

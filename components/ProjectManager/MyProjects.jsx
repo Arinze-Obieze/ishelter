@@ -5,9 +5,11 @@ import { FaClipboardList } from "react-icons/fa6";
 import { BsPersonFill } from "react-icons/bs";
 import { IoEye } from "react-icons/io5";
 import { useProjectManager } from '@/contexts/ProjectManagerProjectsContext';
+import { useRouter } from 'next/navigation';
 
 export default function MyProjects() {
   const { projects, loading, error, isProjectManager } = useProjectManager();
+  const router = useRouter();
 
   // Helper function to get status color
   const getStatusColor = (status) => {
@@ -144,8 +146,10 @@ export default function MyProjects() {
                 <button className="flex  max-md:hidden items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-100">
                   <FiSend /> Request Approval
                 </button>
-                <button className="flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm hover:bg-orange-600">
-                <IoEye />  View Project
+                <button className="flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm hover:bg-orange-600"
+                  onClick={() => router.push(`/project-manager/project-details/${project.id}/overview`)}
+                >
+                  <IoEye />  View Project
                 </button>
               </div>
             </div>

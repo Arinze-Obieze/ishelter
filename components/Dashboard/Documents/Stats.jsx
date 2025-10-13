@@ -1,6 +1,22 @@
+'use client'
 import { Filter } from "lucide-react"
+import { useDocuments } from "@/contexts/DocumentsContext"
 
 export function DocumentsStats() {
+  const { projectDocuments, loading } = useDocuments();
+
+  // Calculate totals
+  const totalNewDocuments = Object.values(projectDocuments).reduce((acc, project) => 
+    acc + (project?.newCount || 0), 0);
+  const totalDocuments = Object.values(projectDocuments).reduce((acc, project) => 
+    acc + (project?.totalCount || 0), 0);
+  const projectsNeedingApproval = Object.values(projectDocuments).filter(project => 
+    (project?.pendingApproval?.length || 0) > 0).length;
+
+  if (loading) {
+    return null;
+  }
+
   return (
     <div className="w-full max-w-7xl mx-auto mt-10">
       {/* Desktop Layout */}
@@ -14,18 +30,18 @@ export function DocumentsStats() {
                 <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">Action Required</h3>
-                  <p className="text-sm text-gray-600">5 projects have documents pending your approval</p>
+                  <p className="text-sm text-gray-600">{projectsNeedingApproval} projects have documents pending your approval</p>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-8 ml-8">
               <div className="text-center">
-                <div className="text-3xl font-bold text-orange-500 mb-1">5</div>
+                <div className="text-3xl font-bold text-orange-500 mb-1">{totalNewDocuments}</div>
                 <div className="text-sm text-gray-600">New Documents This Week</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-orange-500 mb-1">24</div>
+                <div className="text-3xl font-bold text-orange-500 mb-1">{totalDocuments}</div>
                 <div className="text-sm text-gray-600">Total Documents</div>
               </div>
             </div>

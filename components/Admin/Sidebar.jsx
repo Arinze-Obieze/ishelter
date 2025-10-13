@@ -57,7 +57,7 @@ export default function Sidebar({ isOpen = false, onClose }) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Close Icon */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 ">
               <span className="text-xl font-bold tracking-tight text-gray-900">
                 <span className="text-primary font-bold">i</span>SHELTER
               </span>

@@ -10,16 +10,16 @@ export default function Sidebar({ isOpen = false, onClose }) {
     {
       title: "MAIN",
       items: [
-        { name: "Dashboard", icon: FaChartBar, href: "/success-manager" },
-        { name: "Clients", icon: FaChartBar, href: "/success-manager/project" },
-        { name: "Schedule", icon: FaUsers, href: "/success-manager/user-management" }
+        { name: "Dashboard", icon: FaChartBar, href: "/project-manager" },
+        { name: "Clients", icon: FaChartBar, href: "/project-manager/project" },
+        { name: "Schedule", icon: FaUsers, href: "/project-manager/user-management" }
       ]
     },
     {
       title: "MANAGE",
       items: [
-        { name: "Invoices", icon: FaFileInvoiceDollar, href: "/success-manager/billing" },
-        { name: "Reports", icon: FaHandshake, href: "/success-manager/consultation" },
+        { name: "Invoices", icon: FaFileInvoiceDollar, href: "/project-manager/billing" },
+        { name: "Reports", icon: FaHandshake, href: "/project-manager/consultation" },
          { name: "System Settings", icon: FaCog, href: "/settings" },
       ]
     },
@@ -27,8 +27,8 @@ export default function Sidebar({ isOpen = false, onClose }) {
   ];
 
   const isActive = (href) => {
-    if (href === '/success-manager') return pathname === '/success-manager';
-    return pathname.startsWith(href) && href !== '/success-manager';
+    if (href === '/project-manager') return pathname === '/project-manager';
+    return pathname.startsWith(href) && href !== '/project-manager';
   };
 
   return (
@@ -125,7 +125,7 @@ export default function Sidebar({ isOpen = false, onClose }) {
           <img src="/testimonial/1.png" alt="Michael Adebayo" className="w-10  h-10"/>
           <div className=''>
             <h2 className="font-bold text-base">Sarah Johnson</h2>
-            <h6 className="text-text text-xs">Success Manager</h6>
+            <h6 className="text-text text-xs">Project Manager</h6>
           </div>
         </div>
       </aside>
