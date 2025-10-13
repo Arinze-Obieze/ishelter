@@ -13,6 +13,7 @@ export const ProjectManagerProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [isProjectManager, setIsProjectManager] = useState(false);
 
   // ✅ Watch authentication state and verify role
@@ -20,6 +21,7 @@ export const ProjectManagerProvider = ({ children }) => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
         setUser(null);
+        setUserProfile(null);
         setIsProjectManager(false);
         setProjects([]);
         setLoading(false);
@@ -28,7 +30,7 @@ export const ProjectManagerProvider = ({ children }) => {
 
       console.log("Project Manager Context - UID:", firebaseUser.uid);
 
-      // Check if user is a project manager
+      // Check if user is a project manager and fetch full profile
       try {
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
@@ -41,15 +43,31 @@ export const ProjectManagerProvider = ({ children }) => {
           if (isPM) {
             console.log("User is a project manager");
             setUser(firebaseUser);
+            
+            // Store full user profile
+            setUserProfile({
+              uid: firebaseUser.uid,
+              email: userData.email || firebaseUser.email,
+              displayName: userData.displayName || userData.name || 'Project Manager',
+              photoURL: userData.photoURL || null,
+              role: userData.role,
+              status: userData.status || 'active',
+              createdAt: userData.createdAt,
+              lastLogin: userData.lastLogin,
+              phone: userData.phone || null,
+              bio: userData.bio || null,
+            });
           } else {
             console.log("User is not a project manager, role:", userData.role);
             setUser(null);
+            setUserProfile(null);
             setProjects([]);
             setLoading(false);
           }
         } else {
           console.log("User document not found");
           setUser(null);
+          setUserProfile(null);
           setIsProjectManager(false);
           setProjects([]);
           setLoading(false);
@@ -57,6 +75,7 @@ export const ProjectManagerProvider = ({ children }) => {
       } catch (err) {
         console.error("Error checking user role:", err);
         setUser(null);
+        setUserProfile(null);
         setIsProjectManager(false);
         setProjects([]);
         setLoading(false);
@@ -237,7 +256,7 @@ export const ProjectManagerProvider = ({ children }) => {
 
   return (
     <ProjectManagerContext.Provider
-      value={{ projects, loading, error, isProjectManager }}
+      value={{ projects, loading, error, isProjectManager, userProfile }}
     >
       {children}
     </ProjectManagerContext.Provider>
