@@ -17,7 +17,7 @@ export default function ProjectDetailsPage() {
   const { projectId } = useParams()
   const [activeTab, setActiveTab] = useState("Overview")
 
-  const tabs = ["Overview", "Task Timeline", "Documents", "Team", "Settings"]
+  const tabs = ["Overview", "Task Timeline", "Live Feed & Updates", "Bills & Invoices",  "Documents"]
 
   const renderTabContent = () => {
     switch (activeTab) {

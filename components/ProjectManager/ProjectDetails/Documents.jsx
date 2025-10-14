@@ -119,7 +119,7 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
     <div className="px-4 md:px-5 py-6 md:py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-      <div>.</div>
+      <div className=' md:text-3xl font-bold text-xl '>Project Document</div>
         <div className="flex gap-3 flex-shrink-0 [&>*]:cursor-pointer flex-end">
           <button className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 text-sm sm:text-base whitespace-nowrap">
             <AiOutlineFolder className="w-4 h-4 flex-shrink-0" />
@@ -152,10 +152,12 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
       {/* <Breadcrumbs projectId={projectId} tab="Documents" /> */}
 
 
-            <TabsNavigation tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} className="mb-6"/>
+         <div className="mb-6 mt-8">
+         <TabsNavigation tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
+         </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col lg:flex-row gap-4 mb-6 w-full">
+      <div className=" flex flex-col lg:flex-row gap-4 mb-6 w-full">
         <div className="flex-1 min-w-0">
           <div className="relative">
             <AiOutlineSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
