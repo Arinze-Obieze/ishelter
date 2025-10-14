@@ -17,8 +17,9 @@ import { db, storage } from "@/lib/firebase"
 import { doc, updateDoc, arrayUnion } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import Breadcrumbs from './Breadcrumbs'
+import TabsNavigation from './TabsNavigation';
 
-export default function DocumentsTab({ projectId }) {
+export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const { projects } = useProjects();
@@ -115,7 +116,7 @@ export default function DocumentsTab({ projectId }) {
   )
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden">
+    <div className="px-4 md:px-5 py-6 md:py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
       <div>.</div>
@@ -149,6 +150,9 @@ export default function DocumentsTab({ projectId }) {
 
       {/* Dynamic Breadcrumb */}
       {/* <Breadcrumbs projectId={projectId} tab="Documents" /> */}
+
+
+            <TabsNavigation tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} className="mb-6"/>
 
       {/* Search and Filters */}
       <div className="flex flex-col lg:flex-row gap-4 mb-6 w-full">

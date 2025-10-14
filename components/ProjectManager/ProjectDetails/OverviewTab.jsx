@@ -10,9 +10,10 @@ import {
   FaPencilAlt,
   FaComments,
 } from "react-icons/fa"
+import TabsNavigation from './TabsNavigation'
 
 
-const ProjectOverview = () => {
+const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
   const projectPhases = [
     { name: "Foundation", status: "Completed" },
     { name: "Framing", status: "Completed" },
@@ -23,7 +24,6 @@ const ProjectOverview = () => {
   return (
     <div className='md:px-8'>
     <header className="py-4">
-
               <div className="bg-white px-4 py-4 md:pt-13 md:pb-5 md:px-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                
                 {/* Title and Badge */}
@@ -47,38 +47,8 @@ const ProjectOverview = () => {
                 </div>
               </div>
             </header>
-
+            <TabsNavigation tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
            <div className='bg-white'>
-                                 {/* Sub Navigation Icons */}
-                                 <div className="px-4 md:px-5 py-4 ">
-                    <div className="[&>*]:cursor-pointer flex items-center gap-6 md:gap-8 overflow-x-auto">
-                      <button className="flex items-center gap-2 text-orange-500 font-medium text-sm whitespace-nowrap pb-2 border-b-2 border-orange-500">
-                        <FaHome className="text-base" />
-                        <span className="hidden md:inline">Overview</span>
-                      </button>
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium text-sm whitespace-nowrap pb-2 border-b-2 border-transparent transition-colors">
-                        <FaUsers className="text-base" />
-                        <span className="hidden md:inline">Tasks & Team</span>
-                      </button>
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium text-sm whitespace-nowrap pb-2 border-b-2 border-transparent transition-colors">
-                        <FaRss className="text-base" />
-                        <span className="hidden md:inline">Live Feed</span>
-                      </button>
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium text-sm whitespace-nowrap pb-2 border-b-2 border-transparent transition-colors">
-                        <FaFileAlt className="text-base" />
-                        <span className="hidden md:inline">Documents</span>
-                      </button>
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium text-sm whitespace-nowrap pb-2 border-b-2 border-transparent transition-colors">
-                        <FaDollarSign className="text-base" />
-                        <span className="hidden md:inline">Billing & Budget</span>
-                      </button>
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium text-sm whitespace-nowrap pb-2 border-b-2 border-transparent transition-colors">
-                        <FaCheckCircle className="text-base" />
-                        <span className="hidden md:inline">Client Approvals</span>
-                      </button>
-                    </div>
-                  </div>
-
                     {/* Main Content */}
                         <main className="px-4 md:px-5 py-6 md:py-8">
                           <div className="flex flex-col lg:flex-row gap-6">
@@ -183,4 +153,4 @@ const ProjectOverview = () => {
   )
 }
 
-export default ProjectOverview
+export default OverviewTab

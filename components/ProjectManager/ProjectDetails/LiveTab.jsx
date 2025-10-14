@@ -1,4 +1,4 @@
-export default function SettingsTab() {
+export default function LiveTab() {
     return (
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Project Settings</h1>

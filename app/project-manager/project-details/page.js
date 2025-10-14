@@ -7,8 +7,8 @@ import TabsNavigation from "@/components/ProjectManager/ProjectDetails/TabsNavig
 const OverviewTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/OverviewTab'))
 const TimelineTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/TimelineTab'))
 const DocumentsTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/Documents'))
-const TeamTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/TeamTab'))
-const SettingsTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/SettingsTab'))
+const TeamTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/Bills&Invoices'))
+const SettingsTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/LiveTab'))
 
 export default function ProjectPage() {
   const [activeTab, setActiveTab] = useState("Documents")

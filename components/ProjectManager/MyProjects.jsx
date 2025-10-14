@@ -147,7 +147,7 @@ export default function MyProjects() {
                   <FiSend /> Request Approval
                 </button>
                 <button className="flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm hover:bg-orange-600"
-                  onClick={() => router.push(`/project-manager/project-details/${project.id}/overview`)}
+                  onClick={() => router.push(`/project-manager/project-details/${project.id}`)}
                 >
                   <IoEye />  View Project
                 </button>
