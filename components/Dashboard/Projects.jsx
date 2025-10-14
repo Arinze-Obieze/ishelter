@@ -2,6 +2,7 @@
 
 import { FaMapMarkerAlt, FaClock, FaCheckCircle, FaArrowRight } from "react-icons/fa";
 import { usePersonalProjects } from "@/contexts/PersonalProjectsContext";
+import Link from "next/link";
 
 export default function Projects() {
   const { projects, loading, error } = usePersonalProjects();
@@ -39,7 +40,7 @@ export default function Projects() {
   const getCompletion = (status) => {
     const statusLower = status?.toLowerCase() || '';
     if (statusLower.includes('completed')) return 100;
-    if (statusLower.includes('progress')) return 50;
+    if (statusLower.includes('progress')) return 1;
     if (statusLower.includes('planning')) return 10;
     return 25;
   };
@@ -146,13 +147,15 @@ export default function Projects() {
                   </p>
 
                   {/* Button */}
-                  <button
+                <Link href={'#'} className="md:mt-4">
+                <button
                     type="button"
-                    className="w-full border border-primary md:mt-4 text-primary font-medium rounded-lg py-2 hover:bg-orange-50 flex items-center justify-center gap-2"
+                    className="w-full cursor-pointer border border-primary md:mt-4 text-primary font-medium rounded-lg py-2 hover:bg-orange-50 flex items-center justify-center gap-2"
                   >
                     <p>View Details </p>
                     <FaArrowRight />
                   </button>
+                </Link>
                 </div>
               </div>
             );

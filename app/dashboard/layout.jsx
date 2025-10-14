@@ -4,10 +4,13 @@ import Header from '@/components/Dashboard/Header'
 import React from 'react'
 import { PersonalProjectsProvider } from "@/contexts/PersonalProjectsContext";
 import { DocumentsProvider } from '@/contexts/DocumentsContext'
+import { UserProvider } from "@/contexts/UserContext";
 
 
 const ProtectedLayout = withAuthProtection(function Layout({children}) {
   return (
+    <UserProvider> 
+
      <PersonalProjectsProvider> 
           <DocumentsProvider>
 
@@ -17,6 +20,7 @@ const ProtectedLayout = withAuthProtection(function Layout({children}) {
     </div>
     </DocumentsProvider>
   </PersonalProjectsProvider>
+  </UserProvider>
   );
 });
 

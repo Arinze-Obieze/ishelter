@@ -34,9 +34,6 @@ const Dashboard = () => {
       <>
         <StatsOverview/>
 
-
-
-
         <div className="flex justify-center mt-8 mb-7">
           <div className="flex md:flex-row flex-col gap-8 md:max-w-7xl w-full ">
             {/* Projects Section */}
