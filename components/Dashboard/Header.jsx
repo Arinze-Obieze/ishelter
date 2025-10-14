@@ -6,9 +6,38 @@ import { LuVideo } from "react-icons/lu";
 import { IoDocumentTextOutline } from 'react-icons/io5';
 import { FiCreditCard } from 'react-icons/fi';
 import { usePathname } from 'next/navigation';
+import { useUsers } from '@/contexts/UserContext';
+import { auth } from '@/lib/firebase';
+import { useEffect, useState } from 'react';
 
 const Header = () => {
   const pathname = usePathname();
+  const { users } = useUsers();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userName, setUserName] = useState('Loading...');
+
+  // Get current authenticated user
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Find user details from users context
+  useEffect(() => {
+    if (currentUser && users.length > 0) {
+      const userDetails = users.find(u => u.id === currentUser.uid);
+      if (userDetails) {
+        setUserName(userDetails.name || userDetails.email || 'User');
+      } else {
+        // Fallback to Firebase auth display name or email
+        setUserName(currentUser.displayName || currentUser.email || 'User');
+      }
+    } else if (currentUser) {
+      setUserName(currentUser.displayName || currentUser.email || 'User');
+    }
+  }, [currentUser, users]);
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: <FaHome className="mr-1 text-base" /> },
@@ -55,7 +84,7 @@ const Header = () => {
             <span className="bg-gray-200 rounded-full p-2">
               <FaUser className="text-md text-gray-500" />
             </span>
-            <span className="text-gray-700 font-medium">John Smith</span>
+            <span className="text-gray-700 font-medium">{userName}</span>
           </div>
         </div>
 
