@@ -1,28 +1,36 @@
 import { FaClock, FaCheckCircle, FaExclamationCircle } from "react-icons/fa"
 import { FiGrid } from "react-icons/fi";
+import { usePersonalProjects } from "@/contexts/PersonalProjectsContext";
 
 const StatsOverview = () => {
-  // Stats data without color or icon information
+  const { projects, loading } = usePersonalProjects();
+
+  // Calculate stats from projects
+  const total = projects.length;
+  const completed = projects.filter(p => (p.status || p.projectStatus)?.toLowerCase() === "completed").length;
+  const active = projects.filter(p => (p.status || p.projectStatus)?.toLowerCase() === "active").length;
+  const attention = projects.filter(p => (p.status || p.projectStatus)?.toLowerCase().includes("attention")).length;
+
   const statsData = [
     {
       id: "total",
       label: "Total Projects",
-      value: 0,
+      value: total,
     },
     {
       id: "active",
       label: "Active Projects",
-      value: 0,
+      value: active,
     },
     {
       id: "completed",
       label: "Completed",
-      value: 0,
+      value: completed,
     },
     {
       id: "attention",
       label: "Needs Attention",
-      value: 0,
+      value: attention,
     }
   ];
 
@@ -72,7 +80,7 @@ const StatsOverview = () => {
                 <IconComponent className={colors.icon} />
               </div>
               <p className="text-gray-600 text-sm">{stat.label}</p>
-              <p className="font-bold text-lg text-gray-900">{stat.value}</p>
+              <p className="font-bold text-lg text-gray-900">{loading ? "-" : stat.value}</p>
             </div>
           );
         })}

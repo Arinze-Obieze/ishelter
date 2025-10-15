@@ -1,272 +1,523 @@
+"use client"
+
+import { useState } from "react"
 import {
-    FiMoreVertical,
-    FiCalendar,
-    FiDollarSign,
-    FiFileText,
-    FiCheckCircle,
-    FiCircle,
-    FiAlertTriangle,
-    FiClock,
-  } from "react-icons/fi"
-  
-  export default function Dashboard() {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">DUPLEX DEVELOPMENT</span>
-            </div>
-            <h1 className="text-xl font-semibold text-gray-900">Duplex at Lebel</h1>
-            <FiMoreVertical className="w-5 h-5 text-gray-600" />
-          </div>
-  
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Progress and Status Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  IoNotificationsOutline,
+  IoChevronBack,
+  IoEllipsisVertical,
+  IoCheckmarkCircle,
+  IoAlertCircle,
+  IoDocumentTextOutline,
+  IoChatbubbleOutline,
+  IoDocumentOutline,
+  IoCalendarOutline,
+  IoArrowForward,
+} from "react-icons/io5"
+import { MdDashboard, MdDescription, MdPayment } from "react-icons/md"
+import { FaVideo } from "react-icons/fa"
+
+export default function ProjectDetails() {
+  const [expandedPhases, setExpandedPhases] = useState({
+    sitePrep: true,
+    foundation: true,
+  })
+
+  const togglePhase = (phase) => {
+    setExpandedPhases((prev) => ({
+      ...prev,
+      [phase]: !prev[phase],
+    }))
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+   
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Back Button & Title */}
+        <div className="flex items-center justify-between mb-6">
+          <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+            <IoChevronBack />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+          </button>
+          <h1 className="text-2xl font-bold flex-1 text-center sm:text-left sm:ml-4">Duplex at Lekki</h1>
+          <button className="p-2 hover:bg-gray-100 rounded">
+            <IoEllipsisVertical className="text-xl" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Progress & Status Card */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex flex-col sm:flex-row gap-6">
                 {/* Progress Circle */}
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <div className="flex items-center justify-center">
-                    <div className="relative w-24 h-24">
-                      <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="40" stroke="#f3f4f6" strokeWidth="8" fill="none" />
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          stroke="#f97316"
-                          strokeWidth="8"
-                          fill="none"
-                          strokeDasharray={`${63 * 2.51} 251`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-2xl font-bold text-orange-500">63%</span>
+                <div className="flex flex-col items-center">
+                  <div className="relative w-32 h-32">
+                    <svg className="transform -rotate-90 w-32 h-32">
+                      <circle cx="64" cy="64" r="56" stroke="#f3f4f6" strokeWidth="12" fill="none" />
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="56"
+                        stroke="#f97316"
+                        strokeWidth="12"
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 56}`}
+                        strokeDashoffset={`${2 * Math.PI * 56 * (1 - 0.65)}`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-orange-500">65%</span>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-gray-900">Overall Completion</p>
+                </div>
+
+                {/* Project Status */}
+                <div className="flex-1 space-y-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Project Status</h2>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Current Phase</p>
+                      <p className="font-semibold text-gray-900">Foundation Work</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Started On</p>
+                      <p className="font-semibold text-gray-900">March 15, 2023</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">November 30, 2023</p>
+                    <div className="bg-green-50 text-green-700 px-3 py-2 rounded-md inline-flex items-center gap-2 text-sm font-medium">
+                      <IoCheckmarkCircle />
+                      <span>On Schedule</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Required Banner */}
+            <div className="bg-yellow-50 border-l-4 border-orange-500 p-4 rounded-lg flex items-start gap-3">
+              <IoAlertCircle className="text-orange-500 text-2xl flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-1">Action Required</h3>
+                <p className="text-sm text-gray-700">Please approve the updated architectural plan by June 15, 2023</p>
+              </div>
+              <button className="bg-orange-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-600 whitespace-nowrap">
+                Approve Plan
+              </button>
+            </div>
+
+            {/* Project Timeline */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Project Timeline</h2>
+
+              <div className="space-y-4">
+                {/* Consultation Session */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                      <IoCheckmarkCircle className="text-white text-sm" />
+                    </div>
+                    <div className="w-0.5 h-full bg-orange-500 mt-2"></div>
+                  </div>
+                  <div className="flex-1 pb-6">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Consultation Session</h3>
+                        <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded mt-1 font-medium">
+                          Complete
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">March 15 - April 10, 2023</p>
+                        <button className="text-teal-600 text-sm font-medium hover:underline">View Details</button>
                       </div>
                     </div>
                   </div>
-                  <div className="text-center mt-4">
-                    <p className="text-sm font-medium text-gray-900">Social Completion</p>
+                </div>
+
+                {/* Project Planning & Design */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                      <IoCheckmarkCircle className="text-white text-sm" />
+                    </div>
+                    <div className="w-0.5 h-full bg-orange-500 mt-2"></div>
+                  </div>
+                  <div className="flex-1 pb-6">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Project Planning & Design</h3>
+                        <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded mt-1 font-medium">
+                          Complete
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">September 15 - November 30, 2023</p>
+                        <button className="text-teal-600 text-sm font-medium hover:underline">View Details</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-  
-                {/* Project Status */}
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <h3 className="text-sm font-medium text-gray-900 mb-4">Project Status</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Presentation Work</span>
-                      <span className="text-sm text-gray-900">March 16, 2023</span>
+
+                {/* Site Preparation */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                      <IoCheckmarkCircle className="text-white text-sm" />
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Foundation Work</span>
-                      <span className="text-sm text-gray-900">November 24, 2023</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-4">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-xs text-green-600">On Schedule</span>
+                    <div className="w-0.5 h-full bg-orange-500 mt-2"></div>
+                  </div>
+                  <div className="flex-1 pb-6">
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">Site Preparation</h3>
+                          <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded mt-1 font-medium">
+                            Complete
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-400">April 28 - June 20, 2023</p>
+                          <button className="text-teal-600 text-sm font-medium hover:underline">View Details</button>
+                        </div>
+                      </div>
+
+                      {/* Checklist */}
+                      <div className="space-y-2 mt-4">
+                        {[
+                          "Blinding and base",
+                          "1.7m total height, raft foundation",
+                          "Filling",
+                          "Plumbing air conditioning and electrical works conduit pipe",
+                          "Ground floor slab",
+                          "Block settings",
+                          "Beams, columns, and lintels",
+                          "First floor Slab",
+                          "Parapet wall",
+                          "Roof carcass",
+                          "Roof slab",
+                          "Roof covering",
+                          "Plastering (external only)",
+                          "Screeding (external only)",
+                          "Fencing",
+                        ].map((item, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <IoCheckmarkCircle className="text-green-600 text-lg flex-shrink-0" />
+                            <span className="text-sm text-gray-700">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Budget Info */}
+                      <div className="mt-4 pt-4 border-t border-green-200 space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-semibold text-gray-900">Total Budget</span>
+                          <span className="font-semibold text-gray-900">₦500,000</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="font-semibold text-gray-900">Spent to Date</span>
+                          <span className="font-semibold text-gray-900">₦500,000</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="font-semibold text-gray-900">Remaining</span>
+                          <span className="font-semibold text-gray-900">₦500,000</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-  
-              {/* Action Required Banner */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FiAlertTriangle className="w-5 h-5 text-yellow-600" />
-                  <div>
-                    <p className="text-sm font-medium text-yellow-800">Action Required</p>
-                    <p className="text-xs text-yellow-700">Review all requirements and sign the form by Oct 15, 2023</p>
+
+                {/* Foundation Work */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-6 h-6 border-4 border-orange-500 bg-white rounded-full"></div>
+                    <div className="w-0.5 h-full bg-gray-300 mt-2"></div>
+                  </div>
+                  <div className="flex-1 pb-6">
+                    <div className="bg-orange-50 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">Foundation Work</h3>
+                          <span className="inline-block bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded mt-1 font-medium">
+                            In Progress
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-400">April 28 - June 20, 2023</p>
+                          <button className="text-teal-600 text-sm font-medium hover:underline">View Details</button>
+                        </div>
+                      </div>
+
+                      {/* Checklist */}
+                      <div className="space-y-2 mt-4">
+                        {[
+                          { text: "Blinding and base", status: "complete" },
+                          { text: "1.7m total height, raft foundation", status: "complete" },
+                          { text: "Filling", status: "complete" },
+                          { text: "Plumbing air conditioning and electrical works conduit pipe", status: "complete" },
+                          { text: "Ground floor slab", status: "complete" },
+                          { text: "Block settings", status: "complete" },
+                          { text: "Beams, columns, and lintels", status: "complete" },
+                          { text: "First floor Slab", status: "complete" },
+                          { text: "Parapet wall", status: "complete" },
+                          { text: "Roof carcass", status: "complete" },
+                          { text: "Roof slab", status: "complete" },
+                          { text: "Roof covering", status: "complete" },
+                          { text: "Plastering (external only)", status: "complete" },
+                          { text: "Screeding (external only)", status: "complete" },
+                          { text: "Fencing", status: "pending" },
+                        ].map((item, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            {item.status === "complete" ? (
+                              <IoCheckmarkCircle className="text-orange-600 text-lg flex-shrink-0" />
+                            ) : (
+                              <div className="w-5 h-5 border-2 border-orange-300 rounded-full flex-shrink-0"></div>
+                            )}
+                            <span
+                              className={`text-sm ${item.status === "complete" ? "text-gray-700" : "text-gray-500"}`}
+                            >
+                              {item.text}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Budget Info */}
+                      <div className="mt-4 pt-4 border-t border-orange-200 space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-semibold text-gray-900">Total Budget</span>
+                          <span className="font-semibold text-gray-900">₦500,000</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="font-semibold text-gray-900">Spent to Date</span>
+                          <span className="font-semibold text-gray-900">₦500,000</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="font-semibold text-gray-900">Remaining</span>
+                          <span className="font-semibold text-gray-900">₦500,000</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <button className="bg-orange-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-600">
-                  View Details
-                </button>
-              </div>
-  
-              {/* Project Timeline */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Project Timeline</h3>
-                  <span className="text-sm text-gray-500">6 Budget</span>
-                </div>
-  
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <FiCheckCircle className="w-5 h-5 text-green-500" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Project Planning & Design</p>
-                      <p className="text-xs text-gray-500">Completed</p>
-                    </div>
-                    <span className="text-sm text-gray-600">$15,000.00</span>
+
+                {/* Framing & Structural Work */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-6 h-6 border-2 border-gray-300 bg-white rounded-full"></div>
+                    <div className="w-0.5 h-full bg-gray-300 mt-2"></div>
                   </div>
-  
-                  <div className="flex items-center gap-4">
-                    <FiCheckCircle className="w-5 h-5 text-green-500" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Site Preparation</p>
-                      <p className="text-xs text-gray-500">Completed</p>
+                  <div className="flex-1 pb-6">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Framing & Structural Work</h3>
+                        <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded mt-1 font-medium">
+                          Upcoming
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">December 7 - May 13, 2024</p>
+                        <button className="text-teal-600 text-sm font-medium hover:underline">View Details</button>
+                      </div>
                     </div>
-                    <span className="text-sm text-gray-600">$8,500.00</span>
-                  </div>
-  
-                  <div className="flex items-center gap-4">
-                    <div className="w-5 h-5 rounded-full border-2 border-orange-500 bg-orange-500"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Foundation Work</p>
-                      <p className="text-xs text-orange-600">In Progress</p>
-                    </div>
-                    <span className="text-sm text-gray-600">$25,000.00</span>
-                  </div>
-  
-                  <div className="flex items-center gap-4">
-                    <FiCircle className="w-5 h-5 text-gray-300" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-500">Framing & Structural Work</p>
-                      <p className="text-xs text-gray-400">Pending</p>
-                    </div>
-                    <span className="text-sm text-gray-400">$35,000.00</span>
-                  </div>
-  
-                  <div className="flex items-center gap-4">
-                    <FiCircle className="w-5 h-5 text-gray-300" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-500">Interior & Finishing</p>
-                      <p className="text-xs text-gray-400">Pending</p>
-                    </div>
-                    <span className="text-sm text-gray-400">$45,000.00</span>
                   </div>
                 </div>
-              </div>
-  
-              {/* Live Construction Feed */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Live Construction Feed</h3>
-  
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <img
-                      src="/foundation-concrete-pouring.jpg"
-                      alt="Foundation work"
-                      className="w-15 h-15 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Foundation Concrete Pouring</p>
-                      <p className="text-xs text-gray-500">
-                        Foundation concrete work for the building foundation. All reinforcement steel and all formwork are
-                        in place.
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">2 hours ago</p>
-                    </div>
+
+                {/* Interior & Finishing */}
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-6 h-6 border-2 border-gray-300 bg-white rounded-full"></div>
                   </div>
-  
-                  <div className="flex gap-4">
-                    <img
-                      src="/basic-installation-completion.jpg"
-                      alt="Installation work"
-                      className="w-15 h-15 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Basic Installation Completion</p>
-                      <p className="text-xs text-gray-500">
-                        Basic installation work completed for the building foundation. All reinforcement steel and all
-                        formwork are in place.
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">4 hours ago</p>
-                    </div>
-                  </div>
-  
-                  <div className="flex gap-4">
-                    <img
-                      src="/foundation-excavation-started.jpg"
-                      alt="Excavation work"
-                      className="w-15 h-15 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Foundation Excavation Started</p>
-                      <p className="text-xs text-gray-500">
-                        Foundation excavation work for the building foundation. All reinforcement steel and all formwork
-                        are in place.
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">1 day ago</p>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Interior & Finishing</h3>
+                        <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded mt-1 font-medium">
+                          Upcoming
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">June 4 - November 10, 2024</p>
+                        <button className="text-teal-600 text-sm font-medium hover:underline">View Details</button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-  
-            {/* Right Column */}
-            <div className="space-y-6">
-              {/* Budget Summary */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Budget</span>
-                    <span className="text-sm font-medium text-gray-900">$128,500.00</span>
+
+            {/* Live Construction Feed */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">Live Construction Feed</h2>
+                <button className="flex items-center gap-2 text-orange-500 border border-orange-500 px-4 py-2 rounded-md hover:bg-orange-50 font-medium">
+                  <FaVideo />
+                  <span>Live Feed</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Feed Item 1 */}
+                <div className="flex gap-4 pb-4 border-b border-gray-200">
+                  <img
+                    src="/concrete-pouring.png"
+                    alt="Construction update"
+                    className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 mb-1">Foundation Concrete Pouring</h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Successfully completed pouring concrete for the north side foundation. Curing process has begun
+                      and will take approximately 7 days.
+                    </p>
+                    <p className="text-xs text-gray-400">May 28, 2023 - 3:45 PM</p>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Spent</span>
-                    <span className="text-sm font-medium text-gray-900">$48,500.00</span>
+                </div>
+
+                {/* Feed Item 2 */}
+                <div className="flex gap-4 pb-4 border-b border-gray-200">
+                  <img
+                    src="/rebar-installation-construction.jpg"
+                    alt="Construction update"
+                    className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 mb-1">Rebar Installation Complete</h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Finished installing all reinforcement bars according to structural engineer specifications. Ready
+                      for concrete pouring next week.
+                    </p>
+                    <p className="text-xs text-gray-400">May 26, 2023 - 11:20 AM</p>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Remaining</span>
-                    <span className="text-sm font-medium text-green-600">$80,000.00</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
-                    <div className="bg-orange-500 h-2 rounded-full" style={{ width: "38%" }}></div>
+                </div>
+
+                {/* Feed Item 3 */}
+                <div className="flex gap-4">
+                  <img
+                    src="/excavation-construction-site.jpg"
+                    alt="Construction update"
+                    className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 mb-1">Foundation Excavation Started</h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Began excavation work for the building foundation. Soil conditions are good and matching
+                      geotechnical report expectations.
+                    </p>
+                    <p className="text-xs text-gray-400">May 22, 2023 - 9:15 AM</p>
                   </div>
                 </div>
               </div>
-  
-              {/* Upcoming Tasks */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Tasks</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <FiClock className="w-4 h-4 text-orange-500 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Final inspection scheduled for next week</p>
-                      <p className="text-xs text-gray-500">Due in 3 days</p>
-                    </div>
+            </div>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="space-y-6">
+            {/* Budget Card */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <IoDocumentTextOutline className="text-orange-500 text-xl" />
+                <h2 className="text-lg font-semibold text-gray-900">Budget</h2>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Total Budget</span>
+                  <span className="font-semibold text-gray-900">₦75,000,000</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-red-600">Spent to Date</span>
+                  <span className="font-semibold text-gray-900">₦56,250,000</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                  <span className="text-sm text-gray-600">Remaining</span>
+                  <span className="font-semibold text-gray-900">₦18,750,000</span>
+                </div>
+                <button className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                  View Financial Details
+                  <IoArrowForward className="text-xs" />
+                </button>
+              </div>
+            </div>
+
+            {/* Upcoming Tasks */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <IoCalendarOutline className="text-orange-500 text-xl" />
+                <h2 className="text-lg font-semibold text-gray-900">Upcoming Tasks</h2>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm text-gray-900 font-medium">Rebar inspection by local authority</p>
+                    <p className="text-xs text-gray-400">June 12, 2023</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <FiClock className="w-4 h-4 text-orange-500 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Sign required documents before next phase</p>
-                      <p className="text-xs text-gray-500">Due in 5 days</p>
-                    </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm text-gray-900 font-medium">Final foundation concrete pour</p>
+                    <p className="text-xs text-gray-400">June 15, 2023</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm text-gray-900 font-medium">Foundation waterproofing application</p>
+                    <p className="text-xs text-gray-400">June 25, 2023</p>
                   </div>
                 </div>
               </div>
-  
-              {/* Quick Access */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Access</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <button className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50">
-                    <FiFileText className="w-6 h-6 text-orange-500" />
-                    <span className="text-xs text-gray-600">Documents</span>
-                  </button>
-                  <button className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50">
-                    <FiDollarSign className="w-6 h-6 text-orange-500" />
-                    <span className="text-xs text-gray-600">Payments</span>
-                  </button>
-                  <button className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50">
-                    <FiCalendar className="w-6 h-6 text-orange-500" />
-                    <span className="text-xs text-gray-600">Schedule</span>
-                  </button>
-                </div>
+            </div>
+
+            {/* Quick Access */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <IoDocumentOutline className="text-orange-500 text-xl" />
+                <h2 className="text-lg font-semibold text-gray-900">Quick Access</h2>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <button className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-lg">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <IoDocumentTextOutline className="text-orange-500 text-2xl" />
+                  </div>
+                  <span className="text-xs text-gray-700 font-medium">Documents</span>
+                </button>
+                <button className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-lg">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <IoChatbubbleOutline className="text-orange-500 text-2xl" />
+                  </div>
+                  <span className="text-xs text-gray-700 font-medium">Chat</span>
+                </button>
+                <button className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-lg">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <IoDocumentTextOutline className="text-orange-500 text-2xl" />
+                  </div>
+                  <span className="text-xs text-gray-700 font-medium">Invoices</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    )
-  }
-  
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-yellow-50 border-t border-yellow-100 py-4 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-sm text-gray-600">© 2023 iSHELTER, a product of Everything Shelter</p>
+        </div>
+      </footer>
+    </div>
+  )
+}
