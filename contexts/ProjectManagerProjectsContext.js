@@ -28,7 +28,7 @@ export const ProjectManagerProvider = ({ children }) => {
         return;
       }
 
-      console.log("Project Manager Context - UID:", firebaseUser.uid);
+      // console.log("Project Manager Context - UID:", firebaseUser.uid);
 
       // Check if user is a project manager and fetch full profile
       try {
@@ -85,7 +85,7 @@ export const ProjectManagerProvider = ({ children }) => {
     return () => unsubscribeAuth();
   }, []);
 
-  // ✅ Fetch projects managed by this project manager
+  // Fetch projects managed by this project manager
   useEffect(() => {
     if (!user || !isProjectManager) {
       setProjects([]);
@@ -111,24 +111,24 @@ export const ProjectManagerProvider = ({ children }) => {
           let clientName = 'Client not assigned';
           let clientEmail = '';
           
-          console.log("Project:", data.projectName);
-          console.log("projectUsers array:", data.projectUsers);
+          // console.log("Project:", data.projectName);
+          // console.log("projectUsers array:", data.projectUsers);
           
           if (data.projectUsers && Array.isArray(data.projectUsers)) {
-            console.log("projectUsers length:", data.projectUsers.length);
+            // console.log("projectUsers length:", data.projectUsers.length);
             
             const userPromises = data.projectUsers.map(async (userRef, index) => {
               try {
-                console.log(`Processing user ${index}:`, userRef);
-                console.log(`User ref path:`, userRef?.path);
+                // console.log(`Processing user ${index}:`, userRef);
+                // console.log(`User ref path:`, userRef?.path);
                 
                 if (userRef && userRef.path) {
                   const userDoc = await getDoc(userRef);
-                  console.log(`User doc exists for ${index}:`, userDoc.exists());
+                  // console.log(`User doc exists for ${index}:`, userDoc.exists());
                   
                   if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    console.log(`User data for ${index}:`, userData);
+                    // console.log(`User data for ${index}:`, userData);
                     
                     return {
                       id: userDoc.id,
@@ -155,14 +155,14 @@ export const ProjectManagerProvider = ({ children }) => {
             const users = await Promise.all(userPromises);
             projectUsersData = users.filter(u => u !== null);
             
-            console.log("Resolved projectUsersData:", projectUsersData);
+            // console.log("Resolved projectUsersData:", projectUsersData);
             
             // Set client name and email from first user in projectUsers array
             if (projectUsersData.length > 0) {
               clientName = projectUsersData[0].displayName;
               clientEmail = projectUsersData[0].email;
-              console.log("Set clientName:", clientName);
-              console.log("Set clientEmail:", clientEmail);
+              // console.log("Set clientName:", clientName);
+              // console.log("Set clientEmail:", clientEmail);
             } else {
               console.log("No users found in projectUsersData");
             }
