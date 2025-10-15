@@ -14,4 +14,10 @@ body {
   font-family: var(--font-montserrat), sans-serif;
 }
 
-
+@layer components {
+  .backdrop-overlay {
+    @apply fixed inset-0 bg-black/20 backdrop-blur-sm;
+  }
+  
+  
+}

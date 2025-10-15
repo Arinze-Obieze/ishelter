@@ -1,4 +1,5 @@
 'use client'
+import Link from "next/link"
 import { FiMapPin, FiFileText } from "react-icons/fi"
 import { useDocuments } from "@/contexts/DocumentsContext"
 import { usePersonalProjects } from "@/contexts/PersonalProjectsContext"
@@ -55,7 +56,7 @@ export default function Cards() {
 }
 
 function PropertyCard({ property }) {
-  const { title, location, image, stats, hasDocuments, hasNotification } = property
+  const { id, title, location, image, stats, hasDocuments, hasNotification } = property
 
   if (!hasDocuments) {
     return (
@@ -116,10 +117,12 @@ function PropertyCard({ property }) {
           ))}
         </div>
 
-        <button className="w-full cursor-pointer bg-primary hover:bg-orange-600 text-white py-2 px-4 rounded font-medium text-sm flex items-center justify-center gap-2 transition-colors">
-          <FiFileText className="w-4 h-4" />
-          View Documents
-        </button>
+        <Link href={`/dashboard/documents/${id}`}>
+          <button className="w-full cursor-pointer bg-primary hover:bg-orange-600 text-white py-2 px-4 rounded font-medium text-sm flex items-center justify-center gap-2 transition-colors">
+            <FiFileText className="w-4 h-4" />
+            View Documents
+          </button>
+        </Link>
       </div>
     </div>
   )

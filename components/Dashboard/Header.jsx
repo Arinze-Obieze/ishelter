@@ -76,7 +76,7 @@ const Header = () => {
         </nav>
 
         {/* Notification & Profile */}
-        <div className="md:flex hidden items-center gap-4 ">
+        <div className="md:flex cursor-pointer hidden items-center gap-4 ">
           <span>
             <FaRegBell className="text-xl text-gray-700 hover:text-gray-900" />
           </span>
