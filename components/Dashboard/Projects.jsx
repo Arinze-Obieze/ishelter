@@ -147,7 +147,7 @@ export default function Projects() {
                   </p>
 
                   {/* Button */}
-                <Link href={'#'} className="md:mt-4">
+                <Link href={`/dashboard/project-details/${project.id}`} className="md:mt-4">
                 <button
                     type="button"
                     className="w-full cursor-pointer border border-primary md:mt-4 text-primary font-medium rounded-lg py-2 hover:bg-orange-50 flex items-center justify-center gap-2"
