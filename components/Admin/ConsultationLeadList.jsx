@@ -1,8 +1,9 @@
 'use client'
 import { useState, useEffect } from "react"
 import { FiSearch, FiPlus, FiMoreVertical, FiChevronDown, FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi"
+import { useConsultations } from '@/contexts/consultationContext'
+import { toast } from 'react-hot-toast'
 
-// AddLeadModal Component with Frosted Glass Background
 function AddLeadModal({ isOpen, onClose, onLeadAdded }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -141,11 +142,11 @@ function AddLeadModal({ isOpen, onClose, onLeadAdded }) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed backdrop-overlay z-50 flex items-center justify-center p-4"
       onClick={handleOverlayClick}
     >
       {/* Frosted Glass Backdrop */}
-      <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-md backdrop-filter" />
+      <div className="absolute" />
       
       {/* Modal Container */}
       <div className="relative bg-white bg-opacity-90 backdrop-blur-lg backdrop-filter rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden border border-white border-opacity-20">
@@ -302,40 +303,30 @@ export default function ConsultationLeadList() {
   const [planFilter, setPlanFilter] = useState("ALL")
   const [dateFilter, setDateFilter] = useState("ALL")
   const [isModalOpen, setIsModalOpen] = useState(false)
-  // const [leads, setLeads] = useState([
-  //   {
-  //     id: 1,
-  //     name: "James Wilson",
-  //     email: "james.wilson@example.com",
-  //     phone: "(555) 123-4567",
-  //     plan: "LandFit Consultation",
-  //     payment: "success",
-  //     assignedSM: null,
-  //     submissionDate: "Jul 12, 2023",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Emily Johnson",
-  //     email: "emily.j@example.com",
-  //     phone: "(555) 234-5678",
-  //     plan: "BuildPath Consultation",
-  //     payment: "pending",
-  //     assignedSM: "Sarah Parker",
-  //     submissionDate: "Jul 10, 2023",
-  //   },
-    
-  //   ...Array.from({ length: 15 }, (_, i) => ({
-  //     id: i + 9,
-  //     name: `Sample Lead ${i + 9}`,
-  //     email: `lead${i + 9}@example.com`,
-  //     phone: `(555) ${100 + i}-${1000 + i}`,
-  //     plan: i % 2 === 0 ? "LandFit Consultation" : "BuildPath Consultation",
-  //     payment: ["NEW", "ASSIGNED", "SCHEDULED", "COMPLETED", "CANCELLED"][i % 5],
-  //     assignedSM: i % 3 === 0 ? null : ["Sarah Parker", "John Smith", "Mike Johnson"][i % 3],
-  //     submissionDate: `Jul ${15 - (i % 15)}, 2023`,
-  //   }))
-  // ])
-  const [leads, setLeads] = useState([])
+  
+  // Use consultations from context instead of mock data
+  const { consultations, loading, error } = useConsultations();
+
+  // Transform consultations to leads format expected by your component
+  const leads = consultations.map(consultation => ({
+    id: consultation.id,
+    name: consultation.fullName || consultation.name || 'N/A',
+    email: consultation.email || 'N/A',
+    phone: consultation.phone || 'N/A',
+    plan: consultation.plan || 'LandFit Consultation',
+    payment: consultation.status === 'success' ? 'success' : 
+             consultation.status === 'pending' ? 'pending' : 
+             consultation.status || 'NEW',
+    assignedSM: consultation.assignedSM || null,
+    submissionDate: consultation.createdAt ? 
+      new Date(consultation.createdAt).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      }) : 'N/A',
+    // Add the original consultation data for reference if needed
+    _original: consultation
+  }));
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth)
@@ -348,28 +339,29 @@ export default function ConsultationLeadList() {
 
     switch (payment) {
       case "success":
-        return `${baseClasses} bg-green-100 text-blue-800`
+        return `${baseClasses} bg-green-100 text-green-800`
       case "pending":
-        return `${baseClasses} bg-red-100 text-yellow-800`
+        return `${baseClasses} bg-yellow-100 text-yellow-800`
+      case "NEW":
+        return `${baseClasses} bg-blue-100 text-blue-800`
+      case "ASSIGNED":
+        return `${baseClasses} bg-purple-100 text-purple-800`
+      case "COMPLETED":
+        return `${baseClasses} bg-green-100 text-green-800`
+      case "CANCELLED":
+        return `${baseClasses} bg-red-100 text-red-800`
       default:
-        return `${baseClasses} bg-red-100 text-gray-800`
+        return `${baseClasses} bg-gray-100 text-gray-800`
     }
   }
 
   // Handle new lead addition
   const handleLeadAdded = (newLead) => {
-    const leadWithId = {
-      ...newLead,
-      id: Math.max(...leads.map(l => l.id)) + 1,
-      submissionDate: new Date().toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      })
-    }
-    
-    setLeads(prev => [leadWithId, ...prev])
+    // Since we're using real-time data from Firestore, 
+    // the new lead will automatically appear in the list
+    // via the context subscription
     setCurrentPage(1)
+    toast.success("Lead added successfully!")
   }
 
   // Filter leads based on search and filters
@@ -383,7 +375,7 @@ export default function ConsultationLeadList() {
     const matchesAssignedSM = assignedSMFilter === "ALL" || 
       (assignedSMFilter === "UNASSIGNED" ? !lead.assignedSM : lead.assignedSM === assignedSMFilter)
     const matchesPlan = planFilter === "ALL" || lead.plan === planFilter
-    const matchesDate = dateFilter === "ALL"
+    const matchesDate = dateFilter === "ALL" // You can implement date filtering if needed
 
     return matchesSearch && matchesStatus && matchesAssignedSM && matchesPlan && matchesDate
   })
@@ -449,7 +441,7 @@ export default function ConsultationLeadList() {
     email: "Email Address",
     phone: "Phone Number",
     plan: "Requested Plan",
-    payment: "Payment",
+    payment: "Status",
     assignedSM: "Assigned SM",
     submissionDate: "Submission Date",
     actions: "Actions"
@@ -486,6 +478,37 @@ export default function ConsultationLeadList() {
       default:
         return null
     }
+  }
+
+  // Add loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-2 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading consultation leads...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Add error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-2 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <div className="text-red-500 text-xl mb-4">⚠️</div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Leads</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -530,7 +553,8 @@ export default function ConsultationLeadList() {
                 <option value="ALL">Status: All</option>
                 <option value="NEW">New</option>
                 <option value="ASSIGNED">Assigned</option>
-                <option value="SCHEDULED">Scheduled</option>
+                <option value="success">Success</option>
+                <option value="pending">Pending</option>
                 <option value="COMPLETED">Completed</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
