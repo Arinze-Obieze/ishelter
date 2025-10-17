@@ -6,26 +6,26 @@ const ConsultationStats = () => {
     const stats = [
         {
           label: 'Total Leads (MTD)',
-          value: 30,
-          trend: '+12% from last month',
+          value: 0,
+          trend: '0% from last month',
           trendType: 'up'
         },
         {
           label: 'Unassigned Leads',
-          value: 5,
+          value: 0,
           trend: '-5% from last month',
           trendType: 'down'
         },
         {
           label: 'Assigned Leads',
-          value: 25,
+          value: 0,
           trend: '+5% this week',
           trendType: 'up'
         },
         {
           label: 'Completed Consultations',
-          value: '18',
-          trend: '+20% from last month',
+          value: '0',
+          trend: '0% from last month',
           trendType: 'up'
         },
      

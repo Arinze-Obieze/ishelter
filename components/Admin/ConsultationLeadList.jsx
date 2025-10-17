@@ -302,39 +302,40 @@ export default function ConsultationLeadList() {
   const [planFilter, setPlanFilter] = useState("ALL")
   const [dateFilter, setDateFilter] = useState("ALL")
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [leads, setLeads] = useState([
-    {
-      id: 1,
-      name: "James Wilson",
-      email: "james.wilson@example.com",
-      phone: "(555) 123-4567",
-      plan: "LandFit Consultation",
-      payment: "success",
-      assignedSM: null,
-      submissionDate: "Jul 12, 2023",
-    },
-    {
-      id: 2,
-      name: "Emily Johnson",
-      email: "emily.j@example.com",
-      phone: "(555) 234-5678",
-      plan: "BuildPath Consultation",
-      payment: "pending",
-      assignedSM: "Sarah Parker",
-      submissionDate: "Jul 10, 2023",
-    },
-    // ... rest of your sample data
-    ...Array.from({ length: 15 }, (_, i) => ({
-      id: i + 9,
-      name: `Sample Lead ${i + 9}`,
-      email: `lead${i + 9}@example.com`,
-      phone: `(555) ${100 + i}-${1000 + i}`,
-      plan: i % 2 === 0 ? "LandFit Consultation" : "BuildPath Consultation",
-      payment: ["NEW", "ASSIGNED", "SCHEDULED", "COMPLETED", "CANCELLED"][i % 5],
-      assignedSM: i % 3 === 0 ? null : ["Sarah Parker", "John Smith", "Mike Johnson"][i % 3],
-      submissionDate: `Jul ${15 - (i % 15)}, 2023`,
-    }))
-  ])
+  // const [leads, setLeads] = useState([
+  //   {
+  //     id: 1,
+  //     name: "James Wilson",
+  //     email: "james.wilson@example.com",
+  //     phone: "(555) 123-4567",
+  //     plan: "LandFit Consultation",
+  //     payment: "success",
+  //     assignedSM: null,
+  //     submissionDate: "Jul 12, 2023",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Emily Johnson",
+  //     email: "emily.j@example.com",
+  //     phone: "(555) 234-5678",
+  //     plan: "BuildPath Consultation",
+  //     payment: "pending",
+  //     assignedSM: "Sarah Parker",
+  //     submissionDate: "Jul 10, 2023",
+  //   },
+    
+  //   ...Array.from({ length: 15 }, (_, i) => ({
+  //     id: i + 9,
+  //     name: `Sample Lead ${i + 9}`,
+  //     email: `lead${i + 9}@example.com`,
+  //     phone: `(555) ${100 + i}-${1000 + i}`,
+  //     plan: i % 2 === 0 ? "LandFit Consultation" : "BuildPath Consultation",
+  //     payment: ["NEW", "ASSIGNED", "SCHEDULED", "COMPLETED", "CANCELLED"][i % 5],
+  //     assignedSM: i % 3 === 0 ? null : ["Sarah Parker", "John Smith", "Mike Johnson"][i % 3],
+  //     submissionDate: `Jul ${15 - (i % 15)}, 2023`,
+  //   }))
+  // ])
+  const [leads, setLeads] = useState([])
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth)

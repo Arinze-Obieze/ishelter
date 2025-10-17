@@ -27,7 +27,7 @@ function generatePassword(length = 12) {
 
 export async function POST(req) {
   try {
-    const { email, displayName, role } = await req.json();
+    const { email, displayName, role, projectManagerId } = await req.json();
 
     if (!email) {
       return NextResponse.json(
@@ -54,8 +54,8 @@ export async function POST(req) {
       displayName: displayName || '',
     });
 
-    // 2. Add user to Firestore
-    await adminDb.collection('users').doc(userRecord.uid).set({
+    // 2. Prepare user data for Firestore
+    const userData = {
       uid: userRecord.uid,
       email,
       displayName: displayName || '',
@@ -63,7 +63,16 @@ export async function POST(req) {
       status: 'Active',
       createdAt: new Date().toISOString(),
       lastLogin: null
-    });
+    };
+
+    // 3. Add project manager reference if provided (only for clients)
+    if (role === 'client' && projectManagerId) {
+      // Create a Firestore document reference to the project manager
+      userData.projectManager = adminDb.collection('users').doc(projectManagerId);
+    }
+
+    // 4. Add user to Firestore
+    await adminDb.collection('users').doc(userRecord.uid).set(userData);
 
     return NextResponse.json({
       success: true,

@@ -1,24 +1,24 @@
 import React from "react";
 
 const leads = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    isNew: true,
-  },
-  {
-    id: "2",
-    name: "Michael Brown",
-    email: "michael@company.co",
-    isNew: true,
-  },
-  {
-    id: "3",
-    name: "Emily Davis",
-    email: "emily@startup.io",
-    isNew: true,
-  },
+  // {
+  //   id: "1",
+  //   name: "Sarah Johnson",
+  //   email: "sarah@example.com",
+  //   isNew: true,
+  // },
+  // {
+  //   id: "2",
+  //   name: "Michael Brown",
+  //   email: "michael@company.co",
+  //   isNew: true,
+  // },
+  // {
+  //   id: "3",
+  //   name: "Emily Davis",
+  //   email: "emily@startup.io",
+  //   isNew: true,
+  // },
 ];
 
 export default function ConsultationLeads() {

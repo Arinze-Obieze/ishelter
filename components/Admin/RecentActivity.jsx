@@ -2,46 +2,46 @@ import React from "react";
 import { FiUser, FiCheckCircle, FiMessageSquare, FiDollarSign, FiAlertTriangle } from "react-icons/fi";
 
 const activities = [
-  {
-    id: "1",
-    icon: <FiUser className="w-4 h-4 text-white" />,
-    title: "New client signed up",
-    description: "TechFusion Inc. has created a new account",
-    timestamp: "15 minutes ago",
-    iconBg: "bg-orange-500",
-  },
-  {
-    id: "2",
-    icon: <FiCheckCircle className="w-4 h-4 text-white" />,
-    title: "Project status changed",
-    description: "Website Redesign project marked as Completed",
-    timestamp: "2 hours ago",
-    iconBg: "bg-orange-500",
-  },
-  {
-    id: "3",
-    icon: <FiMessageSquare className="w-4 h-4 text-white" />,
-    title: "Consultation lead received",
-    description: "New lead from john@example.com",
-    timestamp: "3 hours ago",
-    iconBg: "bg-orange-500",
-  },
-  {
-    id: "4",
-    icon: <FiDollarSign className="w-4 h-4 text-white" />,
-    title: "Invoice paid",
-    description: "Invoice #INV-2023-042 paid by GlobalTech",
-    timestamp: "5 hours ago",
-    iconBg: "bg-orange-500",
-  },
-  {
-    id: "5",
-    icon: <FiAlertTriangle className="w-4 h-4 text-white" />,
-    title: "System alert triggered",
-    description: "Database backup failed",
-    timestamp: "Yesterday at 11:42 PM",
-    iconBg: "bg-orange-500",
-  },
+  // {
+  //   id: "1",
+  //   icon: <FiUser className="w-4 h-4 text-white" />,
+  //   title: "New client signed up",
+  //   description: "TechFusion Inc. has created a new account",
+  //   timestamp: "15 minutes ago",
+  //   iconBg: "bg-orange-500",
+  // },
+  // {
+  //   id: "2",
+  //   icon: <FiCheckCircle className="w-4 h-4 text-white" />,
+  //   title: "Project status changed",
+  //   description: "Website Redesign project marked as Completed",
+  //   timestamp: "2 hours ago",
+  //   iconBg: "bg-orange-500",
+  // },
+  // {
+  //   id: "3",
+  //   icon: <FiMessageSquare className="w-4 h-4 text-white" />,
+  //   title: "Consultation lead received",
+  //   description: "New lead from john@example.com",
+  //   timestamp: "3 hours ago",
+  //   iconBg: "bg-orange-500",
+  // },
+  // {
+  //   id: "4",
+  //   icon: <FiDollarSign className="w-4 h-4 text-white" />,
+  //   title: "Invoice paid",
+  //   description: "Invoice #INV-2023-042 paid by GlobalTech",
+  //   timestamp: "5 hours ago",
+  //   iconBg: "bg-orange-500",
+  // },
+  // {
+  //   id: "5",
+  //   icon: <FiAlertTriangle className="w-4 h-4 text-white" />,
+  //   title: "System alert triggered",
+  //   description: "Database backup failed",
+  //   timestamp: "Yesterday at 11:42 PM",
+  //   iconBg: "bg-orange-500",
+  // },
 ];
 
 export default function RecentActivity() {

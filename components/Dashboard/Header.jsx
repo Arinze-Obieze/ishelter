@@ -29,7 +29,7 @@ const Header = () => {
     if (currentUser && users.length > 0) {
       const userDetails = users.find(u => u.id === currentUser.uid);
       if (userDetails) {
-        setUserName(userDetails.name || userDetails.email || 'User');
+        setUserName(userDetails.displayname || userDetails.email || 'User');
       } else {
         // Fallback to Firebase auth display name or email
         setUserName(currentUser.displayName || currentUser.email || 'User');
