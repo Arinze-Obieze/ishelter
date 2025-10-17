@@ -6,7 +6,8 @@ import Header from '@/components/Admin/Header'
 import { UserProvider } from '@/contexts/UserContext';
 import { ProjectsProvider } from '@/contexts/ProjectContext';
 import { ProjectUsersProvider } from '@/contexts/ProjectUsersContext';
-import { ConsultationProvider } from '@/contexts/consultationContext';
+import { ConsultationProvider } from '@/contexts/ConsultationContext';
+import { LeadActionsProvider } from '@/contexts/LeadActionsContext';
 
 function AdminLayoutContent({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -16,6 +17,7 @@ function AdminLayoutContent({ children }) {
     <ProjectsProvider>
       <ProjectUsersProvider>
       <ConsultationProvider>
+      <LeadActionsProvider>
         <div className="min-h-screen bg-gray-100 flex">
           {/* Sidebar (renders desktop + mobile internally) */}
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -29,6 +31,7 @@ function AdminLayoutContent({ children }) {
             
           </div>
         </div>
+        </LeadActionsProvider>
         </ConsultationProvider>
       </ProjectUsersProvider>
     </ProjectsProvider>

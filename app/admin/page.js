@@ -2,7 +2,7 @@ import AdminStats from '@/components/Admin/AdminStats'
 import  QuickActions  from '@/components/Admin/QuickActions'
 import SystemAlerts from '@/components/Admin/SystemAlerts'
 import RecentActivity from '@/components/Admin/RecentActivity'
-import ConsultationLeads from '@/components/Admin/ConsultationLeads'
+import ConsultationLeads from '@/components/Admin/Consultation/ConsultationLeads'
 
 
 function AdminDashboard() {

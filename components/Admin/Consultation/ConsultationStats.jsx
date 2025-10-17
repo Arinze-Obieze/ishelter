@@ -1,6 +1,6 @@
 'use client'
-import { useConsultations } from '@/contexts/consultationContext';
-import StatCard from './StatsCard';
+import { useConsultations } from '@/contexts/ConsultationContext';
+import StatCard from '../StatsCard';
 
 const ConsultationStats = () => {
   const { stats, loading } = useConsultations();
