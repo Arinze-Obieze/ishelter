@@ -7,6 +7,18 @@ import Link from "next/link";
 export default function Projects() {
   const { projects, loading, error } = usePersonalProjects();
 
+  // Helper function to calculate progress based on stages
+  const calculateStageProgress = (taskTimeline) => {
+    if (!taskTimeline || !Array.isArray(taskTimeline)) return 0;
+    
+    const totalStages = taskTimeline.length;
+    const completedStages = taskTimeline.filter(stage => 
+      stage.status === "Completed"
+    ).length;
+    
+    return totalStages > 0 ? Math.round((completedStages / totalStages) * 100) : 0;
+  };
+
   // Helper function to get status color
   const getStatusColor = (status) => {
     const statusLower = status?.toLowerCase() || '';
@@ -34,15 +46,6 @@ export default function Projects() {
     } catch {
       return dateString;
     }
-  };
-
-  // Helper function to calculate completion (placeholder logic)
-  const getCompletion = (status) => {
-    const statusLower = status?.toLowerCase() || '';
-    if (statusLower.includes('completed')) return 100;
-    if (statusLower.includes('progress')) return 1;
-    if (statusLower.includes('planning')) return 10;
-    return 25;
   };
 
   // Placeholder image
@@ -92,7 +95,7 @@ export default function Projects() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto">
           {projects.map((project) => {
-            const completion = getCompletion(project.projectStatus);
+            const completion = calculateStageProgress(project.taskTimeline);
             const statusColor = getStatusColor(project.projectStatus);
             
             return (

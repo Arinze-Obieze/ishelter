@@ -110,7 +110,7 @@ export default function Header({ onMenuClick }) {
         </div>
 
         {/* User Avatar + Info */}
-        <div className="flex items-center gap-3">
+        <div className="flex cursor-pointer items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold text-lg">
             {adminUser ? getInitials(adminUser.displayName) : 'AD'}
           </div>

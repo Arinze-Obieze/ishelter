@@ -6,6 +6,7 @@ import { ProjectManagerProvider } from '@/contexts/ProjectManagerProjectsContext
 import withProjectManagerProtection from '@/components/ProjectManager/withProjectManagerProtection';
 import { ProjectsProvider } from '@/contexts/ProjectContext'
 import { UserProvider } from '@/contexts/UserContext';
+import { InvoiceProvider } from '@/contexts/InvoiceContext';
 
 function ProjectManagerLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,6 +18,7 @@ function ProjectManagerLayout({ children }) {
     <UserProvider> 
     <ProjectsProvider>
 <ProjectManagerProvider> 
+<InvoiceProvider>
 <div className="min-h-screen bg-gray-100">
     <div className="flex">
     <Sidebar isOpen={sidebarOpen} onClose={handleCloseSidebar} />
@@ -29,6 +31,7 @@ function ProjectManagerLayout({ children }) {
       </div>
     </div>
   </div>
+  </InvoiceProvider>
   </ProjectManagerProvider>
   </ProjectsProvider>
   </UserProvider>

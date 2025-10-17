@@ -1,13 +1,14 @@
+// components/ProjectManager/ProjectDetails/bills/Bills&Invoices.js
 import { useState, useEffect } from "react"
-import { db } from "@/lib/firebase"
-import { doc, getDoc } from "firebase/firestore"
+import { db, auth } from "@/lib/firebase"
+import { doc, getDoc, getDocs } from "firebase/firestore"
+import { onAuthStateChanged } from "firebase/auth"
 import TabsNavigation from "@/components/ProjectManager/ProjectDetails/TabsNavigation"
 import BudgetStats from "@/components/ProjectManager/ProjectDetails/bills/stats"
 import InvoicesSection from "@/components/ProjectManager/ProjectDetails/bills/invoice"
+import { useInvoice } from "@/contexts/InvoiceContext"
 
 export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) {
-  const [invoices, setInvoices] = useState([])
-  const [loading, setLoading] = useState(true)
   const [budgetData, setBudgetData] = useState({
     total: 0,
     spent: 0,
@@ -16,13 +17,28 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
     status: "Healthy",
     statusColor: "bg-green-50 border-green-300 text-green-700",
   })
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [newInvoice, setNewInvoice] = useState({
-    amount: "",
-    description: "",
-    dueDate: "",
-  })
+  
+  const [currentUser, setCurrentUser] = useState(null)
+  
+  const { 
+    invoices, 
+    loading, 
+    error,
+    fetchInvoices, 
+    createInvoice, 
+    updateInvoiceStatus, 
+    deleteInvoice,
+    clearInvoices
+  } = useInvoice()
+
+  // Get current user from Firebase auth
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user)
+    })
+    
+    return () => unsubscribe()
+  }, [])
 
   // Fetch budget data from project timeline
   useEffect(() => {
@@ -51,16 +67,16 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
           }, 0)
           
           const remaining = totalBudget - costIncurred
-          const percentageUsed = totalBudget > 0 ? costIncurred / totalBudget : 0
+          const percentageUsed = totalBudget > 0 ? (costIncurred / totalBudget) * 100 : 0
           
           // Determine budget status
           let status = "Healthy"
           let statusColor = "bg-green-50 border-green-300 text-green-700"
           
-          if (percentageUsed > 0.9) {
+          if (percentageUsed > 90) {
             status = "Critical"
             statusColor = "bg-red-50 border-red-300 text-red-700"
-          } else if (percentageUsed > 0.75) {
+          } else if (percentageUsed > 75) {
             status = "Warning"
             statusColor = "bg-yellow-50 border-yellow-300 text-yellow-700"
           }
@@ -79,39 +95,21 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
       }
     }
     
-    fetchBudgetData()
+    if (projectId) {
+      fetchBudgetData()
+    }
   }, [projectId])
 
-  // Fetch invoices
+  // Fetch invoices when component mounts or projectId changes
   useEffect(() => {
-    const fetchInvoices = async () => {
-      setLoading(true)
-      try {
-        const response = await fetch(`/api/invoices/create?projectId=${projectId}`)
-        const data = await response.json()
-        
-        if (data.invoices) {
-          // Check for overdue invoices
-          const processedInvoices = data.invoices.map(inv => {
-            const dueDate = new Date(inv.dueDate)
-            const now = new Date()
-            const isOverdue = inv.status === "pending" && dueDate < now
-            
-            return {
-              ...inv,
-              status: isOverdue ? "overdue" : inv.status
-            }
-          })
-          setInvoices(processedInvoices)
-        }
-      } catch (error) {
-        console.error("Error fetching invoices:", error)
-      } finally {
-        setLoading(false)
-      }
+    if (projectId) {
+      fetchInvoices(projectId)
     }
     
-    fetchInvoices()
+    // Cleanup when component unmounts or projectId changes
+    return () => {
+      clearInvoices()
+    }
   }, [projectId])
 
   // Helper functions
@@ -127,11 +125,15 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A"
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    })
+    try {
+      return new Date(dateString).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      })
+    } catch {
+      return dateString
+    }
   }
 
   const getStatusConfig = (status) => {
@@ -145,7 +147,7 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
 
   const calculateStrokeDasharray = (percentage) => {
     const circumference = 2 * Math.PI * 56
-    return `${circumference * percentage} ${circumference}`
+    return `${circumference * (percentage / 100)} ${circumference}`
   }
 
   // Calculate paid amount from invoices
@@ -153,49 +155,31 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
     .filter(inv => inv.status === "paid")
     .reduce((sum, inv) => sum + Number(inv.amount), 0)
 
-  const handleCreateInvoice = async (e) => {
-    e.preventDefault()
-    
-    if (!newInvoice.amount || !newInvoice.dueDate) {
-      alert("Please fill in all required fields")
-      return
+  // Handle create invoice
+  const handleCreateInvoice = async (invoiceData) => {
+    if (!currentUser) {
+      alert("You must be logged in to create an invoice")
+      return { success: false, error: "Not authenticated" }
     }
+
+    const result = await createInvoice({
+      ...invoiceData,
+      createdBy: currentUser.uid
+    }, projectId)
     
-    setCreating(true)
-    try {
-      const response = await fetch("/api/invoices/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId,
-          amount: Number(newInvoice.amount),
-          description: newInvoice.description,
-          dueDate: newInvoice.dueDate,
-        }),
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        alert(`Invoice created successfully! Payment link sent to ${data.sentTo.join(", ")}`)
-        setShowCreateModal(false)
-        setNewInvoice({ amount: "", description: "", dueDate: "" })
-        
-        // Refresh invoices
-        const refreshRes = await fetch(`/api/invoices/create?projectId=${projectId}`)
-        const refreshData = await refreshRes.json()
-        if (refreshData.invoices) {
-          setInvoices(refreshData.invoices)
-        }
-      } else {
-        alert(`Error: ${data.error}`)
-      }
-    } catch (error) {
-      console.error("Error creating invoice:", error)
-      alert("Failed to create invoice")
-    } finally {
-      setCreating(false)
-    }
+    return result
+  }
+
+  // Handle update invoice status
+  const handleUpdateInvoiceStatus = async (invoiceId, newStatus) => {
+    const result = await updateInvoiceStatus(invoiceId, newStatus)
+    return result
+  }
+
+  // Handle delete invoice
+  const handleDeleteInvoice = async (invoiceId) => {
+    const result = await deleteInvoice(invoiceId, projectId)
+    return result
   }
 
   return (
@@ -223,12 +207,10 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
         <InvoicesSection
           invoices={invoices}
           loading={loading}
-          showCreateModal={showCreateModal}
-          creating={creating}
-          newInvoice={newInvoice}
-          setShowCreateModal={setShowCreateModal}
-          setNewInvoice={setNewInvoice}
-          handleCreateInvoice={handleCreateInvoice}
+          error={error}
+          onUpdateInvoiceStatus={handleUpdateInvoiceStatus}
+          onDeleteInvoice={handleDeleteInvoice}
+          onCreateInvoice={handleCreateInvoice}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
           getStatusConfig={getStatusConfig}

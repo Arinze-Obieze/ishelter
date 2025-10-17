@@ -1,4 +1,4 @@
-"use client"
+// components/ProjectManager/ProjectDetails/documents/Documents.js
 import { useProjects } from '@/contexts/ProjectContext';
 import { useUsers } from '@/contexts/UserContext';
 import { useEffect, useState } from "react"
@@ -15,6 +15,7 @@ import { doc, updateDoc, arrayUnion, getDoc, arrayRemove } from "firebase/firest
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import TabsNavigation from '@/components/ProjectManager/ProjectDetails/TabsNavigation';
 import { EditCategoryModal } from '@/components/ProjectManager/ProjectDetails/documents/ui/EditCategoryModal';
+import { EditStatusModal } from '@/components/ProjectManager/ProjectDetails/documents/ui/EditStatusModal';
 import { CategoryModal } from '@/components/ProjectManager/ProjectDetails/documents/ui/CategoryModal';
 import { DocumentsTableHead } from '@/components/ProjectManager/ProjectDetails/documents/ui/DocumentsTableHead';
 import { DocumentsTableRow } from '@/components/ProjectManager/ProjectDetails/documents/ui/DocumentsTableRow';
@@ -22,13 +23,13 @@ import { DocumentCard } from '@/components/ProjectManager/ProjectDetails/documen
 import { FilterButtons } from '@/components/ProjectManager/ProjectDetails/documents/ui/FilterButtons';
 import { DeleteModal } from '@/components/ProjectManager/ProjectDetails/documents/ui/DeleteModal';
 
-
 export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("Pending Approval"); // Default status
   const [newCategory, setNewCategory] = useState("");
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -39,9 +40,12 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
   const [showActionsMenu, setShowActionsMenu] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [showEditStatusModal, setShowEditStatusModal] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState(null);
   const [documentToEdit, setDocumentToEdit] = useState(null);
+  const [documentToEditStatus, setDocumentToEditStatus] = useState(null);
   const [editCategory, setEditCategory] = useState("");
+  const [editStatus, setEditStatus] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -69,6 +73,7 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      setSelectedStatus("Pending Approval"); // Reset to default
       setShowCategoryModal(true);
     }
   };
@@ -93,7 +98,7 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
   };
 
   const handleFileUpload = async () => {
-    if (!selectedFile || !selectedCategory) return;
+    if (!selectedFile || !selectedCategory || !selectedStatus) return;
 
     setIsUploading(true);
     setShowCategoryModal(false);
@@ -106,6 +111,9 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
       const uploaderName = currentUser?.displayName || currentUser?.name || currentUser?.email || 'Unknown User';
       const uploaderRole = currentUser?.role || 'User';
 
+      // Determine status color based on selected status
+      const statusColor = selectedStatus === "Pending Approval" ? "orange" : "green";
+
       const newDocument = {
         name: selectedFile.name,
         type: selectedFile.type.split("/").pop() || selectedFile.name.split('.').pop(),
@@ -115,8 +123,8 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
         uploaderId: currentUser?.uid || null,
         date: new Date().toLocaleString(),
         uploadDate: new Date(),
-        status: "Uploaded",
-        statusColor: "green",
+        status: selectedStatus,
+        statusColor: statusColor,
         category: selectedCategory,
         url: downloadURL,
       };
@@ -128,6 +136,7 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
 
       setSelectedFile(null);
       setSelectedCategory("");
+      setSelectedStatus("Pending Approval"); // Reset to default
     } catch (error) {
       console.error("Error uploading file: ", error);
     } finally {
@@ -186,6 +195,37 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
     }
   };
 
+  const handleUpdateStatus = async () => {
+    if (!documentToEditStatus || !editStatus) return;
+
+    try {
+      // Determine status color based on selected status
+      const statusColor = editStatus === "Pending Approval" ? "orange" : "green";
+
+      const updatedDocument = {
+        ...documentToEditStatus,
+        status: editStatus,
+        statusColor: statusColor
+      };
+
+      const projectRef = doc(db, "projects", projectId);
+      await updateDoc(projectRef, {
+        documents: arrayRemove(documentToEditStatus)
+      });
+      await updateDoc(projectRef, {
+        documents: arrayUnion(updatedDocument)
+      });
+
+      setShowEditStatusModal(false);
+      setDocumentToEditStatus(null);
+      setEditStatus("");
+      setShowActionsMenu(null);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update status. Please try again.");
+    }
+  };
+
   const openDeleteModal = (document) => {
     setDocumentToDelete(document);
     setShowDeleteModal(true);
@@ -199,10 +239,18 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
     setShowActionsMenu(null);
   };
 
+  const openEditStatusModal = (document) => {
+    setDocumentToEditStatus(document);
+    setEditStatus(document.status || "Pending Approval");
+    setShowEditStatusModal(true);
+    setShowActionsMenu(null);
+  };
+
   const closeCategoryModal = () => {
     setShowCategoryModal(false);
     setSelectedFile(null);
     setSelectedCategory("");
+    setSelectedStatus("Pending Approval");
     setIsCreatingCategory(false);
     setNewCategory("");
   };
@@ -211,6 +259,12 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
     setShowEditCategoryModal(false);
     setDocumentToEdit(null);
     setEditCategory("");
+  };
+
+  const closeEditStatusModal = () => {
+    setShowEditStatusModal(false);
+    setDocumentToEditStatus(null);
+    setEditStatus("");
   };
 
   const filteredDocuments = documents.filter(doc =>
@@ -243,12 +297,23 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
         onConfirm={handleUpdateCategory}
       />
 
+      <EditStatusModal
+        isOpen={showEditStatusModal}
+        onClose={closeEditStatusModal}
+        documentToEdit={documentToEditStatus}
+        editStatus={editStatus}
+        setEditStatus={setEditStatus}
+        onConfirm={handleUpdateStatus}
+      />
+
       <CategoryModal
         isOpen={showCategoryModal}
         onClose={closeCategoryModal}
         selectedFile={selectedFile}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
+        selectedStatus={selectedStatus}
+        setSelectedStatus={setSelectedStatus}
         categories={categories}
         isCreatingCategory={isCreatingCategory}
         setIsCreatingCategory={setIsCreatingCategory}
@@ -336,6 +401,7 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
                   showActionsMenu={showActionsMenu}
                   setShowActionsMenu={setShowActionsMenu}
                   onEditCategory={openEditCategoryModal}
+                  onEditStatus={openEditStatusModal}
                   onDelete={openDeleteModal}
                 />
               ))}
@@ -353,6 +419,7 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
               showActionsMenu={showActionsMenu}
               setShowActionsMenu={setShowActionsMenu}
               onEditCategory={openEditCategoryModal}
+              onEditStatus={openEditStatusModal}
               onDelete={openDeleteModal}
             />
           ))}

@@ -5,6 +5,7 @@ export const ActionsMenu = ({
   onClose, 
   document, 
   onEditCategory, 
+  onEditStatus, 
   onDelete 
 }) => {
   if (!isOpen) return null;
@@ -20,6 +21,12 @@ export const ActionsMenu = ({
       label: 'Change Category',
       condition: true,
       onClick: () => onEditCategory(document),
+      className: 'text-gray-700 hover:bg-gray-100'
+    },
+    {
+      label: 'Edit Status',
+      condition: true,
+      onClick: () => onEditStatus(document),
       className: 'text-gray-700 hover:bg-gray-100'
     },
     {

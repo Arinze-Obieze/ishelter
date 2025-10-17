@@ -6,6 +6,8 @@ export const CategoryModal = ({
   selectedFile,
   selectedCategory,
   setSelectedCategory,
+  selectedStatus,
+  setSelectedStatus,
   categories,
   isCreatingCategory,
   setIsCreatingCategory,
@@ -16,11 +18,16 @@ export const CategoryModal = ({
 }) => {
   if (!isOpen) return null;
 
+  const statusOptions = [
+    { value: "Pending Approval", label: "Pending Approval", color: "orange" },
+    { value: "Uploaded", label: "Uploaded", color: "green" }
+  ];
+
   return (
-    <div className="fixed backdrop-overlay  flex items-center justify-center z-50 p-4">
+    <div className="fixed backdrop-overlay flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Select Category</h3>
+          <h3 className="text-lg font-semibold">Upload Document</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -32,6 +39,29 @@ export const CategoryModal = ({
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-2">File: {selectedFile?.name}</p>
           <p className="text-xs text-gray-500">Size: {(selectedFile?.size / 1024).toFixed(1)} KB</p>
+        </div>
+
+        {/* Status Selection */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Document Status
+          </label>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            {selectedStatus === "Pending Approval" 
+              ? "Document will be marked as pending approval"
+              : "Document will be marked as fully uploaded"}
+          </p>
         </div>
 
         {!isCreatingCategory ? (
@@ -103,7 +133,7 @@ export const CategoryModal = ({
           </button>
           <button
             onClick={onUpload}
-            disabled={!selectedCategory}
+            disabled={!selectedCategory || !selectedStatus}
             className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Upload

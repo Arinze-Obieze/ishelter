@@ -8,7 +8,8 @@ export const DocumentCard = ({
   showActionsMenu, 
   setShowActionsMenu, 
   onEditCategory, 
-  onDelete 
+  onDelete, 
+  onEditStatus
 }) => {
   const menuId = `mobile-${index}`;
   
@@ -31,12 +32,13 @@ export const DocumentCard = ({
               </button>
 
               <ActionsMenu
-                isOpen={showActionsMenu === menuId}
-                onClose={() => setShowActionsMenu(null)}
-                document={doc}
-                onEditCategory={onEditCategory}
-                onDelete={onDelete}
-              />
+  isOpen={showActionsMenu === menuId}
+  onClose={() => setShowActionsMenu(null)}
+  document={doc}
+  onEditCategory={onEditCategory}
+  onEditStatus={onEditStatus} 
+  onDelete={onDelete}
+/>
             </div>
           </div>
           

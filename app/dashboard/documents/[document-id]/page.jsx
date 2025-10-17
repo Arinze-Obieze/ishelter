@@ -12,6 +12,7 @@ import {
   FiChevronDown,
   FiClock,
   FiFile,
+  FiX,
 } from "react-icons/fi"
 import {
   FaFilePdf,
@@ -39,22 +40,55 @@ export default function ProjectDocuments() {
   const { projectDocuments, loading: docsLoading } = useDocuments()
   
   const [activeTab, setActiveTab] = useState("all")
-  
+  const [selectedDocument, setSelectedDocument] = useState(null)
+  const [viewerOpen, setViewerOpen] = useState(false)
+
   // Get current project and documents
   const currentProject = projects.find(p => p.id === projectId)
   const documents = projectDocuments[projectId]?.documents || []
   const pendingApproval = projectDocuments[projectId]?.pendingApproval || []
 
+  // Document viewer functions
+  const openDocumentViewer = (doc) => {
+    setSelectedDocument(doc)
+    setViewerOpen(true)
+  }
+
+  const closeDocumentViewer = () => {
+    setSelectedDocument(null)
+    setViewerOpen(false)
+  }
+
+  const handleDownload = async (doc) => {
+    try {
+      const downloadUrl = doc.url || doc.downloadURL
+      if (downloadUrl) {
+        // For direct download links
+        const link = document.createElement('a')
+        link.href = downloadUrl
+        link.download = doc.name || doc.fileName
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } else {
+        alert('Download URL not available for this document')
+      }
+    } catch (error) {
+      console.error('Download failed:', error)
+      alert('Download failed. Please try again.')
+    }
+  }
+
   // Get unique categories from documents
   const getCategories = () => {
     const categoriesMap = {}
     documents.forEach(doc => {
-      if (doc.category) {
-        if (!categoriesMap[doc.category]) {
-          categoriesMap[doc.category] = []
-        }
-        categoriesMap[doc.category].push(doc)
+      const category = doc.category || "uncategorized"
+      if (!categoriesMap[category]) {
+        categoriesMap[category] = []
       }
+      categoriesMap[category].push(doc)
     })
     return categoriesMap
   }
@@ -63,6 +97,7 @@ export default function ProjectDocuments() {
 
   // Define category icons and labels
   const categoryConfig = {
+    law: { label: "Law", icon: FaFileContract },
     contracts: { label: "Contracts & Legal", icon: FaFileContract },
     architectural: { label: "Architectural Plans", icon: FaBuilding },
     invoices: { label: "Invoices & Receipts", icon: FaFileInvoice },
@@ -81,9 +116,9 @@ export default function ProjectDocuments() {
     }))
   ]
 
-  const getFileIcon = (fileName) => {
+  const getFileIcon = (fileName, fileType) => {
     const iconClass = "text-2xl"
-    const ext = fileName?.split('.').pop()?.toLowerCase()
+    const ext = fileType || fileName?.split('.').pop()?.toLowerCase()
     
     switch (ext) {
       case "pdf":
@@ -98,8 +133,9 @@ export default function ProjectDocuments() {
       case "jpeg":
       case "png":
       case "gif":
-      case "zip":
         return <FaFileImage className={`${iconClass} text-purple-500`} />
+      case "zip":
+        return <FaFileImage className={`${iconClass} text-yellow-500`} />
       case "mp4":
       case "mov":
       case "avi":
@@ -121,7 +157,8 @@ export default function ProjectDocuments() {
   if (projectsLoading || docsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading documents...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <p className="text-gray-600 ml-3">Loading documents...</p>
       </div>
     )
   }
@@ -161,7 +198,13 @@ export default function ProjectDocuments() {
           <p className="text-sm text-gray-500 mt-1">Project Documents</p>
         </div>
 
-        <ActionRequiredCard getFileIcon={getFileIcon} pendingDocs={pendingApproval} />
+        {/* Action Required Card - Shows only Pending Approval documents */}
+        <ActionRequiredCard 
+          getFileIcon={getFileIcon}
+          pendingDocs={documents} // Pass all documents, component filters for "Pending Approval"
+          onView={openDocumentViewer}
+          onDownload={handleDownload}
+        />
 
         {/* Search & Filter Bar - Desktop layout */}
         <div className="hidden lg:flex items-center justify-end gap-3 mb-4">
@@ -258,7 +301,9 @@ export default function ProjectDocuments() {
                     key={category}
                     title={categoryLabel} 
                     documents={docs} 
-                    getFileIcon={getFileIcon} 
+                    getFileIcon={getFileIcon}
+                    onView={openDocumentViewer}
+                    onDownload={handleDownload}
                   />
                 )
               })}
@@ -268,33 +313,31 @@ export default function ProjectDocuments() {
               title={tabs.find((t) => t.id === activeTab)?.label}
               documents={getDocumentsByTab()}
               getFileIcon={getFileIcon}
+              onView={openDocumentViewer}
+              onDownload={handleDownload}
             />
           )}
         </div>
       </div>
+
+      {/* Document Viewer Modal */}
+      {viewerOpen && selectedDocument && (
+        <DocumentViewerModal
+          document={selectedDocument}
+          onClose={closeDocumentViewer}
+          onDownload={handleDownload}
+          getFileIcon={getFileIcon}
+        />
+      )}
     </div>
   )
 }
 
-function DocumentSection({ title, documents, getFileIcon }) {
-  const formatDate = (timestamp) => {
-    if (!timestamp) return "Unknown date"
-    try {
-      const date = timestamp.toDate?.() || new Date(timestamp)
-      return `Uploaded ${date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })}`
-    } catch {
-      return "Unknown date"
-    }
-  }
-
-  const formatSize = (bytes) => {
-    if (!bytes) return "Unknown size"
-    const mb = bytes / (1024 * 1024)
-    return mb.toFixed(1) + " MB"
+// DocumentSection and DocumentViewerModal components remain the same as before...
+function DocumentSection({ title, documents, getFileIcon, onView, onDownload }) {
+  const formatDate = (dateString) => {
+    if (!dateString) return "Unknown date"
+    return `Uploaded ${dateString}`
   }
 
   if (!documents || documents.length === 0) {
@@ -311,51 +354,75 @@ function DocumentSection({ title, documents, getFileIcon }) {
         {documents.map((doc, index) => (
           <div
             key={index}
-            className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+            className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow group"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3 flex-1 min-w-0">
-                {getFileIcon(doc.fileName)}
+                {getFileIcon(doc.name, doc.type)}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 text-sm truncate">{doc.fileName}</h3>
+                  <h3 className="font-medium text-gray-900 text-sm truncate">{doc.name}</h3>
                   <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <FiClock className="w-3 h-3" />
-                      {formatDate(doc.uploadDate)}
+                      {formatDate(doc.date)}
                     </span>
                     <span className="flex items-center gap-1">
                       <FiFile className="w-3 h-3" />
-                      {formatSize(doc.size)}
+                      {doc.size || "Unknown size"}
                     </span>
                   </div>
+                  {/* Document status badge */}
+                  {doc.status && doc.status !== "Uploaded" && (
+                    <span className={`inline-block mt-2 px-2 py-1 text-xs rounded-full ${
+                      doc.status === 'approved' || doc.statusColor === 'green' ? 'bg-green-100 text-green-800' :
+                      doc.status === 'pending' || doc.statusColor === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                      doc.status === 'rejected' || doc.statusColor === 'red' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {doc.status}
+                    </span>
+                  )}
+                  {/* Uploader info */}
+                  {doc.uploader && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Uploaded by {doc.uploader} ({doc.uploaderRole})
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 ml-2">
-                {doc.downloadURL ? (
+              <div className="flex items-center gap-1 ml-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                {doc.url ? (
                   <>
-                    <a
-                      href={doc.downloadURL}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => onView(doc)}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="View Document"
                     >
                       <FiEye className="text-gray-600" />
-                    </a>
-                    <a
-                      href={doc.downloadURL}
-                      download={doc.fileName}
+                    </button>
+                    <button
+                      onClick={() => onDownload(doc)}
                       className="p-2 hover:bg-orange-50 rounded-lg transition-colors"
+                      title="Download Document"
                     >
                       <FiDownload className="text-orange-500" />
-                    </a>
+                    </button>
                   </>
                 ) : (
                   <>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                      <FiEye className="text-gray-600" />
+                    <button 
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                      title="View not available"
+                      disabled
+                    >
+                      <FiEye className="text-gray-400" />
                     </button>
-                    <button className="p-2 hover:bg-orange-50 rounded-lg transition-colors">
-                      <FiDownload className="text-orange-500" />
+                    <button 
+                      className="p-2 hover:bg-orange-50 rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                      title="Download not available"
+                      disabled
+                    >
+                      <FiDownload className="text-orange-300" />
                     </button>
                   </>
                 )}
@@ -366,6 +433,152 @@ function DocumentSection({ title, documents, getFileIcon }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function DocumentViewerModal({ document, onClose, onDownload, getFileIcon }) {
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const isImage = () => {
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+    const ext = document.type || document.name?.split('.').pop()?.toLowerCase()
+    return imageExtensions.includes(ext)
+  }
+
+  const isPDF = () => {
+    const ext = document.type || document.name?.split('.').pop()?.toLowerCase()
+    return ext === 'pdf'
+  }
+
+  const handleLoad = () => {
+    setIsLoading(false)
+    setError(null)
+  }
+
+  const handleError = () => {
+    setIsLoading(false)
+    setError('Failed to load document')
+  }
+
+  useEffect(() => {
+    // Reset loading state when document changes
+    setIsLoading(true)
+    setError(null)
+  }, [document])
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {getFileIcon(document.name, document.type)}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 truncate">{document.name}</h3>
+              <p className="text-sm text-gray-500">
+                {document.category} • {document.size} • {document.date}
+              </p>
+              {document.uploader && (
+                <p className="text-xs text-gray-500">Uploaded by {document.uploader} ({document.uploaderRole})</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => onDownload(document)}
+              className="flex items-center gap-2 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              <FiDownload className="text-sm" />
+              Download
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FiX className="text-lg" />
+            </button>
+          </div>
+        </div>
+
+        {/* Document Content */}
+        <div className="flex-1 overflow-auto p-4 flex items-center justify-center">
+          {isLoading && (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+              <span className="ml-3 text-gray-600">Loading document...</span>
+            </div>
+          )}
+          
+          {error && (
+            <div className="text-center py-8">
+              <div className="text-red-500 text-lg mb-2">⚠️ {error}</div>
+              <p className="text-gray-500 mb-4">Please try downloading the document instead.</p>
+              <button
+                onClick={() => onDownload(document)}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors mx-auto"
+              >
+                <FiDownload />
+                Download Document
+              </button>
+            </div>
+          )}
+
+          {!error && document.url && (
+            <div className="w-full h-full flex items-center justify-center">
+              {isImage() ? (
+                <div className="text-center">
+                  <img
+                    src={document.url}
+                    alt={document.name}
+                    className="max-w-full max-h-[70vh] mx-auto rounded-lg"
+                    onLoad={handleLoad}
+                    onError={handleError}
+                  />
+                  <p className="text-sm text-gray-500 mt-2">Scroll to zoom, click and drag to pan</p>
+                </div>
+              ) : isPDF() ? (
+                <div className="w-full h-full">
+                  <iframe
+                    src={document.url}
+                    className="w-full h-full min-h-[500px] rounded-lg border"
+                    title={document.name}
+                    onLoad={handleLoad}
+                    onError={handleError}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">
+                    {getFileIcon(document.name, document.type)}
+                  </div>
+                  <p className="text-gray-500 mb-4">Preview not available for this file type</p>
+                  <button
+                    onClick={() => onDownload(document)}
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors mx-auto"
+                  >
+                    <FiDownload />
+                    Download to View
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!error && !document.url && (
+            <div className="text-center py-8">
+              <div className="text-6xl text-gray-300 mb-4">
+                {getFileIcon(document.name, document.type)}
+              </div>
+              <p className="text-gray-500 mb-4">Document URL not available</p>
+              <p className="text-sm text-gray-400">
+                This document cannot be viewed or downloaded at the moment.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

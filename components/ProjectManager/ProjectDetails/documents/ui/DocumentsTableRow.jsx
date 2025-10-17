@@ -8,7 +8,8 @@ export const DocumentsTableRow = ({
   showActionsMenu, 
   setShowActionsMenu, 
   onEditCategory, 
-  onDelete 
+  onDelete, 
+  onEditStatus
 }) => {
   return (
     <tr key={doc.id || index} className="hover:bg-gray-50">
@@ -63,12 +64,13 @@ export const DocumentsTableRow = ({
           </button>
           
           <ActionsMenu
-            isOpen={showActionsMenu === index}
-            onClose={() => setShowActionsMenu(null)}
-            document={doc}
-            onEditCategory={onEditCategory}
-            onDelete={onDelete}
-          />
+  isOpen={showActionsMenu === index}
+  onClose={() => setShowActionsMenu(null)}
+  document={doc}
+  onEditCategory={onEditCategory}
+  onEditStatus={onEditStatus} 
+  onDelete={onDelete}
+/>
         </div>
       </td>
     </tr>
