@@ -10,12 +10,10 @@ export default function Projects() {
   // Helper function to calculate progress based on stages
   const calculateStageProgress = (taskTimeline) => {
     if (!taskTimeline || !Array.isArray(taskTimeline)) return 0;
-    
     const totalStages = taskTimeline.length;
     const completedStages = taskTimeline.filter(stage => 
       stage.status === "Completed"
     ).length;
-    
     return totalStages > 0 ? Math.round((completedStages / totalStages) * 100) : 0;
   };
 

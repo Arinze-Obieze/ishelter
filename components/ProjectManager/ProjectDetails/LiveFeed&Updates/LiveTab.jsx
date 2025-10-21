@@ -1,0 +1,25 @@
+"use client"
+
+import { useState } from "react"
+import PostUpdateForm from "./PostUpdate"
+import ActivityFeed from "./ActivityFeed"
+import TabsNavigation from "../TabsNavigation"
+import { LiveFeedProvider } from "@/contexts/LiveFeedContext"
+
+export default function Home({ projectId, tabs, activeTab, onTabChange }) {
+  return (
+    <LiveFeedProvider>
+      <div className="min-h-screen bg-gray-50">
+        <TabsNavigation tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
+
+        <main className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+          {/* Post New Update Section */}
+          <PostUpdateForm projectId={projectId} />
+
+          {/* Activity Feed Section */}
+          <ActivityFeed projectId={projectId} />
+        </main>
+      </div>
+    </LiveFeedProvider>
+  )
+}

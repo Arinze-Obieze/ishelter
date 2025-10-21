@@ -27,22 +27,22 @@ export default function MyProjects() {
     }
   };
 
-  // Helper function to get progress - uses DB value if available, otherwise calculates from status
-  const getProgress = (project) => {
-    // If progress field exists in DB, use it
-    if (project.progress !== undefined && project.progress !== null) {
-      return Math.min(Math.max(project.progress, 0), 100); // Ensure it's between 0-100
-    }
-    
-    // Otherwise, fallback to status-based calculation
-    const statusLower = (project.projectStatus || '').toLowerCase();
-    if (statusLower.includes('completed')) return 100;
-    if (statusLower.includes('progress')) return 1;
-    if (statusLower.includes('delayed')) return 0;
-    return 0;
+  // Helper function to calculate progress based on completed stages
+  const calculateStageProgress = (taskTimeline) => {
+    if (!taskTimeline || !Array.isArray(taskTimeline)) return 0;
+    const totalStages = taskTimeline.length;
+    const completedStages = taskTimeline.filter(stage => 
+      stage.status === "Completed"
+    ).length;
+    return totalStages > 0 ? Math.round((completedStages / totalStages) * 100) : 0;
   };
 
- 
+  // Helper function to get next milestone (next stage not completed)
+  const getNextMilestone = (taskTimeline) => {
+    if (!taskTimeline || !Array.isArray(taskTimeline)) return 'No milestone set';
+    const nextStage = taskTimeline.find(stage => stage.status !== "Completed");
+    return nextStage ? nextStage.name || 'Unnamed Stage' : 'All stages completed';
+  };
 
   if (loading) {
     return (
@@ -79,9 +79,10 @@ export default function MyProjects() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {projects.map((project) => {
-          const progress = getProgress(project);
+          const progress = calculateStageProgress(project.taskTimeline);
           const statusColor = getStatusColor(project.projectStatus);
           const clientName = project.clientName || 'Client not assigned';
+          const nextMilestone = getNextMilestone(project.taskTimeline);
 
           return (
             <div key={project.id} className="bg-white  rounded-2xl shadow-md p-5 flex flex-col">
@@ -118,7 +119,7 @@ export default function MyProjects() {
                   <FaFlag className="text-primary" /> Next Milestone
                 </p>
                 <p className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                  <FaCalendarAlt /> {project.milestone || 'No milestone set'}
+                  <FaCalendarAlt /> {nextMilestone}
                 </p>
               </div>
 

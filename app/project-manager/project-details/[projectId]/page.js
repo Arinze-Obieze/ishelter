@@ -7,7 +7,7 @@ const OverviewTab = lazy(() => import('@/components/ProjectManager/ProjectDetail
 const TimelineTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/TimelineTab'))
 const DocumentsTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/documents/Documents'))
 const BillsTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/bills/Bills&Invoices'))
-const LiveTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/LiveTab'))
+const LiveTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/LiveFeed&Updates/LiveTab'))
 
 const TabLoadingFallback = () => (
   <div className="animate-pulse bg-white rounded-lg shadow p-8">Loading...</div>
