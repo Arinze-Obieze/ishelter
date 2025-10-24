@@ -123,7 +123,7 @@ export default function ActivityItem({ update, projectId, isExpanded, onToggleCo
             <div key={idx} className="relative bg-gray-200 rounded-lg overflow-hidden aspect-square">
               {activity.images.includes(media) ? (
                 <img
-                  src={media || "/placeholder.svg"}
+                  src={media || "/placeholder.jpg"}
                   alt={`Activity image ${idx + 1}`}
                   className="w-full h-full object-cover"
                 />
@@ -150,7 +150,7 @@ export default function ActivityItem({ update, projectId, isExpanded, onToggleCo
             <div key={idx} className="relative bg-gray-200 rounded-lg overflow-hidden aspect-square group">
               {activity.images.includes(media) ? (
                 <img
-                  src={media || "/placeholder.svg"}
+                  src={media || "/placeholder.jpg"}
                   alt={`Activity image ${idx + 1}`}
                   className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
                 />

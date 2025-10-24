@@ -1,3 +1,5 @@
+"use client"
+
 import { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, onSnapshot, getDoc, deleteDoc, increment, deleteField } from "firebase/firestore"
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
@@ -200,7 +202,7 @@ export function LiveFeedProvider({ children }) {
       // Delete the update document
       await deleteDoc(updateDocRef)
 
-      // Check if count is 0 and remove type if needed
+      // Check if count icounts 0 and remove type if needed
       const projectSnap = await getDoc(projectDocRef)
       const counts = projectSnap.data()?.updateTypeCounts || {}
       if (counts[updateType] === 0) {

@@ -5,6 +5,7 @@ import PostUpdateForm from "./PostUpdate"
 import ActivityFeed from "./ActivityFeed"
 import TabsNavigation from "../TabsNavigation"
 import { LiveFeedProvider } from "@/contexts/LiveFeedContext"
+import ProjectLocationMap from "./ProjectLocationMap"
 
 export default function Home({ projectId, tabs, activeTab, onTabChange }) {
   return (
@@ -15,6 +16,9 @@ export default function Home({ projectId, tabs, activeTab, onTabChange }) {
         <main className="max-w-7xl mx-auto px-4 py-6 md:py-8">
           {/* Post New Update Section */}
           <PostUpdateForm projectId={projectId} />
+
+            {/* Project Location Map Section */}
+            <ProjectLocationMap projectId={projectId} />
 
           {/* Activity Feed Section */}
           <ActivityFeed projectId={projectId} />
