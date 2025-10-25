@@ -5,29 +5,6 @@ import StatsOverview from '@/components/Dashboard/StatsOverview';
 import Projects from '@/components/Dashboard/Projects';
 
 
-// function Projects() {
-//   const { projects, loading, error } = usePersonalProjects();
-
-//   if (loading) return <div>Loading your projects...</div>;
-//   if (error) return <div className="text-red-500">{error}</div>;
-//   if (!projects.length) return <div>No projects assigned to you yet.</div>;
-
-//   return (
-//     <div className="space-y-4">
-//       {projects.map((project) => (
-//         <div key={project.id} className="border rounded-lg p-4 bg-white shadow">
-//           <div className="font-bold text-lg">{project.projectName || 'Untitled Project'}</div>
-//           <div className="text-sm text-gray-600 mb-1">{project.shortDescription || 'No description provided.'}</div>
-//           <div className="text-xs text-gray-500">Status: {project.projectStatus || 'N/A'}</div>
-//           <div className="text-xs text-gray-500">Manager: {project.projectManager || 'N/A'}</div>
-//           <div className="text-xs text-gray-500">Start: {project.startDate || 'N/A'}</div>
-//           <div className="text-xs text-gray-500">Budget: {project.initialBudget || 'N/A'}</div>
-//         </div>
-//       ))}
-//     </div>
-//   );
-// }
-
 const Dashboard = () => {
   return (
     <PersonalProjectsProvider>

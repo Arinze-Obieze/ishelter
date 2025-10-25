@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation';
 import { useUsers } from '@/contexts/UserContext';
 import { auth } from '@/lib/firebase';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 const Header = () => {
   const pathname = usePathname();
@@ -80,12 +81,15 @@ const Header = () => {
           <span>
             <FaRegBell className="text-xl text-gray-700 hover:text-gray-900" />
           </span>
-          <div className="flex items-center gap-2">
+        
+        <Link href="dashboard/profile">
+        <div className="flex items-center gap-2">
             <span className="bg-gray-200 rounded-full p-2">
               <FaUser className="text-md text-gray-500" />
             </span>
             <span className="text-gray-700 font-medium">{userName}</span>
           </div>
+        </Link>
         </div>
 
         {/* Mobile Menu */}

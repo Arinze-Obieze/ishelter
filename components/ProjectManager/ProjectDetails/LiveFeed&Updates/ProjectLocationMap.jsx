@@ -7,13 +7,30 @@ import { FiLayers } from "react-icons/fi"
 import { doc, updateDoc, onSnapshot, serverTimestamp } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import { toast } from "react-hot-toast"
-import { MdSatellite, MdTerrain, } from "react-icons/md"
+import { MdSatellite, MdTerrain } from "react-icons/md"
 
-// Map Component
+// Map Component with Advanced Markers
 function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapType, onMapLoad }) {
   const ref = useRef(null)
   const [map, setMap] = useState(null)
-  const [mapMarker, setMapMarker] = useState(null)
+  const [advancedMarker, setAdvancedMarker] = useState(null)
+  const [markerLibrary, setMarkerLibrary] = useState(null)
+
+  // Load marker library
+  useEffect(() => {
+    const loadMarkerLibrary = async () => {
+      try {
+        const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker")
+        setMarkerLibrary({ AdvancedMarkerElement })
+      } catch (err) {
+        console.error("Error loading marker library:", err)
+      }
+    }
+    
+    if (window.google?.maps) {
+      loadMarkerLibrary()
+    }
+  }, [])
 
   // Initialize map
   useEffect(() => {
@@ -27,6 +44,7 @@ function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapTy
         fullscreenControl: false,
         zoomControl: true,
         gestureHandling: "greedy",
+        mapId: "PROJECT_LOCATION_MAP", // Required for Advanced Markers
       })
       setMap(newMap)
       onMapLoad?.(newMap)
@@ -53,19 +71,24 @@ function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapTy
     }
   }, [map, onMapClick])
 
-  // Update marker
+  // Update Advanced Marker
   useEffect(() => {
-    if (map && marker) {
-      if (mapMarker) {
-        mapMarker.setPosition(marker)
+    if (map && marker && markerLibrary) {
+      const { AdvancedMarkerElement } = markerLibrary
+
+      if (advancedMarker) {
+        // Update existing marker position
+        advancedMarker.position = marker
       } else {
-        const newMarker = new window.google.maps.Marker({
-          position: marker,
+        // Create new Advanced Marker
+        const newMarker = new AdvancedMarkerElement({
           map,
-          draggable: true,
-          animation: window.google.maps.Animation.DROP,
+          position: marker,
+          gmpDraggable: true, // Note: different property name for Advanced Markers
+          title: "Project Location",
         })
 
+        // Add dragend listener
         newMarker.addListener("dragend", (e) => {
           onMarkerDragEnd?.({
             lat: e.latLng.lat(),
@@ -73,13 +96,14 @@ function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapTy
           })
         })
 
-        setMapMarker(newMarker)
+        setAdvancedMarker(newMarker)
       }
-    } else if (mapMarker && !marker) {
-      mapMarker.setMap(null)
-      setMapMarker(null)
+    } else if (advancedMarker && !marker) {
+      // Remove marker
+      advancedMarker.map = null
+      setAdvancedMarker(null)
     }
-  }, [map, marker, mapMarker, onMarkerDragEnd])
+  }, [map, marker, markerLibrary, advancedMarker, onMarkerDragEnd])
 
   // Center map when marker changes
   useEffect(() => {
@@ -91,33 +115,84 @@ function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapTy
   return <div ref={ref} className="w-full h-full" />
 }
 
-// Search Box Component
+// Search Box Component with New Places Autocomplete
 function SearchBox({ onPlaceSelect, map }) {
   const inputRef = useRef(null)
   const autocompleteRef = useRef(null)
 
   useEffect(() => {
-    if (map && inputRef.current && window.google && !autocompleteRef.current) {
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-        fields: ["geometry", "formatted_address", "name"],
-      })
+    const initAutocomplete = async () => {
+      if (map && inputRef.current && window.google && !autocompleteRef.current) {
+        try {
+          // Try new Places API first
+          const { PlaceAutocompleteElement } = await window.google.maps.importLibrary("places")
+          
+          // Create autocomplete element programmatically
+          const autocomplete = new PlaceAutocompleteElement({
+            componentRestrictions: { country: [] }, // No country restriction
+          })
+          
+          // Style the autocomplete input to match our design
+          Object.assign(autocomplete.style, {
+            width: '100%',
+            border: 'none',
+            outline: 'none',
+            fontSize: '14px',
+            padding: '0',
+          })
 
-      autocompleteRef.current.addListener("place_changed", () => {
-        const place = autocompleteRef.current.getPlace()
-        if (place.geometry && place.geometry.location) {
-          onPlaceSelect?.({
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-            address: place.formatted_address || place.name,
+          // Replace input with autocomplete element
+          inputRef.current.parentNode.replaceChild(autocomplete, inputRef.current)
+          inputRef.current = autocomplete
+
+          // Listen for place selection
+          autocomplete.addEventListener('gmp-placeselect', async (event) => {
+            const place = event.place
+            
+            if (place) {
+              await place.fetchFields({
+                fields: ['location', 'formattedAddress', 'displayName'],
+              })
+
+              if (place.location) {
+                onPlaceSelect?.({
+                  lat: place.location.lat(),
+                  lng: place.location.lng(),
+                  address: place.formattedAddress || place.displayName,
+                })
+              }
+            }
+          })
+
+          autocompleteRef.current = autocomplete
+        } catch (err) {
+          console.warn("New Places API not available, falling back to legacy API:", err)
+          
+          // Fallback to legacy Autocomplete if new API fails
+          autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+            fields: ["geometry", "formatted_address", "name"],
+          })
+
+          autocompleteRef.current.addListener("place_changed", () => {
+            const place = autocompleteRef.current.getPlace()
+            if (place.geometry && place.geometry.location) {
+              onPlaceSelect?.({
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng(),
+                address: place.formatted_address || place.name,
+              })
+            }
           })
         }
-      })
+      }
     }
+
+    initAutocomplete()
   }, [map, onPlaceSelect])
 
   return (
     <div className="relative">
-      <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+      <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
       <input
         ref={inputRef}
         type="text"
@@ -317,14 +392,14 @@ export default function ProjectLocationMap({ projectId }) {
 
       {/* Search Box */}
       <div className="mb-4">
-        <Wrapper apiKey={apiKey} libraries={["places"]} render={MapLoadingStatus}>
+        <Wrapper apiKey={apiKey} libraries={["places", "marker"]} render={MapLoadingStatus}>
           <SearchBox onPlaceSelect={handlePlaceSelect} map={map} />
         </Wrapper>
       </div>
 
       {/* Map Container */}
       <div className="relative mb-4">
-        <Wrapper apiKey={apiKey} libraries={["places"]} render={MapLoadingStatus}>
+        <Wrapper apiKey={apiKey} libraries={["places", "marker"]} render={MapLoadingStatus}>
           <div className="h-96 rounded-lg overflow-hidden border-2 border-gray-200">
             <MapComponent
               center={marker || defaultCenter}
