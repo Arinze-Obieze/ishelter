@@ -115,85 +115,65 @@ function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapTy
   return <div ref={ref} className="w-full h-full" />
 }
 
-// Search Box Component with New Places Autocomplete
-function SearchBox({ onPlaceSelect, map }) {
+// Search Box Component - Using Legacy Autocomplete (More Reliable)
+function SearchBox({ onPlaceSelect }) {
   const inputRef = useRef(null)
   const autocompleteRef = useRef(null)
 
   useEffect(() => {
-    const initAutocomplete = async () => {
-      if (map && inputRef.current && window.google && !autocompleteRef.current) {
+    const initAutocomplete = () => {
+      if (inputRef.current && window.google?.maps?.places && !autocompleteRef.current) {
+        console.log("=== Initializing Legacy Autocomplete ===")
+        
         try {
-          // Try new Places API first
-          const { PlaceAutocompleteElement } = await window.google.maps.importLibrary("places")
-          
-          // Create autocomplete element programmatically
-          const autocomplete = new PlaceAutocompleteElement({
-            componentRestrictions: { country: [] }, // No country restriction
-          })
-          
-          // Style the autocomplete input to match our design
-          Object.assign(autocomplete.style, {
-            width: '100%',
-            border: 'none',
-            outline: 'none',
-            fontSize: '14px',
-            padding: '0',
-          })
-
-          // Replace input with autocomplete element
-          inputRef.current.parentNode.replaceChild(autocomplete, inputRef.current)
-          inputRef.current = autocomplete
-
-          // Listen for place selection
-          autocomplete.addEventListener('gmp-placeselect', async (event) => {
-            const place = event.place
-            
-            if (place) {
-              await place.fetchFields({
-                fields: ['location', 'formattedAddress', 'displayName'],
-              })
-
-              if (place.location) {
-                onPlaceSelect?.({
-                  lat: place.location.lat(),
-                  lng: place.location.lng(),
-                  address: place.formattedAddress || place.displayName,
-                })
-              }
-            }
-          })
-
-          autocompleteRef.current = autocomplete
-        } catch (err) {
-          console.warn("New Places API not available, falling back to legacy API:", err)
-          
-          // Fallback to legacy Autocomplete if new API fails
-          autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+          // Create legacy Autocomplete
+          const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
             fields: ["geometry", "formatted_address", "name"],
           })
-
-          autocompleteRef.current.addListener("place_changed", () => {
-            const place = autocompleteRef.current.getPlace()
+          
+          console.log("Legacy Autocomplete created:", autocomplete)
+          
+          // Listen for place selection
+          autocomplete.addListener("place_changed", () => {
+            console.log("=== place_changed event fired ===")
+            const place = autocomplete.getPlace()
+            console.log("Place object:", place)
+            
             if (place.geometry && place.geometry.location) {
-              onPlaceSelect?.({
+              const locationData = {
                 lat: place.geometry.location.lat(),
                 lng: place.geometry.location.lng(),
                 address: place.formatted_address || place.name,
-              })
+              }
+              console.log("Calling onPlaceSelect with:", locationData)
+              onPlaceSelect?.(locationData)
+            } else {
+              console.error("No geometry in place object")
             }
           })
+          
+          autocompleteRef.current = autocomplete
+          console.log("=== Legacy Autocomplete initialization complete ===")
+        } catch (err) {
+          console.error("Error initializing Autocomplete:", err)
         }
       }
     }
 
-    initAutocomplete()
-  }, [map, onPlaceSelect])
+    // Wait for Google Maps to be loaded
+    if (window.google?.maps?.places) {
+      initAutocomplete()
+    } else {
+      // Retry after a short delay if not loaded yet
+      const timer = setTimeout(initAutocomplete, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [onPlaceSelect])
 
   return (
     <div className="relative">
       <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
-      <input
+      <input 
         ref={inputRef}
         type="text"
         placeholder="Search for a location..."
@@ -244,7 +224,7 @@ export default function ProjectLocationMap({ projectId }) {
   const [mapType, setMapType] = useState("hybrid")
   const [hasChanges, setHasChanges] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [map, setMap] = useState(null)
+  const mapRef = useRef(null) // Use ref instead of state to avoid stale closures
   const [currentUser, setCurrentUser] = useState(null)
 
   // Default center: Lagos, Nigeria
@@ -279,6 +259,14 @@ export default function ProjectLocationMap({ projectId }) {
     return () => unsubscribe()
   }, [projectId])
 
+  // Handle map load - use ref to always have current map instance
+  const handleMapLoad = useCallback((map) => {
+    console.log("=== Map loaded ===")
+    console.log("Map instance:", map)
+    mapRef.current = map
+    console.log("mapRef.current set:", !!mapRef.current)
+  }, [])
+
   // Handle map click
   const handleMapClick = useCallback((location) => {
     setMarker(location)
@@ -294,12 +282,29 @@ export default function ProjectLocationMap({ projectId }) {
     reverseGeocode(location)
   }, [])
 
-  // Handle place select from search
+  // Handle place select from search - NO dependencies, uses ref
   const handlePlaceSelect = useCallback((place) => {
-    setMarker({ lat: place.lat, lng: place.lng })
+    console.log("=== handlePlaceSelect called ===")
+    console.log("Place data:", place)
+    console.log("mapRef.current exists:", !!mapRef.current)
+    
+    const newMarker = { lat: place.lat, lng: place.lng }
+    console.log("New marker:", newMarker)
+    
+    setMarker(newMarker)
     setAddress(place.address || "")
     setHasChanges(true)
-  }, [])
+    
+    // Use ref to get current map instance - this solves the stale closure issue!
+    if (mapRef.current) {
+      console.log("Attempting to pan map to:", newMarker)
+      mapRef.current.panTo(newMarker)
+      mapRef.current.setZoom(15)
+      console.log("Map pan and zoom completed")
+    } else {
+      console.error("Map ref is null!")
+    }
+  }, []) // Empty dependency array - uses ref instead
 
   // Reverse geocode
   const reverseGeocode = async (location) => {
@@ -328,7 +333,7 @@ export default function ProjectLocationMap({ projectId }) {
           lat: marker.lat,
           lng: marker.lng,
           address: address || "",
-          zoom: map?.getZoom() || 15,
+          zoom: mapRef.current?.getZoom() || 15,
           mapType: mapType,
           setBy: currentUser.uid,
           setAt: serverTimestamp(),
@@ -357,9 +362,9 @@ export default function ProjectLocationMap({ projectId }) {
 
   // Center on marker
   const handleCenterOnMarker = () => {
-    if (map && marker) {
-      map.panTo(marker)
-      map.setZoom(15)
+    if (mapRef.current && marker) {
+      mapRef.current.panTo(marker)
+      mapRef.current.setZoom(15)
     }
   }
 
@@ -393,7 +398,7 @@ export default function ProjectLocationMap({ projectId }) {
       {/* Search Box */}
       <div className="mb-4">
         <Wrapper apiKey={apiKey} libraries={["places", "marker"]} render={MapLoadingStatus}>
-          <SearchBox onPlaceSelect={handlePlaceSelect} map={map} />
+          <SearchBox onPlaceSelect={handlePlaceSelect} />
         </Wrapper>
       </div>
 
@@ -408,7 +413,7 @@ export default function ProjectLocationMap({ projectId }) {
               marker={marker}
               onMarkerDragEnd={handleMarkerDragEnd}
               mapType={mapType}
-              onMapLoad={setMap}
+              onMapLoad={handleMapLoad}
             />
           </div>
         </Wrapper>
