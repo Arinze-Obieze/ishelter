@@ -1,4 +1,4 @@
-"use client";
+// "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
@@ -33,7 +33,7 @@ export const PersonalProjectsProvider = ({ children }) => {
     return () => unsubscribeAuth();
   }, []);
 
-  // ✅ Fetch projects
+  // ✅ Fetch projects with project manager resolution
   useEffect(() => {
     if (!user) {
       setProjects([]);
@@ -49,24 +49,29 @@ export const PersonalProjectsProvider = ({ children }) => {
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
-        // Process each project and resolve references
+        // Process each project and resolve project manager
         const projectPromises = snapshot.docs.map(async (docSnapshot) => {
           const data = docSnapshot.data();
           
-          // Resolve projectManager reference if it exists
-          let managerName = 'N/A';
+          // Resolve projectManager reference to get manager details
+          let managerName = 'Project Manager';
+          let managerEmail = '';
+          let managerId = '';
+          
           if (data.projectManager && typeof data.projectManager === 'object' && data.projectManager.path) {
             try {
               const managerDoc = await getDoc(data.projectManager);
               if (managerDoc.exists()) {
                 const managerData = managerDoc.data();
-                managerName = managerData.name || managerData.email || 'Unknown';
+                managerName = managerData.name || managerData.displayName || managerData.email || 'Project Manager';
+                managerEmail = managerData.email || '';
+                managerId = managerDoc.id;
               }
             } catch (err) {
-              console.error("Error fetching manager:", err);
+              console.error("Error fetching project manager:", err);
+              // Use fallback values if permission denied
+              managerName = 'Project Manager';
             }
-          } else if (typeof data.projectManager === 'string') {
-            managerName = data.projectManager;
           }
 
           return {
@@ -75,9 +80,14 @@ export const PersonalProjectsProvider = ({ children }) => {
             shortDescription: data.shortDescription || '',
             projectStatus: data.projectStatus || 'N/A',
             projectManager: managerName,
+            projectManagerEmail: managerEmail,
+            projectManagerId: managerId,
+            projectManagerRef: data.projectManager, // Keep the reference
             startDate: data.startDate || 'N/A',
             initialBudget: data.initialBudget || 'N/A',
-           status: data.status
+            status: data.status,
+            projectAddress: data.projectAddress || '',
+            hasLocation: !!data.projectLocation
           };
         });
 
@@ -89,9 +99,7 @@ export const PersonalProjectsProvider = ({ children }) => {
       (err) => {
         console.error("Firestore error:", err);
         if (err.code === "permission-denied") {
-          setError(
-            "You don't have permission to view projects. Please contact an administrator."
-          );
+          setError("You don't have permission to view projects. Please contact an administrator.");
           setProjects([]);
         } else {
           setError(err.message);
@@ -104,9 +112,7 @@ export const PersonalProjectsProvider = ({ children }) => {
   }, [user]);
 
   return (
-    <PersonalProjectsContext.Provider
-      value={{ projects, loading, error }}
-    >
+    <PersonalProjectsContext.Provider value={{ projects, loading, error }}>
       {children}
     </PersonalProjectsContext.Provider>
   );
@@ -115,9 +121,7 @@ export const PersonalProjectsProvider = ({ children }) => {
 export const usePersonalProjects = () => {
   const context = useContext(PersonalProjectsContext);
   if (!context) {
-    throw new Error(
-      "usePersonalProjects must be used within a PersonalProjectsProvider"
-    );
+    throw new Error("usePersonalProjects must be used within a PersonalProjectsProvider");
   }
   return context;
 };

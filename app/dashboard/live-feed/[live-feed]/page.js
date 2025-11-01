@@ -1,138 +1,199 @@
-import FeedTimeline from "@/components/Dashboard/LiveFeed/Id/FeedTimeline"
-import FilterTabs from "@/components/Dashboard/LiveFeed/Id/FilterTabs"
+'use client'
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import { useLiveFeed } from "@/contexts/LiveFeedContext"
+import { usePersonalProjects } from "@/contexts/PersonalProjectsContext"
 import Header from "@/components/Dashboard/LiveFeed/Id/Headers"
+import FilterTabs from "@/components/Dashboard/LiveFeed/Id/FilterTabs"
+import FeedTimeline from "@/components/Dashboard/LiveFeed/Id/FeedTimeline"
 import LiveFeedSection from "@/components/Dashboard/LiveFeed/Id/LiveFeedSection"
-import { AiFillClockCircle } from "react-icons/ai"
+import ClientLocationView from "@/components/Dashboard/LiveFeed/Id/ClientLocationView"
+import { toast } from "react-hot-toast"
 
-const feedData = [
-  {
-    id: 1,
-    date: "June 15, 2023",
-    time: "2:45 PM",
-    title: "Roofing materials delivered and staged for installation",
-    image: "/construction-roofing-materials.jpg",
-    type: "PHOTO",
-    person: "Site Manager",
-    personInitial: "JD",
-    role: "Site Manager",
-  },
-  {
-    id: 2,
-    date: "June 15, 2023",
-    time: "11:30 AM",
-    title: "Plumbing inspection completed - passed all requirements",
-    image: "/plumbing-inspection.png",
-    type: "PHOTO",
-    person: "Inspector",
-    personInitial: "AS",
-    role: "Inspector",
-  },
-  {
-    id: 3,
-    date: "June 14, 2023",
-    time: "3:15 PM",
-    title: "Foundation concrete pouring completed for east wing",
-    image: "/foundation-concrete-pouring.jpg",
-    type: "VIDEO",
-    person: "Site Manager",
-    personInitial: "MJ",
-    role: "Site Manager",
-  },
-  {
-    id: 4,
-    date: "June 14, 2023",
-    time: "10:00 AM",
-    title: "Electrical wiring installation begun on first floor",
-    image: "/electrical-wiring-installation.png",
-    type: "PHOTO",
-    person: "Electrician",
-    personInitial: "JD",
-    role: "Electrician",
-  },
-  {
-    id: 5,
-    date: "June 12, 2023",
-    time: "4:30 PM",
-    title: "Wall framing completed on main level ahead of schedule",
-    image: "/wall-framing-construction.jpg",
-    type: "PHOTO",
-    person: "Lead Carpenter",
-    personInitial: "AS",
-    role: "Lead Carpenter",
-  },
-]
+export default function LiveFeedDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const projectId = params['live-feed']
 
-export default function Home() {
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
+  const { projects, loading: projectsLoading } = usePersonalProjects()
+  const { updates, subscribeToUpdates } = useLiveFeed()
 
-      {/* Desktop: Live Feed Section */}
-      <div className="hidden lg:block">
-        <LiveFeedSection />
-      </div>
+  const [projectData, setProjectData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState("all")
+  const [dateFilter, setDateFilter] = useState("all")
+  const [filteredUpdates, setFilteredUpdates] = useState([])
 
-      {/* Mobile + Desktop Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <FilterTabs />
+  // Fetch project data
+  useEffect(() => {
+    if (!projectId) return
 
-        {/* Mobile Timeline View */}
-        <div className="lg:hidden mt-8">
-          <FeedTimeline feedData={feedData} />
-        </div>
+    const fetchProject = async () => {
+      try {
+        setLoading(true)
+        
+        const projectRef = doc(db, "projects", projectId)
+        const projectSnap = await getDoc(projectRef)
 
-        {/* Desktop Grid View */}
-        <div className="hidden lg:block mt-8">
-          <div className="space-y-12">
-            {["June 15, 2023", "June 14, 2023", "June 12, 2023"].map((dateGroup) => (
-              <div key={dateGroup}>
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                  <h3 className="text-lg font-semibold text-foreground">{dateGroup}</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                  {feedData
-                    .filter((item) => item.date === dateGroup)
-                    .map((item) => (
-                      <FeedCard key={item.id} item={item} />
-                    ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+        if (!projectSnap.exists()) {
+          toast.error("Project not found")
+          router.push("/dashboard/live-feed")
+          return
+        }
 
-function FeedCard({ item }) {
-  return (
-    <div className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-      <div className="relative">
-        <img src={item.image || "/placeholder.svg"} alt={item.title} className="w-full h-48 object-cover" />
-        <div className="absolute top-3 right-3 bg-gray-800 text-white px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1">
-          <span>■</span> {item.type}
-        </div>
-      </div>
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <AiFillClockCircle className="w-4 h-4 text-orange-500" />
-          <span className="text-sm text-orange-600 font-medium">{item.time}</span>
-        </div>
-        <h3 className="font-semibold text-foreground mb-3 line-clamp-2">{item.title}</h3>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center">
-              <span className="text-xs font-semibold text-orange-600">{item.personInitial}</span>
+        const data = projectSnap.data()
+        setProjectData({ id: projectSnap.id, ...data })
+        setLoading(false)
+      } catch (err) {
+        if (err.code === 'permission-denied') {
+          toast.error("You don't have access to this project")
+        } else {
+          toast.error("Failed to load project")
+        }
+        router.push("/dashboard/live-feed")
+      }
+    }
+
+    fetchProject()
+  }, [projectId, router])
+
+  // Subscribe to live updates
+  useEffect(() => {
+    if (!projectId) return
+    const unsubscribe = subscribeToUpdates(projectId)
+    return () => unsubscribe && unsubscribe()
+  }, [projectId, subscribeToUpdates])
+
+  // Filter updates based on active tab and date range
+  useEffect(() => {
+    let filtered = [...updates]
+
+    // Date filter
+    if (dateFilter !== "all") {
+      filtered = filterByDateRange(filtered, dateFilter)
+    }
+
+    // Content type filter
+    if (activeTab === "photos") {
+      filtered = filtered.filter(u => 
+        u.media?.some(m => m.contentType.startsWith("image"))
+      )
+    } else if (activeTab === "videos") {
+      filtered = filtered.filter(u => 
+        u.media?.some(m => m.contentType.startsWith("video"))
+      )
+    }
+
+    setFilteredUpdates(filtered)
+  }, [updates, activeTab, dateFilter])
+
+  // Filter by date range helper
+  const filterByDateRange = (updates, range) => {
+    const now = new Date()
+    const filterDate = new Date()
+    
+    switch(range) {
+      case "today":
+        filterDate.setHours(0, 0, 0, 0)
+        break
+      case "7days":
+        filterDate.setDate(now.getDate() - 7)
+        break
+      case "30days":
+        filterDate.setDate(now.getDate() - 30)
+        break
+      case "3months":
+        filterDate.setMonth(now.getMonth() - 3)
+        break
+      case "1year":
+        filterDate.setFullYear(now.getFullYear() - 1)
+        break
+      default:
+        return updates
+    }
+    
+    return updates.filter(update => {
+      if (!update.createdAt?.seconds) return false
+      const updateDate = new Date(update.createdAt.seconds * 1000)
+      return updateDate >= filterDate
+    })
+  }
+
+  // Loading state
+  if (loading || projectsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-64 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-48"></div>
             </div>
-            <span className="text-sm text-muted-foreground">{item.person}</span>
           </div>
-          <a href="#" className="text-orange-600 text-sm font-medium hover:underline">
-            {item.type === "VIDEO" ? "Play video" : "Details"}
-          </a>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-96 bg-gray-200 rounded"></div>
+          </div>
         </div>
       </div>
+    )
+  }
+
+  if (!projectData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Project Data</h2>
+          <p className="text-gray-600">Unable to load project information.</p>
+          <button 
+            onClick={() => router.push("/dashboard/live-feed")}
+            className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-orange-700"
+          >
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Get latest video for LiveFeedSection
+  const latestVideo = updates
+    .filter(u => u.media?.some(m => m.contentType.startsWith("video")))
+    .sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds)[0]
+
+  const hasLocation = !!projectData.projectLocation
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <Header projectData={projectData} />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Filter Tabs */}
+        <FilterTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          hasLocation={hasLocation}
+          dateFilter={dateFilter}
+          onDateFilterChange={setDateFilter}
+        />
+
+        {/* Latest Video Section - Only if video exists and not on Location tab */}
+        {latestVideo && activeTab !== "location" && (
+          <LiveFeedSection update={latestVideo} />
+        )}
+
+        {/* Content based on active tab */}
+        {activeTab === "location" ? (
+          <ClientLocationView projectId={projectId} projectData={projectData} />
+        ) : (
+          <FeedTimeline updates={filteredUpdates} />
+        )}
+      </main>
     </div>
   )
 }

@@ -2,9 +2,9 @@ import ProjectsGrid from "@/components/Dashboard/LiveFeed/Grid";
 import Header from "@/components/Dashboard/LiveFeed/Header";
 
 
-export default function Home() {
+export default function LiveFeedHome() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen md:max-w-7xl md:mx-auto">
       <Header />
       <main className="px-4 py-8 md:px-6 md:py-12">
         <ProjectsGrid />

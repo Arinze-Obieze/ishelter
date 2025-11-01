@@ -2,7 +2,7 @@ import { MdFiberManualRecord } from "react-icons/md"
 
 export default function Header() {
   return (
-    <header className="px-4 py-6 md:px-6 md:py-8">
+    <header className="px-4 py-6 md:px-6 md:py-8  mx-auto bg-white">
       <div className="mx-auto flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         {/* Desktop Stats */}
         <div className="hidden gap-8 bg-white md:w-full  md:p-8 md:flex md:justify-between md:mt-6">

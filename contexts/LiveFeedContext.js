@@ -12,7 +12,7 @@ const LiveFeedContext = createContext()
 export function LiveFeedProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null)
   
-  // Get current authenticated user
+  // Get current authenticated user (UNCHANGED)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -57,15 +57,17 @@ export function LiveFeedProvider({ children }) {
     
     return () => unsubscribe()
   }, [])
+  
   const [updates, setUpdates] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Subscribe to live updates for a project using DocumentReferences in project doc
+  // Subscribe to live updates - SAFE VERSION (maintains backward compatibility)
   const subscribeToUpdates = useCallback((projectId) => {
     if (!projectId) return () => {}
     const projectDocRef = doc(db, "projects", projectId)
     let unsub = null
+    
     // Listen to project doc for liveFeedRefs
     unsub = onSnapshot(projectDocRef, async (projectSnap) => {
       const refs = projectSnap.data()?.liveFeedRefs || []
@@ -73,11 +75,13 @@ export function LiveFeedProvider({ children }) {
         setUpdates([])
         return
       }
+      
       // Fetch all referenced update docs
       const promises = refs.map(async (refObj) => {
         try {
           const updateSnap = await getDoc(refObj)
           if (updateSnap.exists()) {
+            // Return the EXACT SAME structure as before
             return { id: updateSnap.id, ...updateSnap.data() }
           }
         } catch (err) {
@@ -85,14 +89,43 @@ export function LiveFeedProvider({ children }) {
         }
         return null
       })
+      
       const updatesArr = (await Promise.all(promises)).filter(u => u !== null)
       // Sort by createdAt desc
       setUpdates(updatesArr.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds))
     })
+    
     return () => unsub && unsub()
   }, [])
 
-  // Upload files to Firebase Storage and return array of metadata
+  // NEW: Get project manager info for a specific update (optional - doesn't break existing code)
+  const getProjectManagerForUpdate = useCallback(async (update) => {
+    if (!update || !update.projectId) return null
+    
+    try {
+      const projectDoc = await getDoc(doc(db, "projects", update.projectId))
+      if (projectDoc.exists()) {
+        const projectData = projectDoc.data()
+        if (projectData.projectManager) {
+          const managerDoc = await getDoc(projectData.projectManager)
+          if (managerDoc.exists()) {
+            const managerData = managerDoc.data()
+            return {
+              id: managerDoc.id,
+              name: managerData.name || managerData.displayName || 'Project Manager',
+              email: managerData.email || '',
+              photoURL: managerData.photoURL || ''
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching project manager:", err)
+    }
+    return null
+  }, [])
+
+  // Upload files to Firebase Storage (UNCHANGED)
   const uploadFiles = async (files, projectId, onProgress) => {
     const uploaded = []
     const toastId = toast.loading(`Uploading ${files.length} file(s)...`)
@@ -137,7 +170,7 @@ export function LiveFeedProvider({ children }) {
     }
   }
 
-  // Post a new update and add its reference to the project doc
+  // Post a new update (UNCHANGED)
   const postUpdate = async ({ projectId, description, updateType, media }) => {
     if (!currentUser) {
       toast.error("You must be logged in to post updates")
@@ -185,7 +218,7 @@ export function LiveFeedProvider({ children }) {
     }
   }
 
-  // Delete an update and decrement type count
+  // Delete an update (UNCHANGED)
   const deleteUpdate = async (updateId, projectId, updateType) => {
     const toastId = toast.loading("Deleting update...")
     
@@ -202,7 +235,7 @@ export function LiveFeedProvider({ children }) {
       // Delete the update document
       await deleteDoc(updateDocRef)
 
-      // Check if count icounts 0 and remove type if needed
+      // Check if count is 0 and remove type if needed
       const projectSnap = await getDoc(projectDocRef)
       const counts = projectSnap.data()?.updateTypeCounts || {}
       if (counts[updateType] === 0) {
@@ -220,7 +253,7 @@ export function LiveFeedProvider({ children }) {
     }
   }
 
-  // Get update types for a project
+  // Get update types (UNCHANGED)
   const getUpdateTypes = async (projectId) => {
     try {
       const projectDocRef = doc(db, "projects", projectId)
@@ -242,7 +275,8 @@ export function LiveFeedProvider({ children }) {
       postUpdate, 
       uploadFiles,
       deleteUpdate,
-      getUpdateTypes
+      getUpdateTypes,
+      getProjectManagerForUpdate // NEW: Optional function for getting manager info
     }}>
       {children}
     </LiveFeedContext.Provider>

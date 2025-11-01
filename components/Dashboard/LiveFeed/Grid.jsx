@@ -169,7 +169,7 @@ export default function ProjectsGrid() {
   if (loading || projectsLoading) {
     return (
       <div className="mx-auto max-w-7xl">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900 md:mb-12 md:text-4xl">
+        <h1 className="mb-8 md:text-xl font-bold text-gray-900 md:mb-12 text-md">
           Your Projects, Live
         </h1>
         <div className="grid gap-6 md:grid-cols-2 md:gap-8">
