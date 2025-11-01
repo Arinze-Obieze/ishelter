@@ -1,5 +1,4 @@
 'use client'
-import { PersonalProjectsProvider, usePersonalProjects } from '@/contexts/PersonalProjectsContext';
 import ManagerCard from '@/components/Dashboard/ManagerCard';
 import StatsOverview from '@/components/Dashboard/StatsOverview';
 import Projects from '@/components/Dashboard/Projects';
@@ -7,7 +6,6 @@ import Projects from '@/components/Dashboard/Projects';
 
 const Dashboard = () => {
   return (
-    <PersonalProjectsProvider>
       <>
         <StatsOverview/>
 
@@ -26,7 +24,6 @@ const Dashboard = () => {
         </div>
 
       </>
-    </PersonalProjectsProvider>
   )
 }
 
