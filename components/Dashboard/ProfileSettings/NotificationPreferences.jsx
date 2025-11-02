@@ -12,7 +12,8 @@ export default function NotificationPreferences() {
     marketing: false,
   })
 
-  const toggleNotification = (key) => {
+  const toggleNotification = (key, disabled = false) => {
+    if (disabled) return
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
@@ -21,21 +22,19 @@ export default function NotificationPreferences() {
       key: "emailInvoices",
       label: "Email Alerts for New Invoices",
       desc: "Receive an email when a new invoice is generated",
-    },
-    {
-      key: "smsUpdates",
-      label: "SMS Updates for Project Progress",
-      desc: "Get text messages about significant project milestones",
+      disabled: true,
     },
     {
       key: "approvalRequests",
       label: "Approval Request Notifications",
       desc: "Notifications when your approval is needed for project items",
+      disabled: true,
     },
     {
       key: "marketing",
       label: "Marketing Communications",
       desc: "Updates about SHELTER services, news, and promotions",
+      disabled: false,
     },
   ]
 
@@ -50,26 +49,39 @@ export default function NotificationPreferences() {
       </p>
 
       <div className="space-y-4 mb-8">
-        {notificationItems.map(({ key, label, desc }) => (
+        {notificationItems.map(({ key, label, desc, disabled }) => (
           <div
             key={key}
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+            className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-lg transition ${
+              disabled ? "bg-gray-50" : "bg-gray-50 hover:bg-gray-100"
+            }`}
           >
             <div>
               <p className="font-medium text-gray-900">{label}</p>
               <p className="text-sm text-gray-600">{desc}</p>
+              {disabled && (
+                <p className="text-xs text-gray-500 italic mt-1">
+                  This notification cannot be disabled
+                </p>
+              )}
             </div>
-            <label className="flex items-center cursor-pointer flex-shrink-0">
+            <label
+              title={disabled ? "This setting is required" : ""}
+              className={`flex items-center flex-shrink-0 ${
+                disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"
+              }`}
+            >
               <input
                 type="checkbox"
                 checked={notifications[key]}
-                onChange={() => toggleNotification(key)}
+                onChange={() => toggleNotification(key, disabled)}
                 className="sr-only peer"
+                disabled={disabled}
               />
               <div
-                className={`relative w-11 h-6 rounded-full peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 transition ${
+                className={`relative w-11 h-6 rounded-full transition ${
                   notifications[key] ? "bg-primary" : "bg-gray-300"
-                }`}
+                } ${disabled ? "opacity-80" : ""}`}
               >
                 <div
                   className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${

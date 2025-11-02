@@ -45,7 +45,7 @@ const Header = () => {
     { name: 'Live Feed', href: '/dashboard/live-feed', icon: <LuVideo className="mr-1 text-base" /> },
     { name: 'Documents', href: '/dashboard/documents', icon: <IoDocumentTextOutline className="mr-1 text-base" /> },
     { name: 'Billing', href: '/dashboard/billing', icon: <FiCreditCard className="mr-1 text-base" /> },
-    { name: 'Chat', href: '/dashboard/chat', icon: <FaRegCommentDots className="mr-1 text-base" /> },
+    // { name: 'Chat', href: '/dashboard/chat', icon: <FaRegCommentDots className="mr-1 text-base" /> },
   ];
 
   return (

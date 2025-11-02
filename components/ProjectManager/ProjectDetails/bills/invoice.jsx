@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { FaPlus, FaEllipsisV, FaTimes, FaEdit, FaTrash } from "react-icons/fa"
+import toast from "react-hot-toast"
+import { FaPlus, FaEllipsisV, FaTimes, FaEdit, FaTrash, FaCreditCard, FaUniversity } from "react-icons/fa"
 
 export default function InvoicesSection({ 
   invoices, 
@@ -24,7 +25,11 @@ export default function InvoicesSection({
     amount: "",
     description: "",
     dueDate: "",
-    paymentLink: ""
+    paymentMethod: "link", 
+    paymentLink: "",
+    accountName: "",
+    accountNumber: "",
+    bankName: ""
   })
 
   // Process invoices for display
@@ -45,30 +50,58 @@ export default function InvoicesSection({
   const handleCreateInvoice = async (e) => {
     e.preventDefault()
     
-    if (!newInvoice.amount || !newInvoice.dueDate || !newInvoice.paymentLink) {
-      alert("Please fill in all required fields")
+    // Validate required fields based on payment method
+    if (!newInvoice.amount || !newInvoice.dueDate) {
+      toast.error("Please fill in all required fields")
+      return
+    }
+
+    if (newInvoice.paymentMethod === "link" && !newInvoice.paymentLink) {
+      toast.error("Please provide a payment link")
+      return
+    }
+
+    if (newInvoice.paymentMethod === "account" && (!newInvoice.accountName || !newInvoice.accountNumber || !newInvoice.bankName)) {
+      toast.error("Please fill in all account details")
       return
     }
     
     setCreating(true)
     try {
-      const result = await onCreateInvoice({
+      const invoiceData = {
         amount: Number(newInvoice.amount),
         description: newInvoice.description,
         dueDate: newInvoice.dueDate,
-        paymentLink: newInvoice.paymentLink
-      })
+        paymentMethod: newInvoice.paymentMethod,
+        ...(newInvoice.paymentMethod === "link" && { paymentLink: newInvoice.paymentLink }),
+        ...(newInvoice.paymentMethod === "account" && {
+          accountName: newInvoice.accountName,
+          accountNumber: newInvoice.accountNumber,
+          bankName: newInvoice.bankName
+        })
+      }
+      
+      const result = await onCreateInvoice(invoiceData)
       
       if (result.success) {
-        alert("Invoice created successfully and emails sent to clients!")
+        toast.success("Invoice created successfully and emails sent to clients!")
         setShowCreateModal(false)
-        setNewInvoice({ amount: "", description: "", dueDate: "", paymentLink: "" })
+        setNewInvoice({ 
+          amount: "", 
+          description: "", 
+          dueDate: "", 
+          paymentMethod: "link",
+          paymentLink: "",
+          accountName: "",
+          accountNumber: "",
+          bankName: ""
+        })
       } else {
         alert(`Error: ${result.error}`)
       }
     } catch (error) {
       console.error("Error creating invoice:", error)
-      alert("Failed to create invoice")
+      toast.error("Failed to create invoice")
     } finally {
       setCreating(false)
     }
@@ -79,13 +112,13 @@ export default function InvoicesSection({
     try {
       const result = await onUpdateInvoiceStatus(invoiceId, newStatus)
       if (result.success) {
-        alert("Invoice status updated successfully!")
+        toast.success("Invoice status updated successfully!")
       } else {
-        alert(`Error: ${result.error}`)
+        toast.error(`Error: ${result.error}`)
       }
     } catch (error) {
       console.error("Error updating invoice:", error)
-      alert("Failed to update invoice")
+      toast.error("Failed to update invoice")
     } finally {
       setUpdating(false)
       setShowEditModal(false)
@@ -99,13 +132,13 @@ export default function InvoicesSection({
     try {
       const result = await onDeleteInvoice(selectedInvoice.id)
       if (result.success) {
-        alert("Invoice deleted successfully!")
+        toast.success("Invoice deleted successfully!")
       } else {
-        alert(`Error: ${result.error}`)
+        toast.error(`Error: ${result.error}`)
       }
     } catch (error) {
       console.error("Error deleting invoice:", error)
-      alert("Failed to delete invoice")
+      toast.error("Failed to delete invoice")
     } finally {
       setDeleting(false)
       setShowDeleteModal(false)
@@ -121,6 +154,16 @@ export default function InvoicesSection({
   const openDeleteModal = (invoice) => {
     setSelectedInvoice(invoice)
     setShowDeleteModal(true)
+  }
+
+  const handlePaymentMethodChange = (method) => {
+    setNewInvoice({
+      ...newInvoice,
+      paymentMethod: method,
+      // Clear the other method's fields when switching
+      ...(method === "link" && { accountName: "", accountNumber: "", bankName: "" }),
+      ...(method === "account" && { paymentLink: "" })
+    })
   }
 
   return (
@@ -196,15 +239,22 @@ export default function InvoicesSection({
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${invoice.statusColor}`}>
                       {invoice.statusLabel}
                     </span>
-                    {invoice.status === "pending" && invoice.paymentLink && (
-                      <a 
-                        href={invoice.paymentLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline"
-                      >
-                        View Payment Link
-                      </a>
+                    {invoice.status === "pending" && (
+                      <div className="flex items-center gap-2">
+                        {invoice.paymentMethod === "link" && invoice.paymentLink && (
+                          <a 
+                            href={invoice.paymentLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline"
+                          >
+                            Payment Link
+                          </a>
+                        )}
+                        {invoice.paymentMethod === "account" && (
+                          <span className="text-xs text-gray-500">Bank Transfer</span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -221,6 +271,7 @@ export default function InvoicesSection({
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Amount (NGN)</th>
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date Issued</th>
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Due Date</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Payment Method</th>
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
                   </tr>
@@ -235,6 +286,9 @@ export default function InvoicesSection({
                       <td className={`py-4 px-4 text-sm ${invoice.isOverdue ? "text-red-600 font-medium" : "text-gray-600"}`}>
                         {invoice.formattedDueDate}
                       </td>
+                      <td className="py-4 px-4 text-sm text-gray-600">
+                        {invoice.paymentMethod === "link" ? "Payment Link" : "Bank Transfer"}
+                      </td>
                       <td className="py-4 px-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${invoice.statusColor}`}>
                           {invoice.statusLabel}
@@ -242,15 +296,24 @@ export default function InvoicesSection({
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
-                          {invoice.status === "pending" && invoice.paymentLink && (
-                            <a 
-                              href={invoice.paymentLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline text-sm"
-                            >
-                              Payment Link
-                            </a>
+                          {invoice.status === "pending" && (
+                            <>
+                              {invoice.paymentMethod === "link" && invoice.paymentLink && (
+                                <a 
+                                  href={invoice.paymentLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline text-sm"
+                                >
+                                  Payment Link
+                                </a>
+                              )}
+                              {invoice.paymentMethod === "account" && (
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                  Bank Details
+                                </span>
+                              )}
+                            </>
                           )}
                           <button 
                             onClick={() => openEditModal(invoice)}
@@ -282,8 +345,8 @@ export default function InvoicesSection({
       {/* Create Invoice Modal */}
       {showCreateModal && (
         <div className="fixed backdrop-overlay flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-xl font-bold text-gray-900">Create New Invoice</h3>
               <button 
                 onClick={() => setShowCreateModal(false)}
@@ -293,7 +356,7 @@ export default function InvoicesSection({
               </button>
             </div>
             
-            <form onSubmit={handleCreateInvoice}>
+            <form onSubmit={handleCreateInvoice} className="p-6">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Amount (NGN) <span className="text-red-500">*</span>
@@ -323,20 +386,6 @@ export default function InvoicesSection({
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Payment Link (Flutterwave) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="url"
-                  value={newInvoice.paymentLink}
-                  onChange={(e) => setNewInvoice({ ...newInvoice, paymentLink: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="https://flutterwave.com/pay/..."
-                  required
-                />
-              </div>
-              
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Due Date <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -348,8 +397,103 @@ export default function InvoicesSection({
                   min={new Date().toISOString().split('T')[0]}
                 />
               </div>
+
+              {/* Payment Method Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Payment Method <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentMethodChange("link")}
+                    className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg transition-all ${
+                      newInvoice.paymentMethod === "link" 
+                        ? "border-primary bg-orange-50 text-primary" 
+                        : "border-gray-300 text-gray-700 hover:border-gray-400"
+                    }`}
+                  >
+                    <FaCreditCard />
+                    <span>Payment Link</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentMethodChange("account")}
+                    className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg transition-all ${
+                      newInvoice.paymentMethod === "account" 
+                        ? "border-primary bg-orange-50 text-primary" 
+                        : "border-gray-300 text-gray-700 hover:border-gray-400"
+                    }`}
+                  >
+                    <FaUniversity />
+                    <span>Bank Transfer</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Payment Link Fields */}
+              {newInvoice.paymentMethod === "link" && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Link (Flutterwave) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={newInvoice.paymentLink}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, paymentLink: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="https://flutterwave.com/pay/..."
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Bank Account Fields */}
+              {newInvoice.paymentMethod === "account" && (
+                <div className="space-y-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Account Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newInvoice.accountName}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, accountName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Enter account name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Account Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newInvoice.accountNumber}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, accountNumber: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Enter account number"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bank Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newInvoice.bankName}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, bankName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Enter bank name"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
               
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
@@ -368,9 +512,11 @@ export default function InvoicesSection({
               </div>
             </form>
             
-            <p className="text-xs text-gray-500 mt-4">
-              * Invoice will be automatically sent to all project clients via email
-            </p>
+            <div className="px-6 pb-6">
+              <p className="text-xs text-gray-500">
+                * Invoice will be automatically sent to all project clients via email
+              </p>
+            </div>
           </div>
         </div>
       )}

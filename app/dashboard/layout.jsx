@@ -6,13 +6,13 @@ import { PersonalProjectsProvider } from "@/contexts/PersonalProjectsContext";
 import { DocumentsProvider } from '@/contexts/DocumentsContext'
 import { UserProvider } from "@/contexts/UserContext";
 import { LiveFeedProvider } from "@/contexts/LiveFeedContext";
-
+import {CurrentClientProvider} from "@/contexts/CurrentClientContext";
 
 const ProtectedLayout = withAuthProtection(function Layout({children}) {
   return (
+    <CurrentClientProvider>
     <UserProvider> 
-
-     <PersonalProjectsProvider> 
+             <PersonalProjectsProvider> 
       <LiveFeedProvider>
           <DocumentsProvider>
     <div className='bg-gray-100 min-h-screen'>
@@ -23,6 +23,8 @@ const ProtectedLayout = withAuthProtection(function Layout({children}) {
     </LiveFeedProvider>
   </PersonalProjectsProvider>
   </UserProvider>
+  </CurrentClientProvider>
+
   );
 });
 

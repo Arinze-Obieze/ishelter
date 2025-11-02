@@ -11,7 +11,7 @@ import {
   arrayUnion,
   arrayRemove,
   getDocs,
-  getDoc // Add this import
+  getDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -41,6 +41,24 @@ export const InvoiceProvider = ({ children }) => {
     };
   }, []);
 
+  // Process invoice data for consistent structure
+  const processInvoiceData = (docData) => {
+    const baseData = {
+      id: docData.id,
+      ...docData,
+      projectRef: docData.projectRef?.path,
+      createdBy: docData.createdBy?.path,
+      // Ensure backward compatibility for existing invoices
+      paymentMethod: docData.paymentMethod || 'link', // Default to 'link' for existing invoices
+      paymentLink: docData.paymentLink || null,
+      accountName: docData.accountName || null,
+      accountNumber: docData.accountNumber || null,
+      bankName: docData.bankName || null
+    };
+    
+    return baseData;
+  };
+
   // Fetch invoices for a specific project with real-time updates
   const fetchInvoices = useCallback((projectId) => {
     if (!projectId || currentProjectIdRef.current === projectId) {
@@ -67,12 +85,9 @@ export const InvoiceProvider = ({ children }) => {
       unsubscribeRef.current = onSnapshot(
         invoicesQuery, 
         (snapshot) => {
-          const invoicesData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            projectRef: doc.data().projectRef?.path,
-            createdBy: doc.data().createdBy?.path
-          }));
+          const invoicesData = snapshot.docs.map(doc => 
+            processInvoiceData({ id: doc.id, ...doc.data() })
+          );
           setInvoices(invoicesData);
           setLoading(false);
         },
@@ -100,7 +115,7 @@ export const InvoiceProvider = ({ children }) => {
     currentProjectIdRef.current = null;
   }, []);
 
-  // Create new invoice
+  // Create new invoice with support for both payment methods
   const createInvoice = useCallback(async (invoiceData, projectId) => {
     setLoading(true);
     setError(null);
@@ -108,16 +123,38 @@ export const InvoiceProvider = ({ children }) => {
       // Generate invoice number
       const invoiceNumber = await generateInvoiceNumber(projectId);
       
-      // Create invoice in invoices collection
-      const invoiceRef = await addDoc(collection(db, 'invoices'), {
-        ...invoiceData,
+      // Prepare invoice data with proper structure
+      const invoicePayload = {
+        // Core invoice fields
         invoiceNumber,
+        amount: invoiceData.amount,
+        description: invoiceData.description || '',
+        dueDate: invoiceData.dueDate,
+        status: 'pending',
+        
+        // Payment method fields (backward compatible)
+        paymentMethod: invoiceData.paymentMethod || 'link', // Default to 'link'
+        paymentLink: invoiceData.paymentLink || null,
+        accountName: invoiceData.accountName || null,
+        accountNumber: invoiceData.accountNumber || null,
+        bankName: invoiceData.bankName || null,
+        
+        // References and timestamps
         projectRef: doc(db, 'projects', projectId),
         createdBy: doc(db, 'users', invoiceData.createdBy),
-        status: 'pending',
         createdAt: new Date(),
         updatedAt: new Date()
+      };
+
+      // Remove null values for cleaner data
+      Object.keys(invoicePayload).forEach(key => {
+        if (invoicePayload[key] === null) {
+          delete invoicePayload[key];
+        }
       });
+
+      // Create invoice in invoices collection
+      const invoiceRef = await addDoc(collection(db, 'invoices'), invoicePayload);
 
       // Add invoice reference to project's projectInvoices array
       await updateDoc(doc(db, 'projects', projectId), {
@@ -125,7 +162,7 @@ export const InvoiceProvider = ({ children }) => {
       });
 
       // Send email notifications
-      await sendInvoiceEmails(invoiceData, projectId, invoiceNumber);
+      await sendInvoiceEmails(invoicePayload, projectId, invoiceNumber);
 
       setLoading(false);
       return { success: true, invoiceId: invoiceRef.id };
@@ -197,7 +234,7 @@ export const InvoiceProvider = ({ children }) => {
     }
   };
 
-  // Send email notifications to project clients
+  // Send email notifications to project clients (updated for payment methods)
   const sendInvoiceEmails = async (invoiceData, projectId, invoiceNumber) => {
     try {
       // Fetch project data to get client emails
@@ -232,6 +269,24 @@ export const InvoiceProvider = ({ children }) => {
         return { success: true, warning: 'No clients to notify' };
       }
 
+      const emailData = {
+        invoiceNumber,
+        amount: invoiceData.amount,
+        dueDate: invoiceData.dueDate,
+        description: invoiceData.description,
+        projectName: projectData.projectName,
+        clientNames: clientEmails.join(', '),
+        paymentMethod: invoiceData.paymentMethod || 'link',
+        ...(invoiceData.paymentMethod === 'link' && {
+          paymentLink: invoiceData.paymentLink
+        }),
+        ...(invoiceData.paymentMethod === 'account' && {
+          accountName: invoiceData.accountName,
+          accountNumber: invoiceData.accountNumber,
+          bankName: invoiceData.bankName
+        })
+      };
+
       // Send email via your existing API
       const response = await fetch('/api/send-email', {
         method: 'POST',
@@ -242,15 +297,7 @@ export const InvoiceProvider = ({ children }) => {
           to: clientEmails,
           subject: `New Invoice - ${projectData.projectName || 'Project'}`,
           template: 'invoice-notification',
-          data: {
-            invoiceNumber,
-            amount: invoiceData.amount,
-            dueDate: invoiceData.dueDate,
-            description: invoiceData.description,
-            paymentLink: invoiceData.paymentLink,
-            projectName: projectData.projectName,
-            clientNames: clientEmails.join(', ')
-          }
+          data: emailData
         })
       });
 
@@ -261,10 +308,43 @@ export const InvoiceProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       console.error('Error sending invoice emails:', err);
-      // Don't throw error here - invoice was created successfully
       return { success: false, error: err.message };
     }
   };
+
+  const migrateInvoices = useCallback(async (projectId) => {
+    try {
+      const invoicesQuery = query(
+        collection(db, 'invoices'),
+        where('projectRef', '==', doc(db, 'projects', projectId))
+      );
+      
+      const snapshot = await getDocs(invoicesQuery);
+      const updatePromises = [];
+      
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (!data.paymentMethod) {
+          updatePromises.push(
+            updateDoc(doc.ref, {
+              paymentMethod: 'link',
+              updatedAt: new Date()
+            })
+          );
+        }
+      });
+      
+      if (updatePromises.length > 0) {
+        await Promise.all(updatePromises);
+        console.log(`Migrated ${updatePromises.length} invoices`);
+      }
+      
+      return { success: true, migrated: updatePromises.length };
+    } catch (err) {
+      console.error('Error migrating invoices:', err);
+      return { success: false, error: err.message };
+    }
+  }, []);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -277,7 +357,8 @@ export const InvoiceProvider = ({ children }) => {
     updateInvoiceStatus,
     deleteInvoice,
     clearInvoices,
-    clearError
+    clearError,
+    migrateInvoices 
   };
 
   return (
