@@ -122,14 +122,14 @@ export default function FeedTimeline({ updates }) {
   return (
     <>
       <div className="relative">
-        <div className="absolute left-2 top-0 bottom-0 w-1 bg-orange-500"></div>
+        <div className="absolute left-2 top-0 bottom-0 w-1 bg-primary"></div>
 
         <div className="space-y-8 relative">
           {dateEntries.map(([date, items]) => (
             <div key={date}>
               <div className="relative pl-8 mb-6">
                 <div className="absolute left-0 top-0 -translate-x-1.5">
-                  <div className="w-5 h-5 bg-orange-500 rounded-full border-4 border-white shadow-md relative z-10"></div>
+                  <div className="w-5 h-5 bg-primary rounded-full border-4 border-white shadow-md relative z-10"></div>
                 </div>
 
                 {/* Date label */}
@@ -138,7 +138,7 @@ export default function FeedTimeline({ updates }) {
 
               <div className="space-y-6 pl-8">
                 {items.map((update) => {
-                  const userName = update.createdBy?.name || "Unknown User"
+                  const userName = update.createdBy?.name || "project manager"
                   const userInitials = getInitials(userName)
                   const time = formatTime(update.createdAt)
 
@@ -149,7 +149,7 @@ export default function FeedTimeline({ updates }) {
 
                   return (
                     <div key={update.id} className="relative">
-                      <div className="absolute -left-5 top-2 w-2.5 h-2.5 bg-orange-500 rounded-full relative z-10 border-2 border-white"></div>
+                      <div className="absolute -left-5 top-2 w-2.5 h-2.5 bg-primary rounded-full relative z-10 border-2 border-white"></div>
 
                       {/* Content */}
                       <div className="bg-white rounded-lg overflow-hidden shadow-sm">
@@ -173,7 +173,7 @@ export default function FeedTimeline({ updates }) {
                                       className="w-full h-48 object-cover"
                                     />
                                     <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/30 transition-colors">
-                                      <div className="w-16 h-16 rounded-full bg-orange-500/90 flex items-center justify-center">
+                                      <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center">
                                         <MdPlayArrow className="w-8 h-8 text-white ml-1" />
                                       </div>
                                     </div>
@@ -181,40 +181,40 @@ export default function FeedTimeline({ updates }) {
                                 )}
                               </div>
                             ) : (
-                              // Multiple media - grid
-                              <div className={`grid gap-1 ${allMedia.length === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'}`}>
-                                {allMedia.slice(0, 6).map((media, idx) => (
-                                  <div key={idx} className="relative aspect-square group cursor-pointer" onClick={() => setSelectedMedia(media)}>
-                                    {media.contentType.startsWith("image") ? (
-                                      <img
-                                        src={media.url}
-                                        alt={`Media ${idx + 1}`}
-                                        className="w-full h-full object-cover group-hover:opacity-95 transition-opacity"
-                                      />
-                                    ) : (
-                                      <>
-                                        <video
-                                          src={media.url}
-                                          className="w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/30 transition-colors">
-                                          <div className="w-12 h-12 rounded-full bg-orange-500/90 flex items-center justify-center">
-                                            <MdPlayArrow className="w-6 h-6 text-white ml-0.5" />
-                                          </div>
-                                        </div>
-                                      </>
-                                    )}
-                                    {/* Show +N overlay on last item if more media exists */}
-                                    {idx === 5 && allMedia.length > 6 && (
-                                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                        <span className="text-white text-2xl font-semibold">
-                                          +{allMedia.length - 6}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
+                             // Multiple media - grid
+<div className={`grid gap-1 ${allMedia.length === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3 md:px-8'}`}>
+  {allMedia.slice(0, 6).map((media, idx) => (
+    <div key={idx} className="relative group cursor-pointer" onClick={() => setSelectedMedia(media)}>
+      {media.contentType.startsWith("image") ? (
+        <img
+          src={media.url}
+          alt={`Media ${idx + 1}`}
+          className="w-full h-32 md:h-[240px] md:w-[582px] object-cover group-hover:opacity-95 transition-opacity"
+        />
+      ) : (
+        <>
+          <video
+            src={media.url}
+            className="w-full h-32 md:h-[240px] md:w-[582px] object-cover"
+          />
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/30 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+              <MdPlayArrow className="w-6 h-6 text-white ml-0.5" />
+            </div>
+          </div>
+        </>
+      )}
+      {/* Show +N overlay on last item if more media exists */}
+      {idx === 5 && allMedia.length > 6 && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+          <span className="text-white text-2xl font-semibold">
+            +{allMedia.length - 6}
+          </span>
+        </div>
+      )}
+    </div>
+  ))}
+</div>
                             )}
                             {/* Update Type Badge */}
                             {update.updateType && (
@@ -228,13 +228,11 @@ export default function FeedTimeline({ updates }) {
                         <div className="p-4">
                           {/* Time */}
                           <div className="flex items-center gap-2 mb-2">
-                            <AiFillClockCircle className="w-4 h-4 text-orange-500" />
+                            <AiFillClockCircle className="w-4 h-4 text-primary" />
                             <span className="text-sm font-semibold text-orange-600">{time}</span>
                           </div>
-
                           {/* Description */}
                           <p className="text-gray-800 mb-4 whitespace-pre-wrap">{update.description}</p>
-
                           {/* User Info */}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -244,6 +242,7 @@ export default function FeedTimeline({ updates }) {
                               <span className="text-sm text-gray-600">{userName}</span>
                             </div>
                           </div>
+
                         </div>
                       </div>
                     </div>
