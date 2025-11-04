@@ -3,6 +3,7 @@ import { usePathname } from 'next/navigation';
 import { FaChartBar, FaUsers, FaFileInvoiceDollar, FaHandshake, FaCog, FaShieldAlt, FaUserCircle } from 'react-icons/fa';
 import { FiX } from 'react-icons/fi';
 import { useProjectManager } from '@/contexts/ProjectManagerProjectsContext';
+import Link from 'next/link';
 
 export default function Sidebar({ isOpen = false, onClose }) {
   const pathname = usePathname();
@@ -14,15 +15,12 @@ export default function Sidebar({ isOpen = false, onClose }) {
       items: [
         { name: "Dashboard", icon: FaChartBar, href: "/project-manager" },
         { name: "Clients", icon: FaChartBar, href: "/project-manager/project" },
-        { name: "Schedule", icon: FaUsers, href: "/project-manager/user-management" }
       ]
     },
     {
       title: "MANAGE",
       items: [
-        { name: "Invoices", icon: FaFileInvoiceDollar, href: "/project-manager/billing" },
-        { name: "Reports", icon: FaHandshake, href: "/project-manager/consultation" },
-        { name: "System Settings", icon: FaCog, href: "/settings" },
+        { name: "System Settings", icon: FaCog, href: "/project-manager/settings" },
       ]
     },
   ];
@@ -80,8 +78,9 @@ export default function Sidebar({ isOpen = false, onClose }) {
 
   // Common user profile component
   const UserProfile = ({ className = "" }) => (
-    <div className={`flex space-x-4 cursor-pointer items-center px-6 pb-5 pt-8 border-t border-gray-100 ${className}`}>
-      {photoURL ? (
+    <Link href="/project-manager/settings">
+   <div className={`flex space-x-4 cursor-pointer items-center px-6 pb-5 pt-8 border-t border-gray-100 ${className}`}>
+    {photoURL ? (
         <img 
           src={photoURL} 
           alt={displayName} 
@@ -102,6 +101,8 @@ export default function Sidebar({ isOpen = false, onClose }) {
         <h6 className="text-text text-xs">{displayRole}</h6>
       </div>
     </div>
+    </Link>
+
   );
 
   // Common header component
