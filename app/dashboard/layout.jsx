@@ -7,6 +7,7 @@ import { DocumentsProvider } from '@/contexts/DocumentsContext'
 import { UserProvider } from "@/contexts/UserContext";
 import { LiveFeedProvider } from "@/contexts/LiveFeedContext";
 import {CurrentClientProvider} from "@/contexts/CurrentClientContext";
+import { InvoiceProvider } from "@/contexts/InvoiceContext";
 
 const ProtectedLayout = withAuthProtection(function Layout({children}) {
   return (
@@ -15,10 +16,12 @@ const ProtectedLayout = withAuthProtection(function Layout({children}) {
              <PersonalProjectsProvider> 
       <LiveFeedProvider>
           <DocumentsProvider>
+            <InvoiceProvider>
     <div className='bg-gray-100 min-h-screen'>
       <Header/>
       {children}
     </div>
+    </InvoiceProvider>
     </DocumentsProvider>
     </LiveFeedProvider>
   </PersonalProjectsProvider>
