@@ -82,7 +82,7 @@ const Header = () => {
             <FaRegBell className="text-xl text-gray-700 hover:text-gray-900" />
           </span>
         
-        <Link href="dashboard/profile">
+        <Link href="/dashboard/profile">
         <div className="flex items-center gap-2">
             <span className="bg-gray-200 rounded-full p-2">
               <FaUser className="text-md text-gray-500" />
@@ -102,7 +102,7 @@ const Header = () => {
       </header>
 
       <div className="bg-[#FDF2E5] w-full text-center py-3 max-md:hidden">
-        <h1 className="text-[#F07D00] text-base font-semibold">
+        <h1 className="text-primary text-base font-semibold">
           iSHELTER is a product of Everything Shelter
         </h1>
       </div>

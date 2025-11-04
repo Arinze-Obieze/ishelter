@@ -629,7 +629,7 @@ export default function BillingDetailPage() {
         <div className="max-w-6xl mx-auto px-4 py-4 md:px-6 md:py-6">
           <button 
             onClick={() => router.push("/dashboard/billing")}
-            className="flex items-center gap-2 text-orange-600 font-medium mb-3 hover:opacity-80 text-sm md:text-base"
+            className="flex items-center gap-2 text-primary font-medium mb-3 hover:opacity-80 text-sm md:text-base"
           >
             <IoArrowBack className="w-4 h-4 md:w-5 md:h-5" />
             Back to Billing
@@ -646,7 +646,7 @@ export default function BillingDetailPage() {
       <div className="max-w-6xl mx-auto px-4 py-4 md:py-6 md:px-6">
         {/* Payment Due Banner */}
         {paymentDueAmount > 0 && (
-          <div className="bg-orange-50 border-l-4 border-orange-600 rounded-lg p-4 md:p-6 mb-6 md:mb-8">
+          <div className="bg-orange-50 border-l-4 border-primary rounded-lg p-4 md:p-6 mb-6 md:mb-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-start gap-3 flex-1">
                 <div className="flex-shrink-0">
@@ -679,7 +679,7 @@ export default function BillingDetailPage() {
             onClick={() => setActiveTab("invoices")}
             className={`py-3 md:py-4 px-2 font-medium border-b-2 transition text-sm md:text-base whitespace-nowrap ${
               activeTab === "invoices"
-                ? "text-orange-600 border-orange-600"
+                ? "text-primary border-primary"
                 : "text-gray-600 border-transparent hover:text-gray-900"
             }`}
           >
@@ -692,7 +692,7 @@ export default function BillingDetailPage() {
             onClick={() => setActiveTab("history")}
             className={`py-3 md:py-4 px-2 font-medium border-b-2 transition text-sm md:text-base whitespace-nowrap ${
               activeTab === "history"
-                ? "text-orange-600 border-orange-600"
+                ? "text-primary border-primary"
                 : "text-gray-600 border-transparent hover:text-gray-900"
             }`}
           >

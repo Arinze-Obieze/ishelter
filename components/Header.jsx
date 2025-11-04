@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { RiMenu3Fill } from "react-icons/ri";
 import { IoMdClose } from "react-icons/io";
 import Link from 'next/link'
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -12,11 +13,11 @@ const Header = () => {
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "Service", href: "#" },
+    { name: "Service", href: "#services" },
     { name: "About Us", href: "#" },
-    { name: "Testimonials", href: "#" },
-    { name: "Contact", href: "#" }
-    ];
+    { name: "Testimonials", href: "#testimonials" },
+    { name: "Contact", href: "#contact" }
+  ];
 
   return (
     <>
@@ -31,18 +32,24 @@ const Header = () => {
         {/* Desktop navigation - hidden on mobile */}
         <div className=' place-items-center space-x-12 md:flex hidden'>
           <nav className='space-x-8'>
-          {navLinks.map((link, index) => (
-          <a 
-            key={index} 
-            href={link.href} 
-            className='text-base text-secondary hover:text-primary'
-          >
-            {link.name}
-          </a>
-        ))}
-      </nav>
-<Link href='/consultation'>          <button className='bg-primary cursor-pointer text-white py-2 px-4 rounded'>Request Consultation</button>
-</Link>
+            {navLinks.map((link, index) => (
+              <a 
+                key={index} 
+                href={link.href} 
+                className='text-base text-secondary hover:text-primary'
+              >
+                {link.name}
+              </a>
+            ))}
+          </nav>
+          <Link href='/login'>         
+            <button className='border-1 border-primary cursor-pointer text-primary py-1 px-4 rounded'>
+              Login
+            </button>
+          </Link>
+          <Link href='/consultation'>         
+            <button className='bg-primary cursor-pointer text-white py-2 px-4 rounded'>Request Consultation</button>
+          </Link>
         </div>
 
         {/* Mobile menu button - visible only on small screens */}
@@ -68,14 +75,36 @@ const Header = () => {
       {isMenuOpen && (
         <div className='md:hidden bg-white shadow-lg py-4 px-6 absolute w-full z-10'>
           <nav className='flex flex-col space-y-4'>
-            <a href='#' className='text-lg text-secondary hover:text-primary py-2'>Home</a>
-            <a href='#' className='text-lg text-secondary hover:text-primary py-2'>Services</a>
-            <a href='#' className='text-lg text-secondary hover:text-primary py-2'>About Us</a>
-            <a href='#' className='text-lg text-secondary hover:text-primary py-2'>Testimonials</a>
-            <a href='#' className='text-lg text-secondary hover:text-primary py-2'>Contact</a>
-            <div className='pt-2'>
-              <button className='w-full justify-center'>Request Consultation</button>
-            </div>
+            {navLinks.map((link, index) => (
+              <a 
+                key={index} 
+                href={link.href} 
+                className='text-lg text-secondary hover:text-primary py-2'
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {link.name}
+              </a>
+            ))}
+            <Link href='/login'>
+              <div className='pt-2'>
+                <button 
+                  className='w-full border-1 border-primary justify-center py-2 text-primary'
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </button>
+              </div>
+            </Link>
+            <Link href='/consultation'>
+              <div className='pt-2'>
+                <button 
+                  className='w-full justify-center bg-primary py-2 text-white'
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Request Consultation
+                </button>
+              </div>
+            </Link>
           </nav>
         </div>
       )}

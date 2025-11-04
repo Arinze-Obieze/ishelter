@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function CTASection() {
     return (
       <section className="relative bg-primary py-20 pt-24 text-center text-white overflow-hidden">
@@ -10,16 +12,16 @@ export default function CTASection() {
           <h2 className="text-3xl md:text-[40px] font-bold mb-6 leading-snug">
             Ready to Start Your Construction Journey?
           </h2>
-          <p className="text-xl text-white/90 mb-10">
+          <p className="text-lg text-white/90 mb-10">
             Let us help you turn your construction dreams into reality, with expert
             guidance every step of the way.
           </p>
-          <a
-            href="#"
+          <Link
+            href="/consultation"
             className="inline-block text-lg bg-white text-primary font-semibold px-8 py-4 rounded-lg shadow hover:bg-gray-100 transition"
           >
             Request Consultation
-          </a>
+          </Link>
         </div>
       </section>
     );

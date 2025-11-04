@@ -21,11 +21,11 @@ const Home = () => {
  <Solution/>
 </section>
 
-<section className='mb-20'>
+<section className='mb-20' id='services'>
  <CoreServices/>
 </section>
 
-<section>
+<section id="why">
 <Why/>
 </section>
 
@@ -34,7 +34,7 @@ const Home = () => {
  <WhoWeServe/>
 </section>
 
-<section>
+<section id="testimonials">
  <Testimonials/>
 </section>
 <section>
@@ -42,7 +42,7 @@ const Home = () => {
 </section>
 
 </div>
-<footer>
+<footer id="contact">
   <Footer/>
 </footer>
  </>
