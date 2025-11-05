@@ -16,7 +16,7 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-const Header = () => {
+const Header = ({ onMenuClick }) => {
   const pathname = usePathname();
   const { currentClient, loading } = useCurrentClient();
 
@@ -85,7 +85,10 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu */}
-        <button className="md:hidden flex space-x-4 text-gray-700 text-2xl py-4">
+        <button 
+          onClick={onMenuClick}
+          className="md:hidden flex space-x-4 text-gray-700 text-2xl py-4"
+        >
           <span>
             <FaRegBell className="text-gray-700 hover:text-gray-900" />
           </span>
