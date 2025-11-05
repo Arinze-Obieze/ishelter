@@ -5,7 +5,7 @@ import { FiEdit2, FiTrash2, FiEye, FiChevronRight, FiChevronDown, FiPlus, FiChec
 import { db } from "@/lib/firebase"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
 import TabsNavigation from "./TabsNavigation"
-import ProjectTeam from "@/components/Dashboard/Timeline/ProjectTeam"
+import ProjectTeam from "@/components/ProjectManager/ProjectDetails/ProjectTeam"
 
 // Constants and configuration
 const STATUS_CONFIG = {

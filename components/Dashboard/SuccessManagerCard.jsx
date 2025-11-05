@@ -1,7 +1,7 @@
 import { FaUserTie, FaWhatsapp } from "react-icons/fa";
 
 const SuccessManagerCard = () => {
-  const successManagers = [
+  const projectTeam = [
     // {
     //   id: 1,
     //   name: "Michael Adebayo",
@@ -19,8 +19,8 @@ const SuccessManagerCard = () => {
         </div>
       </div>
 
-      {successManagers.length > 0 ? (
-        successManagers.map((manager) => (
+      {projectTeam.length > 0 ? (
+        projectTeam.map((manager) => (
           <div key={manager.id} className="mb-3">
             <div className="flex items-center gap-3 mb-3">
               <img

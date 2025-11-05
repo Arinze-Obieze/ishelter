@@ -12,7 +12,6 @@ import Image from "next/image"
 
 export default function SettingsPage() {
   const { userProfile } = useProjectManager()
-  
   const [activeTab, setActiveTab] = useState("profile")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [fullName, setFullName] = useState("")

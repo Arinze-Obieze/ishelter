@@ -87,7 +87,10 @@ export const PersonalProjectsProvider = ({ children }) => {
             initialBudget: data.initialBudget || 'N/A',
             status: data.status,
             projectAddress: data.projectAddress || '',
-            hasLocation: !!data.projectLocation
+            hasLocation: !!data.projectLocation,
+            // ✅ Add new fields for team and WhatsApp
+            projectTeam: Array.isArray(data.projectTeam) ? data.projectTeam : [],
+            whatsappLinks: Array.isArray(data.whatsappLinks) ? data.whatsappLinks : []
           };
         });
 
