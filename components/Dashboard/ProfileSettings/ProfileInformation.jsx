@@ -1,22 +1,30 @@
 "use client"
 
-import { FiUser, FiEdit, FiX, FiCheck } from "react-icons/fi"
+import { FiUser, FiEdit, FiX, FiCheck, FiCamera } from "react-icons/fi"
 import { useCurrentClient } from '@/contexts/CurrentClientContext'
-import { auth, db } from '@/lib/firebase'
+import { auth, db, storage } from '@/lib/firebase'
 import { useEffect, useState } from 'react'
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { updateEmail, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import { toast } from 'react-hot-toast'
+
+function getInitials(name) {
+  if (!name) return 'U'
+  const parts = name.trim().split(' ')
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
 
 export default function ProfileInformation() {
   const { currentClient, loading, error } = useCurrentClient()
   const [isEditing, setIsEditing] = useState(false)
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false)
   const [password, setPassword] = useState('')
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   
-  // Get country options
   const countryOptions = countryList().getData()
   
   const [userData, setUserData] = useState({
@@ -24,6 +32,7 @@ export default function ProfileInformation() {
     email: '',
     phoneNumber: '',
     location: '',
+    photoURL: '',
     createdAt: '',
     role: '',
     status: ''
@@ -33,10 +42,10 @@ export default function ProfileInformation() {
     displayName: '',
     email: '',
     phoneNumber: '',
-    location: null
+    location: null,
+    photoURL: ''
   })
 
-  // Custom styles for react-select
   const customStyles = {
     control: (base) => ({
       ...base,
@@ -54,7 +63,6 @@ export default function ProfileInformation() {
     })
   }
 
-  // Send email notification function
   const sendEmailNotification = async (updates, oldEmail = null) => {
     try {
       const subject = oldEmail ? "Email Address Updated" : "Profile Updated Successfully";
@@ -63,7 +71,6 @@ export default function ProfileInformation() {
         `• ${key}: ${updates[key]}`
       ).join('\n');
       
-      // If email was changed, show both old and new email
       if (oldEmail) {
         changes = `• email: ${oldEmail} → ${updates.email}\n${changes.replace('• email:', '')}`;
       }
@@ -92,7 +99,7 @@ export default function ProfileInformation() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: oldEmail || userData.email, // Send to old email if email was changed
+          to: oldEmail || userData.email,
           subject: subject,
           message: message,
           name: userData.displayName
@@ -112,7 +119,6 @@ export default function ProfileInformation() {
     }
   }
 
-  // Update when currentClient changes
   useEffect(() => {
     if (currentClient) {
       const processedData = {
@@ -120,6 +126,7 @@ export default function ProfileInformation() {
         email: currentClient.email || '',
         phoneNumber: currentClient.phoneNumber || currentClient.phone || '',
         location: currentClient.location || currentClient.address || '',
+        photoURL: currentClient.photoURL || '',
         role: currentClient.role || '',
         status: currentClient.status || '',
         createdAt: currentClient.createdAt ? 
@@ -142,10 +149,55 @@ export default function ProfileInformation() {
         displayName: processedData.displayName,
         email: processedData.email,
         phoneNumber: processedData.phoneNumber,
-        location: processedData.location ? countryOptions.find(c => c.label === processedData.location) : null
+        location: processedData.location ? countryOptions.find(c => c.label === processedData.location) : null,
+        photoURL: processedData.photoURL
       })
     }
   }, [currentClient, countryOptions])
+
+  const deletePhotoFromStorage = async (photoURL) => {
+    if (!photoURL) return
+    try {
+      const photoRef = ref(storage, photoURL)
+      await deleteObject(photoRef)
+    } catch (err) {
+      console.error('Failed to delete photo:', err)
+    }
+  }
+
+  const handlePhotoUpload = async (file) => {
+    if (!file || !currentClient) return
+
+    setUploadingPhoto(true)
+    try {
+      // Delete old photo if exists
+      if (userData.photoURL) {
+        await deletePhotoFromStorage(userData.photoURL)
+      }
+
+      // Upload new photo
+      const storageRef = ref(storage, `profile-pictures/${currentClient.id}/${Date.now()}_${file.name}`)
+      await uploadBytes(storageRef, file)
+      const photoURL = await getDownloadURL(storageRef)
+
+      // Update Firestore
+      await updateDoc(doc(db, 'users', currentClient.id), {
+        photoURL: photoURL,
+        updatedAt: serverTimestamp()
+      })
+
+      // Update local state
+      setUserData(prev => ({ ...prev, photoURL }))
+      setFormData(prev => ({ ...prev, photoURL }))
+
+      toast.success('Profile photo updated successfully!')
+    } catch (err) {
+      console.error('Photo upload error:', err)
+      toast.error('Failed to upload photo')
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -164,16 +216,15 @@ export default function ProfileInformation() {
     setIsEditing(false)
     setIsUpdatingEmail(false)
     setPassword('')
-    // Reset form data to original values
     setFormData({
       displayName: userData.displayName,
       email: userData.email,
       phoneNumber: userData.phoneNumber,
-      location: userData.location ? countryOptions.find(c => c.label === userData.location) : null
+      location: userData.location ? countryOptions.find(c => c.label === userData.location) : null,
+      photoURL: userData.photoURL
     })
   }
 
-  // Reauthenticate user for sensitive operations (email change)
   const reauthenticateUser = async (password) => {
     const user = auth.currentUser;
     if (!user || !user.email) {
@@ -194,7 +245,6 @@ export default function ProfileInformation() {
       let emailChanged = false
       let oldEmail = null
       
-      // Only update fields that have changed
       if (formData.displayName !== userData.displayName && formData.displayName.trim() !== '') {
         updates.displayName = formData.displayName
       }
@@ -207,20 +257,16 @@ export default function ProfileInformation() {
         updates.location = formData.location.label
       }
 
-      // Check if email changed and handle authentication
       if (formData.email !== userData.email && formData.email.trim() !== '') {
         if (!password) {
-          // If email changed but no password provided, show password prompt
           setIsUpdatingEmail(true)
           toast.dismiss()
           toast.error('Please enter your password to update email')
           return
         }
 
-        // Reauthenticate user before changing email
         await reauthenticateUser(password)
         
-        // Update email in Firebase Auth
         const user = auth.currentUser
         if (user) {
           await updateEmail(user, formData.email.trim())
@@ -231,20 +277,17 @@ export default function ProfileInformation() {
       }
 
       if (Object.keys(updates).length > 0 || emailChanged) {
-        // Update Firestore
         await updateDoc(doc(db, 'users', currentClient.id), {
           ...updates,
           updatedAt: serverTimestamp()
         })
 
-        // Update local state
         setUserData(prev => ({
           ...prev,
           ...updates,
           location: formData.location ? formData.location.label : prev.location
         }))
 
-        // Send email notification for the update
         await sendEmailNotification(updates, oldEmail);
 
         toast.dismiss()
@@ -277,7 +320,6 @@ export default function ProfileInformation() {
     }
   }
 
-  // Loading state
   if (loading) {
     return (
       <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -331,6 +373,41 @@ export default function ProfileInformation() {
             Edit
           </button>
         )}
+      </div>
+
+      {/* Profile Photo Section */}
+      <div className="flex justify-center mb-8">
+        <div className="relative">
+          {userData.photoURL ? (
+            <img
+              src={userData.photoURL}
+              alt={userData.displayName}
+              className="w-32 h-32 rounded-full object-cover border-4 border-gray-100"
+            />
+          ) : (
+            <div className="w-32 h-32 rounded-full bg-orange-500 flex items-center justify-center text-white text-4xl font-bold border-4 border-gray-100">
+              {getInitials(userData.displayName)}
+            </div>
+          )}
+          <label className="absolute bottom-0 right-0 bg-orange-500 rounded-full p-3 cursor-pointer hover:bg-orange-600 transition border-4 border-white">
+            <FiCamera className="text-white" size={20} />
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handlePhotoUpload(file)
+              }}
+              disabled={uploadingPhoto}
+            />
+          </label>
+          {uploadingPhoto && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
