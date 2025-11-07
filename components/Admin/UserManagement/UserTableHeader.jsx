@@ -24,7 +24,7 @@ const UserTableHeader = ({
           <FilterDropdown
             value={roleFilter}
             onChange={(e) => onRoleFilterChange(e.target.value)}
-            options={["All Role", "Admin", "Success Manager", "Client"]}
+            options={["All Role", "Admin", "Project Manager", "Client"]}
           />
           <FilterDropdown
             value={statusFilter}
@@ -35,7 +35,7 @@ const UserTableHeader = ({
 
         <button 
           onClick={onAddUser}
-          className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors"
+          className="w-full sm:w-auto bg-primary hover:bg-orange-600 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors"
         >
           <FiPlus className="w-4 h-4" />
           Add New User

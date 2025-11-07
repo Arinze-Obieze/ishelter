@@ -27,7 +27,6 @@ export default function Sidebar({ isOpen = false, onClose }) {
       title: "ADMIN",
       items: [
         { name: "System Settings", icon: FaCog, href: "/settings" },
-        { name: "Security", icon: FaShieldAlt, href: "/security" }
       ]
     }
   ];

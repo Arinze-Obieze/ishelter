@@ -170,7 +170,7 @@ export default function ProjectOverview() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 lg:p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 p-2 md:p-4 lg:p-6 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading projects...</p>
@@ -181,7 +181,7 @@ export default function ProjectOverview() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 lg:p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 p-2 md:p-4 lg:p-6 flex items-center justify-center">
         <div className="text-center text-red-600">
           <p>Error loading projects: {error}</p>
         </div>
@@ -190,7 +190,7 @@ export default function ProjectOverview() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+    <div className="min-h-screen bg-gray-50 p-2 md:p-4 lg:p-6">
       <div className="mx-auto max-w-8xl">
         {/* Header Section */}
         <div className="mb-4 lg:mb-6">

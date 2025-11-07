@@ -52,11 +52,11 @@ const ProjectStats = () => {
 
   return (
     <div className="bg-gray-50 flex items-center justify-center">
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-8xl p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full md:max-w-8xl p-2 md:p-4 ">
         {stats.map((item, index) => (
           <div
             key={index}
-            className="bg-white rounded-xl shadow-sm p-6 flex flex-col gap-2 border border-gray-100"
+            className="bg-white rounded-xl shadow-sm md:p-6 p-4 flex flex-col gap-2 border border-gray-100"
           >
             <div>{item.icon}</div>
             <p className="text-gray-500 text-sm">{item.title}</p>

@@ -1,6 +1,6 @@
 import UserRow from "@/components/Admin/UserManagement/UserRow"
 
-const UserTableDesktop = ({ users }) => {
+const UserTableDesktop = ({ users, onEdit, onDelete }) => {
   return (
     <div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <table className="w-full">
@@ -17,7 +17,12 @@ const UserTableDesktop = ({ users }) => {
         </thead>
         <tbody className="divide-y divide-gray-200">
           {users.map((user) => (
-            <UserRow key={user.id} user={user} />
+            <UserRow 
+              key={user.id} 
+              user={user} 
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
           ))}
         </tbody>
       </table>

@@ -65,7 +65,7 @@ const AdminStats = () => {
 
   return (
     <section className="w-full bg-gray-50 py-4 px-2">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="w-full grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((card, i) => (
           <StatCard key={i} {...card} />
         ))}

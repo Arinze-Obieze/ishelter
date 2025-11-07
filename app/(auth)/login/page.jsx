@@ -24,7 +24,6 @@ export default function LoginPage() {
   const isDisabled = loading || !email || !password;
 
 
-
   async function handleLogin(e) {
     e.preventDefault();
     setError("");

@@ -25,7 +25,7 @@ function AdminLayoutContent({ children }) {
           {/* Main Content */}
           <div className="flex-1 flex flex-col md:ml-64">
             <Header onMenuClick={() => setSidebarOpen(true)} />
-            <main className="flex-1 p-6 sm:p-2 ">
+            <main className="flex-1 p-2 md:p-2 ">
               {children}
             </main>
             

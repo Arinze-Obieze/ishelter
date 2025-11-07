@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { FiUsers, FiGitBranch, FiFileText, FiSettings } from "react-icons/fi"
 
 export default function QuickActions() {
@@ -7,22 +8,22 @@ export default function QuickActions() {
     {
       title: "Manage Users",
       icon: FiUsers,
-      onClick: () => console.log("Manage Users clicked"),
+      link: '/admin/user-management',
     },
     {
       title: "Oversee Projects",
       icon: FiGitBranch,
-      onClick: () => console.log("Oversee Projects clicked"),
+      link: "admin/project-overview",
     },
     {
       title: "View Reports",
       icon: FiFileText,
-      onClick: () => console.log("View Reports clicked"),
+      link: "/admin/billing",
     },
     {
       title: "System Settings",
       icon: FiSettings,
-      onClick: () => console.log("System Settings clicked"),
+      link: "/admin/settings",
     },
   ]
 
@@ -33,14 +34,16 @@ export default function QuickActions() {
         {actions.map((action, index) => {
           const IconComponent = action.icon
           return (
-            <button
-              key={index}
-              onClick={action.onClick}
+           <Link 
+           key={index}
+           href="/admin/user-management">
+            <button   
               className="flex flex-col items-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200 group"
             >
               <IconComponent className="w-8 h-8 text-orange-500 mb-3 group-hover:text-orange-600 transition-colors" />
               <span className="text-sm text-gray-600 text-center font-medium">{action.title}</span>
             </button>
+           </Link>
           )
         })}
       </div>

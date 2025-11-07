@@ -9,7 +9,7 @@ function AdminDashboard() {
   return (
     <div className=''>
       
-<div className="max-md:grid grid-cols-2 "> 
+<div className=""> 
 <AdminStats/>  
 </div>
 
