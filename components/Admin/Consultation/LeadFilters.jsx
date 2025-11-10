@@ -32,7 +32,7 @@ export default function LeadFilters({
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md flex items-center gap-2 font-medium transition-colors w-full sm:w-auto justify-center"
+          className="bg-primary hover:bg-amber-600 text-white px-4 py-2 rounded-md flex items-center gap-2 font-medium transition-colors w-full sm:w-auto justify-center"
         >
           <FiPlus className="w-4 h-4" />
           Add New Lead

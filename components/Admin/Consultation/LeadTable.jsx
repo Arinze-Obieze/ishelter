@@ -55,7 +55,7 @@ export default function LeadTable({ leads, windowWidth, filteredLeadsCount }) {
         <thead className="bg-gray-50">
           <tr>
             {visibleColumns.map(column => (
-              <th key={column} className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th key={column} className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {columnHeaders[column]}
               </th>
             ))}
@@ -66,7 +66,7 @@ export default function LeadTable({ leads, windowWidth, filteredLeadsCount }) {
             leads.map((lead) => (
               <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
                 {visibleColumns.map(column => (
-                  <td key={column} className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
+                  <td key={column} className="px-2 sm:px-6 py-4  text-sm">
                     {renderLeadData(lead, column)}
                   </td>
                 ))}

@@ -23,7 +23,7 @@ const leads = [
 
 export default function ConsultationLeads() {
   return (
-    <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm">
+    <div className="bg-white rounded-lg p-2 md:p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="md:text-xl text-base font-semibold text-gray-900">Consultation Leads</h2>

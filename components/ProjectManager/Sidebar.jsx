@@ -14,7 +14,7 @@ export default function Sidebar({ isOpen = false, onClose }) {
       title: "MAIN",
       items: [
         { name: "Dashboard", icon: FaChartBar, href: "/project-manager" },
-        { name: "Clients", icon: FaChartBar, href: "/project-manager/project" },
+        { name: "Clients", icon: FaChartBar, href: "/project-manager/clients" },
       ]
     },
     {
