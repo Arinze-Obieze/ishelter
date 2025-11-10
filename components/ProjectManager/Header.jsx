@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export default function Header({ onMenuClick }) {
   return (
-    <header className="bg-gray-100 h-fit  border-gray-300 px-4 md:px-8 w-full pb-4 pt-5 flex items-center justify-between">
+    <header className="bg-gray-100 h-fit border-gray-300 px-4 md:px-8 w-full pb-4 pt-5 flex items-center justify-between">
       {/* Left: Menu Icon + Logo */}
       <div className="flex items-center gap-3">
      

@@ -39,7 +39,7 @@ export default function StatCards() {
     {
       label: "Active Projects",
       value: stats.activeProjects,
-      icon: <FaClipboardList className="text-orange-500 text-xl" />,
+      icon: <FaClipboardList className="text-amber-500 text-xl" />,
       bg: "bg-orange-100",
     },
     {
@@ -64,7 +64,7 @@ export default function StatCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 items-center md:gap-10 gap-2 md:max-w-7xl mx-auto bg-gray-100 justify-center mt-8 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 items-center md:gap-10 gap-2 md:max-w-7xl mx-auto bg-gray-100 justify-center mt-2 md:mt-8 mb-6">
         {statCards.map((stat) => (
           <div
             key={stat.label}
@@ -84,7 +84,7 @@ export default function StatCards() {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 items-center md:gap-10 gap-2 md:max-w-7xl mx-auto bg-gray-100 justify-center mt-8 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 items-center md:gap-10 gap-4 md:max-w-7xl mx-auto bg-gray-100 justify-center mt-2 md:mt-8 mb-6">
       {statCards.map((stat) => (
         <div
           key={stat.label}

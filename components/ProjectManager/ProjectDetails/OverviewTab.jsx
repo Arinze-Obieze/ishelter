@@ -252,7 +252,7 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
           <div className="text-red-500 text-lg mb-4">{error}</div>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-md"
+            className="bg-primary hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-md"
           >
             Retry
           </button>
@@ -288,7 +288,7 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
               projectData.projectStatus === "Completed" 
                 ? "bg-green-500" 
                 : projectData.projectStatus === "In Progress" 
-                  ? "bg-orange-500" 
+                  ? "bg-primary" 
                   : "bg-gray-500"
             }`}>
               {projectData.projectStatus || "Not Started"}
@@ -296,8 +296,8 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col md:flex-row gap-2 md:gap-3 [&>*]:cursor-pointer">
-            <button className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors">
+          {/* <div className="flex flex-col md:flex-row gap-2 md:gap-3 [&>*]:cursor-pointer">
+            <button className="bg-primary hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors">
               <FaFileInvoiceDollar className="text-sm" />
               Generate Invoice
             </button>
@@ -305,7 +305,7 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
               <FaPencilAlt className="text-sm" />
               Log Update
             </button>
-          </div>
+          </div> */}
         </div>
       </header>
       
@@ -329,7 +329,7 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
 
                 {/* Budget Spent */}
                 <div className="bg-white rounded-lg p-6 text-center shadow-sm border border-gray-200">
-                  <div className="text-4xl md:text-5xl font-bold text-orange-500 mb-2">
+                  <div className="text-4xl md:text-5xl font-bold text-primary mb-2">
                     {stats.budgetSpentPercentage}%
                   </div>
                   <div className="text-sm text-gray-600 font-medium">Budget Spent</div>
@@ -352,7 +352,7 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
                 <div className="mb-6">
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-orange-500 rounded-full transition-all duration-500" 
+                      className="h-full bg-primary rounded-full transition-all duration-500" 
                       style={{ width: `${stats.progressPercentage}%` }}
                     ></div>
                   </div>
@@ -383,7 +383,7 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
                               phase.status === "Completed"
                                 ? "bg-green-500"
                                 : phase.status === "In Progress"
-                                  ? "bg-orange-500"
+                                  ? "bg-primary"
                                   : "bg-gray-300"
                             }`}
                           ></div>
@@ -394,7 +394,7 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
                                 phase.status === "Completed"
                                   ? "text-green-600"
                                   : phase.status === "In Progress"
-                                    ? "text-orange-500"
+                                    ? "text-primary"
                                     : "text-gray-400"
                               }`}
                             >
@@ -437,7 +437,7 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
                           {user.status || "Unknown"}
                         </div>
                         
-                        <button className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2.5 rounded-md flex items-center justify-center gap-2 transition-colors">
+                        <button className="w-full mt-3 bg-primary hover:bg-amber-600 text-white font-medium px-4 py-2.5 rounded-md flex items-center justify-center gap-2 transition-colors">
                           <FaComments className="text-base" />
                           Start Chat
                         </button>

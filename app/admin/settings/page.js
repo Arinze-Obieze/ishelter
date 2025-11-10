@@ -1,14 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FiUser, FiLock, FiCamera } from "react-icons/fi"
+import { FiUser, FiLock, FiCamera, FiShield } from "react-icons/fi"
 import { useAuth } from "@/contexts/AuthContext"
 import { db, storage } from "@/lib/firebase"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import toast from "react-hot-toast"
 import Image from "next/image"
-import AdminSecuritySettings from "@/components/Admin/Security/AdminSecuritySettings"
+import AdminSecuritySettings from "@/components/Admin/settings/Security/AdminSecuritySettings"
+import AdminManagement from "@/components/Admin/settings/Security/AdminManagement"
 
 export default function AdminSettingsPage() {
   const { currentUser } = useAuth()
@@ -33,6 +34,7 @@ export default function AdminSettingsPage() {
   const tabs = [
     { id: "profile", label: "Profile & Contact", icon: FiUser, mobileLabel: "Profile" },
     { id: "security", label: "Security", icon: FiLock, mobileLabel: "Security" },
+    { id: "admins", label: "Admin Management", icon: FiShield, mobileLabel: "Admins" }, 
   ]
 
   // Fetch user profile data from Firestore
@@ -307,7 +309,7 @@ export default function AdminSettingsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -336,7 +338,7 @@ export default function AdminSettingsPage() {
                     flex items-center gap-2 px-6 py-4 border-b-2 transition-all text-sm font-medium
                     ${
                       activeTab === tab.id
-                        ? "border-orange-500 text-gray-900"
+                        ? "border-primary text-gray-900"
                         : "border-transparent text-gray-600 hover:text-gray-900"
                     }
                   `}
@@ -358,7 +360,7 @@ export default function AdminSettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`
                     flex items-center gap-1.5 px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap transition-all flex-shrink-0
-                    ${activeTab === tab.id ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}
+                    ${activeTab === tab.id ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}
                   `}
                 >
                   <IconComponent className="w-4 h-4" />
@@ -400,7 +402,7 @@ export default function AdminSettingsPage() {
                     )}
                     <label 
                       htmlFor="profile-image-input"
-                      className="absolute bottom-0 right-0 bg-orange-500 rounded-full p-2 cursor-pointer hover:bg-orange-600 transition-colors"
+                      className="absolute bottom-0 right-0 bg-primary rounded-full p-2 cursor-pointer hover:bg-amber-600 transition-colors"
                     >
                       <FiCamera className="w-4 h-4 text-white" />
                     </label>
@@ -438,7 +440,7 @@ export default function AdminSettingsPage() {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       disabled={isLoading}
-                      className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
 
@@ -467,7 +469,7 @@ export default function AdminSettingsPage() {
                     onChange={handlePhoneChange}
                     placeholder="+234 XXX XXX XXXX"
                     disabled={isLoading}
-                    className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <p className="text-gray-500 text-xs mt-1">International format (e.g., +234...)</p>
                 </div>
@@ -491,7 +493,7 @@ export default function AdminSettingsPage() {
               <button 
                 onClick={handleSaveChanges}
                 disabled={isLoading || !hasChanges}
-                className="px-6 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -507,6 +509,7 @@ export default function AdminSettingsPage() {
         )}
 
         {activeTab === "security" && <AdminSecuritySettings />}
+        {activeTab === "admins" && <AdminManagement currentUserProfile={userProfile} />}
       </div>
     </div>
   )
