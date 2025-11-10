@@ -1,81 +1,90 @@
 'use client'
-import { FaBell, FaBars } from 'react-icons/fa';
-import { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { FaBell, FaBars } from 'react-icons/fa'
+import { FiUser } from 'react-icons/fi'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import Image from 'next/image'
 
 export default function Header({ onMenuClick }) {
-  const [adminUser, setAdminUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { currentUser, loading: authLoading } = useAuth()
+  const [adminUser, setAdminUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          // Fetch user data from Firestore
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setAdminUser({
-              displayName: userData.displayName || user.email,
-              email: user.email,
-              role: userData.role || 'admin'
-            });
-          } else {
-            // Fallback to auth data if Firestore doc doesn't exist
-            setAdminUser({
-              displayName: user.email,
-              email: user.email,
-              role: 'admin'
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          // Fallback to auth data
-          setAdminUser({
-            displayName: user.email,
-            email: user.email,
-            role: 'admin'
-          });
-        }
+    const fetchUserProfile = async () => {
+      if (!currentUser?.uid) {
+        setLoading(false)
+        return
       }
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
-  }, []);
+      try {
+        // Fetch user data from Firestore
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid))
+        if (userDoc.exists()) {
+          const userData = userDoc.data()
+          setAdminUser({
+            displayName: userData.displayName || currentUser.email,
+            email: currentUser.email,
+            role: userData.role || 'admin',
+            photoURL: userData.photoURL || null
+          })
+        } else {
+          // Fallback to auth data if Firestore doc doesn't exist
+          setAdminUser({
+            displayName: currentUser.email,
+            email: currentUser.email,
+            role: 'admin',
+            photoURL: null
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+        // Fallback to auth data
+        setAdminUser({
+          displayName: currentUser.email,
+          email: currentUser.email,
+          role: 'admin',
+          photoURL: null
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (!authLoading) {
+      fetchUserProfile()
+    }
+  }, [currentUser, authLoading])
 
   // Generate initials from name
   const getInitials = (name) => {
-    if (!name) return 'AD';
+    if (!name) return 'AD'
     return name
       .split(' ')
       .map(word => word[0])
       .join('')
       .toUpperCase()
-      .slice(0, 2);
-  };
+      .slice(0, 2)
+  }
 
   // Format role for display
   const formatRole = (role) => {
-    if (!role) return 'Admin';
+    if (!role) return 'Admin'
     return role
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
+      .join(' ')
+  }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <header className="bg-gray-100 h-fit border-b border-gray-300 px-4 md:px-8 w-full pb-4 pt-5 flex items-center justify-between">
         <div className="flex items-center gap-3"></div>
         <div className="flex items-center gap-4">
           <div className="relative">
             <FaBell className="text-2xl text-gray-600" />
-            {/* <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-red-500 text-white text-xs font-bold">
-              3
-            </span> */}
           </div>
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-full bg-gray-300 animate-pulse"></div>
@@ -93,29 +102,46 @@ export default function Header({ onMenuClick }) {
           </button>
         </div>
       </header>
-    );
+    )
   }
 
   return (
     <header className="bg-gray-100 h-fit border-b border-gray-300 px-4 md:px-8 w-full pb-4 pt-5 flex items-center justify-between">
-      {/* Left: Menu Icon + Logo */}
+      {/* Left: Empty space for layout */}
       <div className="flex items-center gap-3"></div>
    
       <div className="flex items-center gap-4">
-        <div className="relative">
+        {/* Notification Bell */}
+        <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
           <FaBell className="text-2xl text-gray-600" />
+          {/* Uncomment to show notification badge */}
           {/* <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-red-500 text-white text-xs font-bold">
             3
           </span> */}
         </div>
 
         {/* User Avatar + Info */}
-        <div className="flex cursor-pointer items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold text-lg">
-            {adminUser ? getInitials(adminUser.displayName) : 'AD'}
-          </div>
-          <div className="flex flex-col">
-            <span className="font-semibold text-gray-800">
+        <div className="flex cursor-pointer items-center gap-3 hover:opacity-90 transition-opacity">
+          {/* Avatar */}
+          {adminUser?.photoURL ? (
+            <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-primary">
+              <Image
+                src={adminUser.photoURL}
+                alt={adminUser.displayName || 'Admin'}
+                width={36}
+                height={36}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg">
+              {adminUser ? getInitials(adminUser.displayName) : 'AD'}
+            </div>
+          )}
+          
+          {/* User Info */}
+          <div className="hidden sm:flex flex-col">
+            <span className="font-semibold text-gray-800 text-sm">
               {adminUser ? adminUser.displayName : 'Admin'}
             </span>
             <span className="text-xs text-gray-500">
@@ -126,7 +152,7 @@ export default function Header({ onMenuClick }) {
 
         {/* Hamburger for mobile */}
         <button
-          className="md:hidden p-2 rounded hover:bg-gray-200 focus:outline-none"
+          className="md:hidden p-2 rounded hover:bg-gray-200 focus:outline-none transition-colors"
           onClick={onMenuClick}
           aria-label="Open menu"
         >
@@ -134,5 +160,5 @@ export default function Header({ onMenuClick }) {
         </button>
       </div>
     </header>
-  );
+  )
 }

@@ -23,7 +23,7 @@ function AdminDashboard() {
 
 <div className="space-y-8 md:flex-1">
 <QuickActions/>
-<ConsultationLeads/>
+{/* <ConsultationLeads/> */}
 </div>
 
 </div>

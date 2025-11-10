@@ -36,7 +36,7 @@ export default function QuickActions() {
           return (
            <Link 
            key={index}
-           href="/admin/user-management">
+           href={action.link}>
             <button   
               className="flex flex-col items-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200 group"
             >
