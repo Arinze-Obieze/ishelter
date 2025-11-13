@@ -5,125 +5,18 @@ import Header from "@/components/ProjectManager/Clients/Header"
 import ClientsList from "@/components/ProjectManager/Clients/ClientList"
 import ClientsTable from "@/components/ProjectManager/Clients/ClientTable"
 import FilterTabs from "@/components/ProjectManager/Clients/FilterTabs"
-
-const mockData = [
-  {
-    id: 1,
-    name: "Sarah Mitchell",
-    contact: { type: "phone", value: "(555) 234-5678" },
-    projects: 5,
-    value: "$287,450",
-    status: "Active",
-    lastActivity: "2 days ago",
-  },
-  {
-    id: 2,
-    name: "James Chen & Associates",
-    contact: { type: "email", value: "jchen@associates.com" },
-    projects: 3,
-    value: "$156,200",
-    status: "Active",
-    lastActivity: "1 week ago",
-  },
-  {
-    id: 3,
-    name: "Riverside Development LLC",
-    contact: { type: "phone", value: "(555) 789-0123" },
-    projects: 2,
-    value: "$94,300",
-    status: "On Hold",
-    lastActivity: "3 weeks ago",
-  },
-  {
-    id: 4,
-    name: "Thompson Family Trust",
-    contact: { type: "phone", value: "(555) 345-6789" },
-    projects: 4,
-    value: "$223,800",
-    status: "Active",
-    lastActivity: "5 days ago",
-  },
-  {
-    id: 5,
-    name: "Martinez Construction",
-    contact: { type: "phone", value: "(555) 456-7890" },
-    projects: 1,
-    value: "$45,600",
-    status: "Archived",
-    lastActivity: "4 months ago",
-  },
-  {
-    id: 6,
-    name: "Oakwood Properties",
-    contact: { type: "email", value: "info@oakwoodprop.com" },
-    projects: 2,
-    value: "$112,500",
-    status: "Active",
-    lastActivity: "4 days ago",
-  },
-  {
-    id: 7,
-    name: "Diana Rodriguez",
-    contact: { type: "phone", value: "(555) 567-8901" },
-    projects: 1,
-    value: "$68,900",
-    status: "Active",
-    lastActivity: "Yesterday",
-  },
-  {
-    id: 8,
-    name: "Westside Medical Center",
-    contact: { type: "email", value: "facilities@westmed.org" },
-    projects: 3,
-    value: "$189,400",
-    status: "Active",
-    lastActivity: "3 days ago",
-  },
-  {
-    id: 9,
-    name: "Green Valley School District",
-    contact: { type: "phone", value: "(555) 678-9012" },
-    projects: 1,
-    value: "$52,700",
-    status: "On Hold",
-    lastActivity: "2 months ago",
-  },
-  {
-    id: 10,
-    name: "Peterson & Lee Attorneys",
-    contact: { type: "email", value: "admin@plattorneys.com" },
-    projects: 2,
-    value: "$134,200",
-    status: "Active",
-    lastActivity: "1 week ago",
-  },
-  {
-    id: 11,
-    name: "Anderson Construction",
-    contact: { type: "phone", value: "(555) 123-4567" },
-    projects: 3,
-    value: "$156,200",
-    status: "Active",
-    lastActivity: "2 days ago",
-  },
-  {
-    id: 12,
-    name: "Summit Property Group",
-    contact: { type: "phone", value: "(555) 987-6543" },
-    projects: 2,
-    value: "$245,800",
-    status: "On Hold",
-    lastActivity: "3 weeks ago",
-  },
-]
+import { useClients } from "@/contexts/ClientsContext"
 
 export default function MyClientsPage() {
+  const { clients, loading, error } = useClients()
   const [activeFilter, setActiveFilter] = useState("All")
   const [sortBy, setSortBy] = useState(null)
+  const [sortDirection, setSortDirection] = useState("asc")
 
   const filteredData = useMemo(() => {
-    let filtered = mockData
+    let filtered = [...clients]
 
+    // Apply filters
     if (activeFilter === "Active") {
       filtered = filtered.filter((c) => c.status === "Active")
     } else if (activeFilter === "On Hold") {
@@ -134,36 +27,126 @@ export default function MyClientsPage() {
       filtered = filtered.filter((c) => c.projects >= 2)
     } else if (activeFilter === "High Value") {
       filtered = filtered.filter((c) => {
-        const value = Number.parseInt(c.value.replace(/[$,]/g, ""))
+        const value = parseInt(c.value.replace(/[₦,]/g, ""))
         return value >= 150000
       })
     }
 
+    // Apply sorting
+    if (sortBy) {
+      filtered.sort((a, b) => {
+        let aVal, bVal
+
+        switch (sortBy) {
+          case "name":
+            aVal = a.name.toLowerCase()
+            bVal = b.name.toLowerCase()
+            break
+          case "projects":
+            aVal = a.projects
+            bVal = b.projects
+            break
+          case "value":
+            aVal = parseInt(a.value.replace(/[₦,]/g, ""))
+            bVal = parseInt(b.value.replace(/[₦,]/g, ""))
+            break
+          case "status":
+            aVal = a.status
+            bVal = b.status
+            break
+          case "lastActivity":
+            // Sort by timestamp for accurate ordering
+            aVal = a.lastLoginTimestamp?.toMillis?.() || 0
+            bVal = b.lastLoginTimestamp?.toMillis?.() || 0
+            break
+          default:
+            return 0
+        }
+
+        if (aVal < bVal) return sortDirection === "asc" ? -1 : 1
+        if (aVal > bVal) return sortDirection === "asc" ? 1 : -1
+        return 0
+      })
+    }
+
     return filtered
-  }, [activeFilter])
+  }, [clients, activeFilter, sortBy, sortDirection])
 
   const handleSort = (column) => {
-    setSortBy(column)
+    if (sortBy === column) {
+      // Toggle direction if clicking same column
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      // New column, default to ascending
+      setSortBy(column)
+      setSortDirection("asc")
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-500 border-r-transparent"></div>
+              <p className="mt-4 text-gray-600">Loading clients...</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <div className="rounded-lg bg-red-50 p-4 text-red-800">
+            <p className="font-semibold">Error loading clients</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        </div>
+      </main>
+    )
   }
 
   return (
     <main className="min-h-screen bg-gray-50">
       <Header />
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <FilterTabs activeFilter={activeFilter} onFilterChange={setActiveFilter} totalCount={mockData.length} />
+        <FilterTabs 
+          activeFilter={activeFilter} 
+          onFilterChange={setActiveFilter} 
+          totalCount={clients.length}
+          filteredCount={filteredData.length}
+        />
 
-        {/* Mobile view */}
-        <div className="block md:hidden">
-          <ClientsList clients={filteredData} />
-        </div>
+        {filteredData.length === 0 ? (
+          <div className="rounded-lg bg-white p-8 text-center">
+            <p className="text-gray-600">No clients found matching your filters.</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile view */}
+            <div className="block md:hidden">
+              <ClientsList clients={filteredData} />
+            </div>
 
-        {/* Desktop view */}
-        <div className="hidden md:block">
-          <ClientsTable clients={filteredData} onSort={handleSort} sortBy={sortBy} />
-        </div>
+            {/* Desktop view */}
+            <div className="hidden md:block">
+              <ClientsTable 
+                clients={filteredData} 
+                onSort={handleSort} 
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+              />
+            </div>
+          </>
+        )}
       </div>
     </main>
   )
 }
-
-

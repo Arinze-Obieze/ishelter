@@ -1,6 +1,6 @@
 "use client"
 
-export default function FilterTabs({ activeFilter, onFilterChange, totalCount }) {
+export default function FilterTabs({ activeFilter, onFilterChange, totalCount, filteredCount }) {
   const filters = ["All", "Active", "On Hold", "Archived", "2+ Projects", "High Value"]
 
   return (
@@ -23,7 +23,7 @@ export default function FilterTabs({ activeFilter, onFilterChange, totalCount })
         ))}
       </div>
       <div className="hidden text-right text-sm text-gray-600 md:block">
-        Showing {totalCount} of {totalCount} clients
+        Showing {filteredCount || 0} of {totalCount} clients
       </div>
     </div>
   )

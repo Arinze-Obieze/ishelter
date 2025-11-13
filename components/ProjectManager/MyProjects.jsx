@@ -144,9 +144,9 @@ export default function MyProjects() {
                 <button className="flex  items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-100">
                   <FaWhatsapp /> Chat
                 </button>
-                <button className="flex  max-md:hidden items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-100">
+                {/* <button className="flex  max-md:hidden items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-100">
                   <FiSend /> Request Approval
-                </button>
+                </button> */}
                 <button className="flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-2 text-sm hover:bg-orange-600"
                   onClick={() => router.push(`/project-manager/project-details/${project.id}`)}
                 >

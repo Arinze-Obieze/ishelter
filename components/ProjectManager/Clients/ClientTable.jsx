@@ -1,8 +1,8 @@
 "use client"
 
-import { Mail, Phone, ChevronDown } from "lucide-react"
+import { Mail, Phone, ChevronDown, ChevronUp } from "lucide-react"
 
-export default function ClientsTable({ clients, onSort, sortBy }) {
+export default function ClientsTable({ clients, onSort, sortBy, sortDirection }) {
   const columns = [
     { key: "name", label: "CLIENT NAME" },
     { key: "contact", label: "PRIMARY CONTACT" },
@@ -12,7 +12,16 @@ export default function ClientsTable({ clients, onSort, sortBy }) {
     { key: "lastActivity", label: "LAST ACTIVITY" },
   ]
 
-  const SortIcon = () => <ChevronDown className="ml-1 inline h-3 w-3 text-gray-400" />
+  const SortIcon = ({ column }) => {
+    if (sortBy !== column) {
+      return <ChevronDown className="ml-1 inline h-3 w-3 text-gray-400" />
+    }
+    return sortDirection === "asc" ? (
+      <ChevronUp className="ml-1 inline h-3 w-3 text-orange-500" />
+    ) : (
+      <ChevronDown className="ml-1 inline h-3 w-3 text-orange-500" />
+    )
+  }
 
   return (
     <div className="overflow-x-auto rounded-lg bg-white">
@@ -27,7 +36,7 @@ export default function ClientsTable({ clients, onSort, sortBy }) {
               >
                 <div className="flex items-center">
                   {column.label}
-                  <SortIcon />
+                  <SortIcon column={column.key} />
                 </div>
               </th>
             ))}

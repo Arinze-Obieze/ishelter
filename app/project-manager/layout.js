@@ -7,6 +7,7 @@ import withProjectManagerProtection from '@/components/ProjectManager/withProjec
 import { ProjectsProvider } from '@/contexts/ProjectContext'
 import { UserProvider } from '@/contexts/UserContext';
 import { InvoiceProvider } from '@/contexts/InvoiceContext';
+import { ClientsProvider } from '@/contexts/ClientsContext';
 
 function ProjectManagerLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,6 +18,7 @@ function ProjectManagerLayout({ children }) {
   return (
     <UserProvider> 
     <ProjectsProvider>
+      <ClientsProvider>
 <ProjectManagerProvider> 
 <InvoiceProvider>
 <div className="min-h-screen bg-gray-100">
@@ -33,6 +35,7 @@ function ProjectManagerLayout({ children }) {
   </div>
   </InvoiceProvider>
   </ProjectManagerProvider>
+  </ClientsProvider>
   </ProjectsProvider>
   </UserProvider>
 

@@ -1,4 +1,3 @@
-// app/api/admin/create-admin/route.js
 import { NextResponse } from 'next/server'
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin'
 import { headers } from 'next/headers'
