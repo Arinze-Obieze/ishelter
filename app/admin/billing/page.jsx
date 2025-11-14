@@ -213,7 +213,7 @@ export default function AdminBillingDashboard() {
           id: inv.invoiceNumber || inv.id,
           client: inv.clientName || "Unknown",
           project: inv.projectName || "Unknown",
-          amount: `$${Number(inv.amount).toLocaleString()}`,
+          amount: `₦${Number(inv.amount).toLocaleString()}`,
           issued: inv.createdAt?.toDate ? inv.createdAt.toDate().toLocaleDateString() : "N/A",
           dueDate: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : "N/A",
           status: inv.status,
@@ -233,7 +233,7 @@ export default function AdminBillingDashboard() {
           date: c.paidAt?.toDate ? c.paidAt.toDate().toLocaleDateString() : (c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString() : "N/A"),
           client: c.fullName || "Unknown",
           plan: c.plan?.replace(" Consultation", "") || "LandFit",
-          amount: `$${getConsultationAmount(c)}`,
+          amount: `₦${getConsultationAmount(c)}`,
         }))
 
       setPaymentsData(recentConsultations)
@@ -270,7 +270,7 @@ export default function AdminBillingDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
           <StatCard 
             label="Total Revenue (YTD)" 
-            value={`$${stats.totalRevenueYTD.toLocaleString()}`} 
+            value={`₦${stats.totalRevenueYTD.toLocaleString()}`} 
             change={null}
             isPositive={true} 
           />
@@ -282,13 +282,13 @@ export default function AdminBillingDashboard() {
           />
           <StatCard 
             label="Revenue This Month" 
-            value={`$${stats.revenueThisMonth.toLocaleString()}`} 
+            value={`₦${stats.revenueThisMonth.toLocaleString()}`} 
             change={null}
             isPositive={true} 
           />
           <StatCard 
             label="Consultation Revenue (YTD)" 
-            value={`$${stats.consultationRevenueYTD.toLocaleString()}`} 
+            value={`₦${stats.consultationRevenueYTD.toLocaleString()}`} 
             change={null}
             isPositive={true} 
           />
@@ -301,9 +301,9 @@ export default function AdminBillingDashboard() {
             <BarChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis tickFormatter={(value) => `$${value / 1000}k`} tick={{ fontSize: 12 }} />
+              <YAxis tickFormatter={(value) => `₦${value / 1000}k`} tick={{ fontSize: 12 }} />
               <Tooltip
-                formatter={(value) => `$${value.toLocaleString()}`}
+                formatter={(value) => `₦${value.toLocaleString()}`}
                 contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}
               />
               <Bar dataKey="revenue" fill="#f97316" radius={[8, 8, 0, 0]} />
@@ -355,9 +355,9 @@ export default function AdminBillingDashboard() {
               <BarChart data={consultationData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(value) => `$${value / 1000}k`} tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(value) => `₦${value / 1000}k`} tick={{ fontSize: 12 }} />
                 <Tooltip
-                  formatter={(value) => `$${value.toLocaleString()}`}
+                  formatter={(value) => `₦${value.toLocaleString()}`}
                   contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}
                 />
                 <Bar dataKey="value" fill="#2563eb" radius={[8, 8, 0, 0]} />
@@ -409,42 +409,7 @@ export default function AdminBillingDashboard() {
           </div>
         </div>
 
-        {/* Recent Payments Section */}
-        {/* <div className="bg-white rounded-lg p-4 md:p-6 mb-6 md:mb-8">
-          <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">Recent Consultation Payments</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm md:text-base">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-2 md:px-4 font-semibold text-gray-700">Date</th>
-                  <th className="text-left py-3 px-2 md:px-4 font-semibold text-gray-700">Client</th>
-                  <th className="text-left py-3 px-2 md:px-4 font-semibold text-gray-700 hidden sm:table-cell">Plan</th>
-                  <th className="text-left py-3 px-2 md:px-4 font-semibold text-gray-700">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paymentsData.map((payment, index) => (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-2 md:px-4 text-gray-700">{payment.date}</td>
-                    <td className="py-3 px-2 md:px-4 text-gray-900 font-medium">{payment.client}</td>
-                    <td className="py-3 px-2 md:px-4 text-gray-700 hidden sm:table-cell">{payment.plan}</td>
-                    <td className="py-3 px-2 md:px-4 text-gray-900 font-semibold">{payment.amount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div> */}
-
-        {/* Action Buttons */}
-        {/* <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-          <button className="flex-1 bg-orange-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-orange-600 transition-colors">
-            📋 Export Report (CSV)
-          </button>
-          <button className="flex-1 bg-white text-gray-900 border border-gray-300 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors">
-            📊 Generate Custom Report
-          </button>
-        </div> */}
+       
       </div>
     </main>
   )
