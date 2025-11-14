@@ -11,6 +11,8 @@ const AdminStats = () => {
   const { projects, loading: projectsLoading } = useProjects();
   const [consultationLeads, setConsultationLeads] = useState(0);
   const [leadsLoading, setLeadsLoading] = useState(true);
+  const [revenueYTD, setRevenueYTD] = useState(0);
+  const [revenueLoading, setRevenueLoading] = useState(true);
 
   // Fetch consultation leads count
   useEffect(() => {
@@ -28,6 +30,49 @@ const AdminStats = () => {
     };
 
     fetchConsultationLeads();
+  }, []);
+
+  // Fetch and calculate total revenue (YTD)
+  useEffect(() => {
+    const fetchRevenueYTD = async () => {
+      try {
+        setRevenueLoading(true);
+        // Fetch all invoices
+        const invoicesSnapshot = await getDocs(collection(db, 'invoices'));
+        const invoices = invoicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Fetch all consultation registrations
+        const consultationsSnapshot = await getDocs(collection(db, 'consultation-registrations'));
+        const consultations = consultationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Get current year
+        const currentYear = new Date().getFullYear();
+        // Paid invoices (YTD)
+        const paidInvoicesYTD = invoices.filter(inv => {
+          if (inv.status !== 'paid') return false;
+          const paidDate = inv.paidAt?.toDate ? inv.paidAt.toDate() : (inv.createdAt?.toDate ? inv.createdAt.toDate() : new Date(inv.createdAt));
+          return paidDate.getFullYear() === currentYear;
+        });
+        // Paid consultations (YTD)
+        const paidConsultationsYTD = consultations.filter(c => {
+          if (!(c.status === 'paid' || c.payment === 'success')) return false;
+          const paidDate = c.paidAt?.toDate ? c.paidAt.toDate() : (c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt));
+          return paidDate.getFullYear() === currentYear;
+        });
+        // Consultation amount helper
+        const getConsultationAmount = (consultation) => {
+          if (consultation.plan === 'BuildPath Consultation') return 498;
+          return 299;
+        };
+        // Calculate totals
+        const invoiceRevenueYTD = paidInvoicesYTD.reduce((sum, inv) => sum + Number(inv.amount), 0);
+        const consultationRevenueYTD = paidConsultationsYTD.reduce((sum, c) => sum + getConsultationAmount(c), 0);
+        setRevenueYTD(invoiceRevenueYTD + consultationRevenueYTD);
+      } catch (error) {
+        setRevenueYTD(0);
+      } finally {
+        setRevenueLoading(false);
+      }
+    };
+    fetchRevenueYTD();
   }, []);
 
   // Calculate active clients (users with role 'client')
@@ -52,9 +97,9 @@ const AdminStats = () => {
       loading: leadsLoading
     },
     {
-      label: 'Revenue This Month',
-      value: '$0',
-      loading: false
+      label: 'Total Revenue (YTD)',
+      value: revenueLoading ? '...' : `₦${revenueYTD.toLocaleString()}`,
+      loading: revenueLoading
     },
     {
       label: 'Pending Approvals',

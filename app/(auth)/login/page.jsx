@@ -181,12 +181,12 @@ export default function LoginPage() {
               <FcGoogle size={20} /> Google Account
             </button>
 
-            <p className="text-center mt-6 text-sm text-gray-600">
+            {/* <p className="text-center mt-6 text-sm text-gray-600">
               New to iSHELTER?{" "}
               <a href="#" className="text-primary font-medium hover:underline">
                 Create an account
               </a>
-            </p>
+            </p> */}
           </div>
         </div>
       </div>

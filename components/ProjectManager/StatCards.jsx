@@ -1,5 +1,5 @@
 'use client'
-import { FaClipboardList, FaCheckCircle, FaExclamationCircle, FaFlag } from "react-icons/fa";
+import { FaClipboardList, FaCheckCircle, FaExclamationCircle, FaUsers } from "react-icons/fa";
 import { useProjectManager } from '@/contexts/ProjectManagerProjectsContext';
 
 export default function StatCards() {
@@ -9,27 +9,44 @@ export default function StatCards() {
   const calculateStats = () => {
     if (!projects || projects.length === 0) {
       return {
-        activeProjects: 0,
-        pendingApprovals: 0,
-        overdueMilestones: 0,
-        milestonesThisWeek: 0
+        totalClients: 0,
+        totalProjects: 0,
+        overdueInvoices: 0,
+        completedProjects: 0
       };
     }
 
-    const activeProjects = projects.filter(p => {
-      const status = (p.status || p.projectStatus || '').toLowerCase();
-      return status.includes('active') || status.includes('progress');
+    // Count unique clients across all projects
+    const uniqueClientIds = new Set();
+    projects.forEach(project => {
+      if (project.projectUsers && Array.isArray(project.projectUsers)) {
+        project.projectUsers.forEach(user => {
+          // Only count users with role "client"
+          if (user.role?.toLowerCase() === "client") {
+            uniqueClientIds.add(user.id || user.uid);
+          }
+        });
+      }
+    });
+    const totalClients = uniqueClientIds.size;
+
+    // Total projects
+    const totalProjects = projects.length;
+
+    // Sum all overdue invoices
+    const overdueInvoices = projects.reduce((sum, p) => sum + (p.overdueInvoices || 0), 0);
+
+    // Count completed projects
+    const completedProjects = projects.filter(p => {
+      const status = (p.projectStatus || '').toLowerCase();
+      return status === 'completed' || status === 'done';
     }).length;
 
-    const pendingApprovals = projects.reduce((sum, p) => sum + (p.pendingApprovals || 0), 0);
-    const overdueMilestones = projects.reduce((sum, p) => sum + (p.overdueMilestones || 0), 0);
-    const milestonesThisWeek = projects.reduce((sum, p) => sum + (p.milestonesThisWeek || 0), 0);
-
     return {
-      activeProjects,
-      pendingApprovals,
-      overdueMilestones,
-      milestonesThisWeek
+      totalClients,
+      totalProjects,
+      overdueInvoices,
+      completedProjects
     };
   };
 
@@ -37,27 +54,27 @@ export default function StatCards() {
 
   const statCards = [
     {
-      label: "Active Projects",
-      value: stats.activeProjects,
+      label: "Total Clients",
+      value: stats.totalClients,
+      icon: <FaUsers className="text-blue-500 text-xl" />,
+      bg: "bg-blue-100",
+    },
+    {
+      label: "Total Projects",
+      value: stats.totalProjects,
       icon: <FaClipboardList className="text-amber-500 text-xl" />,
       bg: "bg-orange-100",
     },
     {
-      label: "Pending Approvals",
-      value: stats.pendingApprovals,
-      icon: <FaCheckCircle className="text-blue-500 text-xl" />,
-      bg: "bg-blue-100",
-    },
-    {
-      label: "Overdue Milestones",
-      value: stats.overdueMilestones,
+      label: "Overdue Invoices",
+      value: stats.overdueInvoices,
       icon: <FaExclamationCircle className="text-red-500 text-xl" />,
       bg: "bg-red-100",
     },
     {
-      label: "Milestones This Week",
-      value: stats.milestonesThisWeek,
-      icon: <FaFlag className="text-green-500 text-xl" />,
+      label: "Completed Projects",
+      value: stats.completedProjects,
+      icon: <FaCheckCircle className="text-green-500 text-xl" />,
       bg: "bg-green-100",
     },
   ];
@@ -96,19 +113,31 @@ export default function StatCards() {
           <div>
             <div className="text-2xl font-bold text-gray-800">{stat.value}</div>
             <div className="md:text-sm text-gray-500 leading-tight text-xs break-words whitespace-normal">
-              {stat.label === "Active Projects"
+              {stat.label === "Total Clients"
                 ? (
                   <>
-                    Active <span className="block sm:inline">Projects</span>
+                    Total <span className="block sm:inline">Clients</span>
                   </>
                 )
-                : stat.label === "Overdue Milestones"
+                : stat.label === "Total Projects"
                   ? (
                     <>
-                      Overdue <span className="block sm:inline">Milestones</span>
+                      Total <span className="block sm:inline">Projects</span>
                     </>
                   )
-                  : stat.label}
+                  : stat.label === "Overdue Invoices"
+                    ? (
+                      <>
+                        Overdue <span className="block sm:inline">Invoices</span>
+                      </>
+                    )
+                    : stat.label === "Completed Projects"
+                      ? (
+                        <>
+                          Completed <span className="block sm:inline">Projects</span>
+                        </>
+                      )
+                      : stat.label}
             </div>
           </div>
         </div>
