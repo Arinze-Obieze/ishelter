@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
-  FaHome,
-  FaUsers,
-  FaRss,
-  FaFileAlt,
-  FaDollarSign,
-  FaCheckCircle,
-  FaFileInvoiceDollar,
-  FaPencilAlt,
+ 
   FaComments,
 } from "react-icons/fa"
 import { doc, getDoc, onSnapshot } from "firebase/firestore"
@@ -451,36 +444,6 @@ const OverviewTab = ({ projectId, tabs, activeTab, onTabChange }) => {
                 )}
               </div>
 
-              {/* Project Info Card */}
-              {/* <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 mt-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Project Info</h2>
-                <div className="space-y-3">
-                  <div>
-                    <div className="text-sm text-gray-600 font-medium">Address</div>
-                    <div className="text-sm text-gray-900">
-                      {projectData.projectAddress || "Not specified"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 font-medium">Initial Budget</div>
-                    <div className="text-sm text-gray-900">
-                      ₦{parseCost(projectData.initialBudget).toLocaleString()}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 font-medium">Total Stages</div>
-                    <div className="text-sm text-gray-900">
-                      {projectData.taskTimeline?.length || 0}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 font-medium">Description</div>
-                    <div className="text-sm text-gray-900">
-                      {projectData.shortDescription || "No description provided"}
-                    </div>
-                  </div>
-                </div>
-              </div> */}
             </div>
           </div>
         </main>
