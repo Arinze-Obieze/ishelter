@@ -286,12 +286,12 @@ export default function AdminBillingDashboard() {
             change={null}
             isPositive={true} 
           />
-          <StatCard 
+          {/* <StatCard 
             label="Consultation Revenue (YTD)" 
             value={`₦${stats.consultationRevenueYTD.toLocaleString()}`} 
             change={null}
             isPositive={true} 
-          />
+          /> */}
         </div>
 
         {/* Revenue Trends Chart */}
@@ -349,7 +349,7 @@ export default function AdminBillingDashboard() {
           </div>
 
           {/* Consultation Sales Breakdown */}
-          <div className="bg-white rounded-lg p-4 md:p-6">
+          {/* <div className="bg-white rounded-lg p-4 md:p-6">
             <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">Consultation Sales Breakdown (YTD)</h2>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={consultationData}>
@@ -363,7 +363,7 @@ export default function AdminBillingDashboard() {
                 <Bar dataKey="value" fill="#2563eb" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </div> */}
         </div>
 
         {/* Invoice Table Section */}

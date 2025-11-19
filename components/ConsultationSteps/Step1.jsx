@@ -123,7 +123,7 @@ export default function ContactInformationPage({ onNext, formData, setFormData, 
                 type="tel"
                 value={formData.phone}
                 customOnChange={handlePhoneChange}
-                placeholder="e.g., 09161597308 or +2348161597308"
+                placeholder="e.g., 09161... or +2348161..."
                 icon={FaPhone}
                 error={errors.phone}
               />

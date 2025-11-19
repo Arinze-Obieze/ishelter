@@ -91,11 +91,11 @@ const AdminStats = () => {
       value: projectsLoading ? '...' : activeProjects,
       loading: projectsLoading
     },
-    {
-      label: 'Consultation Leads',
-      value: leadsLoading ? '...' : consultationLeads,
-      loading: leadsLoading
-    },
+    // {
+    //   label: 'Consultation Leads',
+    //   value: leadsLoading ? '...' : consultationLeads,
+    //   loading: leadsLoading
+    // },
     {
       label: 'Total Revenue (YTD)',
       value: revenueLoading ? '...' : `₦${revenueYTD.toLocaleString()}`,

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import ContactInformationPage from '@/components/ConsultationSteps/Step1';
 import SchedulingPage from '@/components/ConsultationSteps/Step2';
+import Link from 'next/link';
 
 export default function ConsultationForm() {
   const [currentPage, setCurrentPage] = useState('contact');
@@ -72,10 +73,12 @@ export default function ConsultationForm() {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-start py-6">
       {/* Header with steps */}
       <div className="flex md:flex-row max-md:space-y-4 flex-col max-w-7xl justify-between items-center w-full px-6 mb-8">
-        <div className="bg-white px-4 py-2 rounded shadow flex items-center">
+       <Link href={'/'}>
+       <div className="bg-white px-4 py-2 rounded shadow flex items-center">
           <span className="text-amber-500 font-bold text-lg">i</span>
           <span className="text-black font-bold text-lg ml-1">SHELTER</span>
         </div>
+       </Link>
         
         <div className="flex items-center space-x-6 md:space-x-6 bg-white py-2 px-4 rounded-xl text-sm">
           <StepButton stepNumber={1} label="Your Information" currentStep={currentStep} />
