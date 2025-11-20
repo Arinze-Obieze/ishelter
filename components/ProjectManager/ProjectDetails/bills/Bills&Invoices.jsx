@@ -183,7 +183,7 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
   }
 
   return (
-    <div className="min-h-screen max-w-7xl mx-auto">
+    <div className="min-h-screen md:max-w-7xl mx-auto">
       {/* Header */}
       <div className="px-4 py-6 md:px-8">
         <h1 className="text-xl md:text-2xl font-bold text-gray-900">Project Billing & Invoices</h1>
@@ -194,7 +194,7 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
       </div>
 
       {/* Main Content */}
-      <div className="px-4 py-6 md:px-8 md:py-8 max-w-7xl mx-auto bg-gray-50">
+      <div className="px-4 py-6 md:px-8 md:py-8 md:max-w-7xl mx-auto bg-gray-50">
         {/* Budget Stats Component */}
         <BudgetStats
           budgetData={budgetData}

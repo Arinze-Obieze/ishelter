@@ -13,7 +13,7 @@ export default function Home({ projectId, tabs, activeTab, onTabChange }) {
       <div className="min-h-screen bg-gray-50">
         <TabsNavigation tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
 
-        <main className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+        <main className="md:max-w-7xl mx-auto px-2 md:px-2 py-6 md:py-8">
           {/* Post New Update Section */}
           <PostUpdateForm projectId={projectId} />
 
