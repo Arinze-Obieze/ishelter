@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
-import { FaShieldAlt, FaSignInAlt } from "react-icons/fa";
+import { FaShieldAlt, FaSignInAlt, FaTimes } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { doc, 
   getDoc,  
   collection, 
@@ -18,11 +18,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
   const router = useRouter();
   const [error, setError] = useState("");
 
   const isDisabled = loading || !email || !password;
-
+  const isResetDisabled = resetLoading || !resetEmail;
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -78,10 +81,111 @@ export default function LoginPage() {
     }
   }
 
+  async function handlePasswordReset(e) {
+    e.preventDefault();
+    setResetLoading(true);
+    
+    try {
+      // Send password reset email
+      await sendPasswordResetEmail(auth, resetEmail);
+      
+      toast.success("Password reset email sent! Check your inbox.", { duration: 4000 });
+      
+      // Close modal and reset form
+      setShowForgotPassword(false);
+      setResetEmail("");
+    } catch (err) {
+      let errorMessage = "Failed to send reset email. Please try again.";
+      
+      if (err.code === "auth/user-not-found") {
+        errorMessage = "No account found with this email address.";
+      } else if (err.code === "auth/invalid-email") {
+        errorMessage = "Please enter a valid email address.";
+      } else if (err.code === "auth/too-many-requests") {
+        errorMessage = "Too many attempts. Please try again later.";
+      }
+      
+      toast.error(errorMessage, { duration: 4000 });
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   return (
     <div className="h-screen flex bg-gray-100 overflow-hidden">
-     
-     
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed backdrop-overlay flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => {
+                setShowForgotPassword(false);
+                setResetEmail("");
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <FaTimes size={20} />
+            </button>
+
+            <h2 className="text-2xl font-bold mb-2">Reset Your Password</h2>
+            <p className="text-text text-sm font-light mb-6">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full bg-gray-100 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isResetDisabled}
+                className="w-full cursor-pointer bg-primary hover:bg-amber-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {resetLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Sending...
+                  </>
+                ) : (
+                  "Send Reset Link"
+                )}
+              </button>
+
+              <div className="flex items-center justify-center">
+                <span className="text-green-600 text-xs flex items-center font-light">
+                  <FaShieldAlt className="mr-1" />
+                  Secure password reset via email
+                </span>
+              </div>
+            </form>
+
+            <button
+              onClick={() => {
+                setShowForgotPassword(false);
+                setResetEmail("");
+              }}
+              className="w-full mt-4 text-primary text-sm font-medium hover:underline"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Form Section */}
       <div className="flex flex-col w-full md:w-2/3 shadow-lg overflow-y-auto">
         <div className="flex w-full justify-between items-center px-6 md:px-16 py-6">
@@ -95,7 +199,7 @@ export default function LoginPage() {
 
         <div className="flex bg-white flex-1 items-center max-md:mx-4 justify-center px-6 md:px-6 pb-10">
           <div className="w-full max-w-md">
-            <form className="space-y-5 " onSubmit={handleLogin}>
+            <form className="space-y-5" onSubmit={handleLogin}>
               <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
               <p className="text-text text-base font-light mb-6">
                 Log in to access your iSHELTER dashboard and manage your projects
@@ -135,9 +239,13 @@ export default function LoginPage() {
                   {showPassword ? "Hide" : "Show"}
                 </button>
                 <div className="text-right mt-1">
-                  <a href="#" className="text-primary text-sm hover:underline">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-primary text-sm hover:underline"
+                  >
                     Forgot your password?
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -148,7 +256,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isDisabled}
-                className="w-full  cursor-pointer bg-primary hover:bg-amber-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full cursor-pointer bg-primary hover:bg-amber-600 text-white font-semibold py-3 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (
                   <>
@@ -165,7 +273,7 @@ export default function LoginPage() {
 
               <div className="flex items-center justify-center mt-2">
                 <span className="text-green-600 text-xs flex items-center font-light">
-                <FaShieldAlt className="mr-1" />
+                  <FaShieldAlt className="mr-1" />
                   Your connection to this site is secure and encrypted
                 </span>
               </div>
@@ -180,13 +288,6 @@ export default function LoginPage() {
             <button className="w-full flex items-center justify-center gap-2 border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
               <FcGoogle size={20} /> Google Account
             </button>
-
-            {/* <p className="text-center mt-6 text-sm text-gray-600">
-              New to iSHELTER?{" "}
-              <a href="#" className="text-primary font-medium hover:underline">
-                Create an account
-              </a>
-            </p> */}
           </div>
         </div>
       </div>

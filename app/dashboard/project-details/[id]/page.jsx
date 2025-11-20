@@ -158,7 +158,7 @@ export default function ProjectDetails() {
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-3xl font-bold text-orange-500">{percentComplete}%</span>
+                      <span className="text-3xl font-bold text-amber-500">{percentComplete}%</span>
                     </div>
                   </div>
                   <p className="mt-3 text-sm font-semibold text-gray-900">Overall Completion</p>
@@ -201,9 +201,9 @@ export default function ProjectDetails() {
                       <div
                         className={`w-6 h-6 ${
                           stage.status === "Completed"
-                            ? "bg-orange-500"
+                            ? "bg-amber-500"
                             : stage.status === "In Progress"
-                            ? "border-4 border-orange-500 bg-white"
+                            ? "border-4 border-amber-500 bg-white"
                             : "border-2 border-gray-300 bg-white"
                         } rounded-full flex items-center justify-center`}
                       >
@@ -212,7 +212,7 @@ export default function ProjectDetails() {
                       {idx < timeline.length - 1 && (
                         <div
                           className={`w-0.5 h-full ${
-                            stage.status === "Completed" ? "bg-orange-500" : "bg-gray-300"
+                            stage.status === "Completed" ? "bg-amber-500" : "bg-gray-300"
                           } mt-2`}
                         ></div>
                       )}
@@ -223,7 +223,7 @@ export default function ProjectDetails() {
                           stage.status === "Completed"
                             ? "bg-green-50"
                             : stage.status === "In Progress"
-                            ? "bg-orange-50"
+                            ? "bg-amber-50"
                             : "bg-gray-50"
                         }`}
                       >
@@ -235,7 +235,7 @@ export default function ProjectDetails() {
                                 stage.status === "Completed"
                                   ? "bg-green-100 text-green-700"
                                   : stage.status === "In Progress"
-                                  ? "bg-orange-100 text-orange-700"
+                                  ? "bg-amber-100 text-amber-700"
                                   : "bg-gray-100 text-gray-600"
                               }`}
                             >
@@ -263,9 +263,9 @@ export default function ProjectDetails() {
                             {(stage.tasks || []).map((task, tIdx) => (
                               <div key={task.id || tIdx} className="flex items-center gap-2">
                                 {task.status === "Completed" ? (
-                                  <IoCheckmarkCircle className="text-orange-600 text-lg flex-shrink-0" />
+                                  <IoCheckmarkCircle className="text-amber-600 text-lg flex-shrink-0" />
                                 ) : (
-                                  <div className="w-5 h-5 border-2 border-orange-300 rounded-full flex-shrink-0"></div>
+                                  <div className="w-5 h-5 border-2 border-amber-300 rounded-full flex-shrink-0"></div>
                                 )}
                                 <span className={`text-sm ${task.status === "Completed" ? "text-gray-700" : "text-gray-500"}`}>
                                   {task.name}
@@ -278,7 +278,7 @@ export default function ProjectDetails() {
                           </div>
                         )}
                         {/* Budget Info */}
-                        <div className="mt-4 pt-4 border-t border-orange-200 space-y-1">
+                        <div className="mt-4 pt-4 border-t border-amber-200 space-y-1">
                           <div className="flex justify-between text-sm">
                             <span className="font-semibold text-gray-900">Total Budget</span>
                             <span className="font-semibold text-gray-900">₦{parseCost(stage.cost).toLocaleString()}</span>
@@ -308,7 +308,7 @@ export default function ProjectDetails() {
             {/* Budget Card */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
-                <IoDocumentTextOutline className="text-orange-500 text-xl" />
+                <IoDocumentTextOutline className="text-amber-500 text-xl" />
                 <h2 className="text-lg font-semibold text-gray-900">Budget</h2>
               </div>
               <div className="space-y-3">
@@ -333,14 +333,14 @@ export default function ProjectDetails() {
             {/* Upcoming Tasks */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
-                <IoCalendarOutline className="text-orange-500 text-xl" />
+                <IoCalendarOutline className="text-amber-500 text-xl" />
                 <h2 className="text-lg font-semibold text-gray-900">Upcoming Tasks</h2>
               </div>
               <div className="space-y-3">
                 {upcomingTasks.length === 0 && <div className="text-sm text-gray-500">No upcoming tasks.</div>}
                 {upcomingTasks.map((task, idx) => (
                   <div className="flex gap-3" key={task.id || idx}>
-                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></div>
                     <div>
                       <p className="text-sm text-gray-900 font-medium">
                         {task.name}{" "}

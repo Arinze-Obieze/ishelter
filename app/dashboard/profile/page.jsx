@@ -21,8 +21,8 @@ export default function AccountSettings() {
         <ProfileInformation />
         <SecuritySection />
         {/* <TwoFactorAuth /> */}
-        <NotificationPreferences />
-        <DeleteAccount />
+        {/* <NotificationPreferences />
+        <DeleteAccount /> */}
       </div>
     </div>
   )

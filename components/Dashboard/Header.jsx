@@ -34,10 +34,12 @@ const Header = ({ onMenuClick }) => {
     <div>
       <header className="bg-white place-items-center flex items-center justify-between px-6 py-2 md:mt-4">
         {/* Logo */}
+   <Link href="/dashboard">
         <div className="flex items-center">
           <span className="font-bold text-base md:text-2xl text-primary tracking-wide">i</span>
           <span className="font-bold text-base md:text-2xl ml-0.5">SHELTER</span>
         </div>
+   </Link>
 
         {/* Navigation */}
         <nav className="md:flex items-center gap-8 text-xs hidden">
