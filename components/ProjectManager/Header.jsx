@@ -1,4 +1,5 @@
 import { FaBell, FaBars } from 'react-icons/fa';
+import NotificationDropdown from '@/components/ui/NotificationDropdown';
 import Image from 'next/image';
 
 export default function Header({ onMenuClick }) {
@@ -16,12 +17,7 @@ export default function Header({ onMenuClick }) {
       </div>
    
       <div className="flex items-center gap-4">
-        <div className="relative">
-          <FaBell className="text-2xl text-gray-600" />
-          {/* <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-red-500 text-white text-xs font-bold">
-            3
-          </span> */}
-        </div>
+        <NotificationDropdown notificationsPageUrl="/project-manager/notifications" />
 
            {/* Hamburger for mobile */}
            <button

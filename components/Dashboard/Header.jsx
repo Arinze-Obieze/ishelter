@@ -5,6 +5,7 @@ import { RiMenu3Fill } from 'react-icons/ri';
 import { LuVideo } from "react-icons/lu";
 import { IoDocumentTextOutline } from 'react-icons/io5';
 import { FiCreditCard } from 'react-icons/fi';
+import NotificationDropdown from '@/components/ui/NotificationDropdown';
 import { usePathname } from 'next/navigation';
 import { useCurrentClient } from '@/contexts/CurrentClientContext';
 import Link from 'next/link';
@@ -62,9 +63,7 @@ const Header = ({ onMenuClick }) => {
 
         {/* Notification & Profile */}
         <div className="md:flex cursor-pointer hidden items-center gap-4">
-          <span>
-            <FaRegBell className="text-xl text-gray-700 hover:text-gray-900" />
-          </span>
+          <NotificationDropdown notificationsPageUrl="/dashboard/notifications" />
         
           <Link href="/dashboard/profile">
             <div className="flex items-center gap-2">
@@ -91,9 +90,7 @@ const Header = ({ onMenuClick }) => {
           onClick={onMenuClick}
           className="md:hidden flex space-x-4 text-gray-700 text-2xl py-4"
         >
-          <span>
-            <FaRegBell className="text-gray-700 hover:text-gray-900" />
-          </span>
+          <NotificationDropdown notificationsPageUrl="/dashboard/notifications" />
           <RiMenu3Fill />
         </button>
       </header>

@@ -8,12 +8,14 @@ import { ProjectsProvider } from '@/contexts/ProjectContext';
 import { ProjectUsersProvider } from '@/contexts/ProjectUsersContext';
 import { ConsultationProvider } from '@/contexts/ConsultationContext';
 import { LeadActionsProvider } from '@/contexts/LeadActionsContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 
 function AdminLayoutContent({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
   <UserProvider>
+    <NotificationProvider>
     <ProjectsProvider>
       <ProjectUsersProvider>
       <ConsultationProvider>
@@ -35,6 +37,7 @@ function AdminLayoutContent({ children }) {
         </ConsultationProvider>
       </ProjectUsersProvider>
     </ProjectsProvider>
+    </NotificationProvider>
   </UserProvider>
   );
 }

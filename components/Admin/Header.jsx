@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import NotificationDropdown from '@/components/ui/NotificationDropdown'
 import Image from 'next/image'
 
 export default function Header({ onMenuClick }) {
@@ -112,13 +113,7 @@ export default function Header({ onMenuClick }) {
    
       <div className="flex items-center gap-4">
         {/* Notification Bell */}
-        <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
-          <FaBell className="text-2xl text-gray-600" />
-          {/* Uncomment to show notification badge */}
-          {/* <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-red-500 text-white text-xs font-bold">
-            3
-          </span> */}
-        </div>
+        <NotificationDropdown notificationsPageUrl="/admin/notifications" />
 
         {/* User Avatar + Info */}
         <div className="flex cursor-pointer items-center gap-3 hover:opacity-90 transition-opacity">

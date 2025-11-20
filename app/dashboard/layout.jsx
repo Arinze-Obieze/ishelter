@@ -9,6 +9,7 @@ import { UserProvider } from "@/contexts/UserContext";
 import { LiveFeedProvider } from "@/contexts/LiveFeedContext";
 import {CurrentClientProvider} from "@/contexts/CurrentClientContext";
 import { InvoiceProvider } from "@/contexts/InvoiceContext";
+import { NotificationProvider } from '@/contexts/NotificationContext'
 
 const ProtectedLayout = withAuthProtection(function Layout({children}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -19,6 +20,7 @@ const ProtectedLayout = withAuthProtection(function Layout({children}) {
   return (
     <CurrentClientProvider>
       <UserProvider> 
+        <NotificationProvider>
         <PersonalProjectsProvider> 
           <LiveFeedProvider>
             <DocumentsProvider>
@@ -32,6 +34,7 @@ const ProtectedLayout = withAuthProtection(function Layout({children}) {
             </DocumentsProvider>
           </LiveFeedProvider>
         </PersonalProjectsProvider>
+        </NotificationProvider>
       </UserProvider>
     </CurrentClientProvider>
   );

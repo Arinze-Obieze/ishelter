@@ -1,45 +1,15 @@
-import { IoNotificationsOutline } from "react-icons/io5";
+import { IoNotificationsOutline } from 'react-icons/io5'
+import { useNotifications } from '@/contexts/NotificationContext'
+
+const formatTime = (ts) => {
+  if (!ts) return ''
+  // Firestore Timestamp -> Date
+  const date = ts.toDate ? ts.toDate() : new Date(ts)
+  return date.toLocaleString()
+}
 
 const Notifications = () => {
-  // Notification data array
-  const notificationsData = [
-    // {
-    //   id: 1,
-    //   icon: "📄",
-    //   title: "New invoice available",
-    //   description: "Invoice #2034 for Lekki Duplex is ready for review",
-    //   time: "2 hours ago",
-    //   project: "Duplex at Lekki",
-    //   color: "text-primary",
-    // },
-    // {
-    //   id: 2,
-    //   icon: "✓",
-    //   title: "Approval needed",
-    //   description: "Design plan for Ikeja property requires your approval",
-    //   time: "Yesterday",
-    //   project: "Ikeja Commercial Property",
-    //   color: "text-primary",
-    // },
-    // {
-    //   id: 3,
-    //   icon: "✉️",
-    //   title: "Message from Project Manager",
-    //   description: "Lisa: Updates on Highland Park project timeline",
-    //   time: "2 days ago",
-    //   project: "Modern Residence - Highland Park",
-    //   color: "text-primary",
-    // },
-    // {
-    //   id: 4,
-    //   icon: "📦",
-    //   title: "Material selection required",
-    //   description: "Please select flooring options for Abuja Office Complex",
-    //   time: "3 days ago",
-    //   project: "Abuja Office Complex",
-    //   color: "text-primary",
-    // },
-  ];
+  const { notifications = [], loading, unreadCount } = useNotifications()
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 py-4 max-w-md mx-auto">
@@ -49,31 +19,26 @@ const Notifications = () => {
           Notifications
         </h3>
         <span className="text-xs bg-primary text-white px-2 py-1 rounded-full">
-          {notificationsData.length}
+          {loading ? '…' : unreadCount}
         </span>
       </div>
 
-      {notificationsData.length === 0 ? (
-        <div className="text-center text-gray-500 py-6 text-sm">
-          No notifications
-        </div>
+      {loading ? (
+        <div className="text-center text-gray-500 py-6 text-sm">Loading…</div>
+      ) : notifications.length === 0 ? (
+        <div className="text-center text-gray-500 py-6 text-sm">No notifications</div>
       ) : (
         <>
           <div className="space-y-4 text-sm mt-4">
-            {notificationsData.map((notification) => (
+            {notifications.map((notification) => (
               <div key={notification.id} className="pb-3">
-                <p className="font-medium text-gray-800 flex items-center gap-2">
-                  <span className={notification.color}>{notification.icon}</span>{" "}
-                  {notification.title}
-                </p>
-                <p className="text-text font-light text-xs mt-1 px-6">
-                  {notification.description}
-                </p>
-                <div className="flex justify-between text-xs text-gray-400 mt-1 px-6">
-                  <span>{notification.time}</span>
-                  <span className="text-primary font-medium">
-                    {notification.project}
-                  </span>
+                <p className="font-medium text-gray-800">{notification.title}</p>
+                <p className="text-text font-light text-xs mt-1 px-1">{notification.body}</p>
+                <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
+                  <span>{formatTime(notification.createdAt)}</span>
+                  {notification.projectId && (
+                    <span className="text-primary font-medium">Project</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -85,7 +50,7 @@ const Notifications = () => {
         </>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default Notifications;
+export default Notifications
