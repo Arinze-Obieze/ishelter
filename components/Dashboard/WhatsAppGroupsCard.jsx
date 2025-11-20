@@ -30,7 +30,7 @@ const WhatsAppGroupsCard = () => {
         <div className="space-y-2">
           {whatsappLinks.map((group, index) => (
             <div key={index} className="mb-3">
-              <p className="text-sm font-medium text-gray-700 mb-2">{group.name}</p>
+              <p className="text-sm font-medium text-gray-700 mb-2 max-md:pl-4">{group.name}</p>
               <a
                 href={group.link}
                 target="_blank"
