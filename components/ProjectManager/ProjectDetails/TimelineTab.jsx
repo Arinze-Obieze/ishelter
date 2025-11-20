@@ -269,7 +269,7 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
 
   // Cost Reconciliation Summary Component
   const CostSummary = ({ budgetSummary, isMobile = false }) => (
-    <div className={`bg-orange-500 rounded-lg p-4 ${isMobile ? 'mb-4' : 'p-6 mx-6 mt-6'} text-white`}>
+    <div className={`bg-amber-500 rounded-lg p-4 ${isMobile ? 'mb-4' : 'p-6 mx-6 mt-6'} text-white`}>
       <h2 className="text-sm font-medium mb-3">Cost Reconciliation Summary</h2>
       <div className={`grid ${isMobile ? 'grid-cols-3 gap-3' : 'grid-cols-3 gap-8'}`}>
         <div>
@@ -300,19 +300,7 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
       <div className="lg:hidden">
         {/* Mobile Tabs */}
         <div className="bg-white border-b border-gray-200 flex">
-          {["overview", "documents", "tasks"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveMobileTab(tab)}
-              className={`flex-1 py-3 text-sm font-medium ${
-                activeMobileTab === tab 
-                  ? "text-primary border-b-2 border-orange-500" 
-                  : "text-gray-500"
-              }`}
-            >
-              {tab === "tasks" ? "Tasks & Team" : tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+                      <TabsNavigation tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
         </div>
         
         {/* Mobile Content */}
@@ -458,7 +446,7 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
 
 // Extracted components for better organization
 const StageForm = ({ stage, onChange, onSave, onCancel, saving, isMobile = false }) => (
-  <div className={`border ${isMobile ? 'border-orange-200 rounded-lg mb-3 p-2 bg-orange-50' : 'bg-orange-50'}`}>
+  <div className={`border ${isMobile ? 'border-primary-200 rounded-lg mb-3 p-2 bg-amber-50' : 'bg-amber-50'}`}>
     <input 
       type="text" 
       className="border rounded px-2 py-1 w-full mb-2" 
@@ -653,7 +641,7 @@ const StageItem = ({
 )
 
 const TaskForm = ({ task, onChange, onSave, onCancel, saving, isMobile = false }) => (
-  <div className={`border-l-2 border-orange-200 pl-3 mb-2 bg-orange-50 p-2`}>
+  <div className={`border-l-2 border-primary-200 pl-3 mb-2 bg-amber-50 p-2`}>
     <input 
       type="text" 
       className="border rounded px-2 py-1 w-full mb-1" 
@@ -834,7 +822,7 @@ const TaskTable = ({
       <tbody>
         {/* Add Stage Row */}
         {addingStage && (
-          <tr className="bg-orange-50">
+          <tr className="bg-amber-50">
             <td className="py-2 px-2">
               <input 
                 type="text" 
@@ -1041,7 +1029,7 @@ const StageTableRow = ({
               <FiTrash2 size={16} className="text-gray-600" />
             </button>
             <button 
-              className="flex items-center gap-1 text-xs text-orange-600" 
+              className="flex items-center gap-1 text-xs text-primary-600" 
               onClick={() => onAddTask(stageIdx)} 
               disabled={addingTaskStageId !== null || saving}
             >
@@ -1054,7 +1042,7 @@ const StageTableRow = ({
     
     {/* Add Task Row */}
     {addingTaskStageId === stageIdx && (
-      <tr className="bg-orange-50">
+      <tr className="bg-amber-50">
         <td className="py-2 px-2 pl-10">
           <input 
             type="text" 
