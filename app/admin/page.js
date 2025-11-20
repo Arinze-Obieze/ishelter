@@ -1,3 +1,4 @@
+"use client"
 import AdminStats from '@/components/Admin/AdminStats'
 import  QuickActions  from '@/components/Admin/QuickActions'
 import SystemAlerts from '@/components/Admin/SystemAlerts'

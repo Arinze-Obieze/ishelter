@@ -1,4 +1,3 @@
-// app/api/admin/users/update/route.js
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 

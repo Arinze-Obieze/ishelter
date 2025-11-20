@@ -1,4 +1,3 @@
-// /app/api/complete-profile/route.js
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 
 export async function POST(req) {
