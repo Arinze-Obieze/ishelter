@@ -4,7 +4,7 @@ import { useState, lazy, Suspense } from "react"
 import { useParams } from "next/navigation"
 
 const OverviewTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/OverviewTab'))
-const TimelineTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/TimelineTab'))
+const TimelineTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/TimelineTab/TimelineTab'))
 const DocumentsTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/documents/Documents'))
 const BillsTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/bills/Bills&Invoices'))
 const LiveTab = lazy(() => import('@/components/ProjectManager/ProjectDetails/LiveFeed&Updates/LiveTab'))
