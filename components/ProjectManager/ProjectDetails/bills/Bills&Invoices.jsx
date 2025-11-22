@@ -1,4 +1,3 @@
-// components/ProjectManager/ProjectDetails/bills/Bills&Invoices.js
 import { useState, useEffect } from "react"
 import { db, auth } from "@/lib/firebase"
 import { doc, getDoc, getDocs } from "firebase/firestore"

@@ -1,4 +1,5 @@
-'use client'
+"use client"
+
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { doc, getDoc } from "firebase/firestore"
@@ -15,7 +16,7 @@ import { toast } from "react-hot-toast"
 export default function LiveFeedDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const projectId = params['live-feed']
+  const projectId = params["live-feed"]
 
   const { projects, loading: projectsLoading } = usePersonalProjects()
   const { updates, subscribeToUpdates } = useLiveFeed()
@@ -33,7 +34,7 @@ export default function LiveFeedDetailPage() {
     const fetchProject = async () => {
       try {
         setLoading(true)
-        
+
         const projectRef = doc(db, "projects", projectId)
         const projectSnap = await getDoc(projectRef)
 
@@ -47,7 +48,7 @@ export default function LiveFeedDetailPage() {
         setProjectData({ id: projectSnap.id, ...data })
         setLoading(false)
       } catch (err) {
-        if (err.code === 'permission-denied') {
+        if (err.code === "permission-denied") {
           toast.error("You don't have access to this project")
         } else {
           toast.error("Failed to load project")
@@ -66,23 +67,37 @@ export default function LiveFeedDetailPage() {
     return () => unsubscribe && unsubscribe()
   }, [projectId, subscribeToUpdates])
 
-  // Filter updates based on active tab and date range
+  // Filter Logic
   useEffect(() => {
+    const normalizeType = (type) => {
+      if (!type) return "unknown"
+      const t = type.toLowerCase()
+      if (t.includes("image")) return "image"
+      if (t.includes("video")) return "video"
+      return "unknown"
+    }
+
     let filtered = [...updates]
 
-    // Date filter
+    // Date filter first
     if (dateFilter !== "all") {
       filtered = filterByDateRange(filtered, dateFilter)
     }
 
-    // Content type filter
+    // Content type filtering (strict)
     if (activeTab === "photos") {
-      filtered = filtered.filter(u => 
-        u.media?.some(m => m.contentType.startsWith("image"))
+      filtered = filtered.filter(
+        (u) =>
+          u.media &&
+          u.media.length > 0 &&
+          u.media.every((m) => normalizeType(m.contentType) === "image")
       )
     } else if (activeTab === "videos") {
-      filtered = filtered.filter(u => 
-        u.media?.some(m => m.contentType.startsWith("video"))
+      filtered = filtered.filter(
+        (u) =>
+          u.media &&
+          u.media.length > 0 &&
+          u.media.every((m) => normalizeType(m.contentType) === "video")
       )
     }
 
@@ -93,8 +108,8 @@ export default function LiveFeedDetailPage() {
   const filterByDateRange = (updates, range) => {
     const now = new Date()
     const filterDate = new Date()
-    
-    switch(range) {
+
+    switch (range) {
       case "today":
         filterDate.setHours(0, 0, 0, 0)
         break
@@ -113,15 +128,14 @@ export default function LiveFeedDetailPage() {
       default:
         return updates
     }
-    
-    return updates.filter(update => {
+
+    return updates.filter((update) => {
       if (!update.createdAt?.seconds) return false
       const updateDate = new Date(update.createdAt.seconds * 1000)
       return updateDate >= filterDate
     })
   }
 
-  // Loading state
   if (loading || projectsLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -147,9 +161,11 @@ export default function LiveFeedDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Project Data</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            No Project Data
+          </h2>
           <p className="text-gray-600">Unable to load project information.</p>
-          <button 
+          <button
             onClick={() => router.push("/dashboard/live-feed")}
             className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-orange-700"
           >
@@ -160,20 +176,19 @@ export default function LiveFeedDetailPage() {
     )
   }
 
-  // Get latest video for LiveFeedSection
   const latestVideo = updates
-    .filter(u => u.media?.some(m => m.contentType.startsWith("video")))
+    .filter((u) =>
+      u.media?.some((m) => m.contentType?.toLowerCase().includes("video"))
+    )
     .sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds)[0]
 
   const hasLocation = !!projectData.projectLocation
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <Header projectData={projectData} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Filter Tabs */}
         <FilterTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -182,12 +197,6 @@ export default function LiveFeedDetailPage() {
           onDateFilterChange={setDateFilter}
         />
 
-        {/* Latest Video Section - Only if video exists and not on Location tab */}
-        {latestVideo && activeTab !== "location" && (
-          <LiveFeedSection update={latestVideo} />
-        )}
-
-        {/* Content based on active tab */}
         {activeTab === "location" ? (
           <ClientLocationView projectId={projectId} projectData={projectData} />
         ) : (
