@@ -17,7 +17,7 @@ const STATUS_CONFIG = {
 
 const DEFAULT_STAGE = {
   name: "",
-  dueDate: "",
+  dueDate: { start: "", end: "" },
   cost: "",
   status: "Pending",
   tasks: []
@@ -25,7 +25,7 @@ const DEFAULT_STAGE = {
 
 const DEFAULT_TASK = {
   name: "",
-  dueDate: "",
+  dueDate: { start: "", end: "" },
   cost: "",
   status: "Pending"
 }
@@ -46,19 +46,16 @@ const renderDateRange = (range) => {
   return `${range.start} - ${range.end}`
 }
 
-// Cost calculation mapper
+// Cost calculation mapper - Only counts stage costs, tasks are breakdowns
 const calculateBudgetSummary = (taskTimeline) => {
   const totalBudget = taskTimeline.reduce((sum, stage) => {
     const stageCost = parseCost(stage.cost)
-    const tasksCost = (stage.tasks || []).reduce((s, t) => s + parseCost(t.cost), 0)
-    return sum + stageCost + tasksCost
+    return sum + stageCost
   }, 0)
 
   const remainingBudget = taskTimeline.reduce((sum, stage) => {
     const stageCost = stage.status !== "Completed" ? parseCost(stage.cost) : 0
-    const tasksCost = (stage.tasks || []).reduce((s, t) => 
-      t.status !== "Completed" ? s + parseCost(t.cost) : s, 0)
-    return sum + stageCost + tasksCost
+    return sum + stageCost
   }, 0)
 
   return {
@@ -128,9 +125,13 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
   }
 
   const handleSaveStage = async () => {
-    if (!newStage.name || !newStage.dueDate || !newStage.cost) return
+    if (!newStage.name || !newStage.dueDate.start || !newStage.dueDate.end || !newStage.cost) {
+      setError("Please fill all required fields")
+      return
+    }
     
     setSaving(true)
+    setError(null)
     try {
       const updatedTimeline = [...taskTimeline, { 
         ...newStage, 
@@ -157,6 +158,7 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
     if (!window.confirm("Delete this stage and all its tasks?")) return
     
     setSaving(true)
+    setError(null)
     try {
       const updatedTimeline = taskTimeline.filter((_, idx) => idx !== stageIdx)
       await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
@@ -174,7 +176,18 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
   }
 
   const handleSaveEditStage = async (stageIdx) => {
+    // Validate: Check if new stage cost is >= sum of all its tasks
+    const stage = taskTimeline[stageIdx]
+    const newStageCost = parseCost(editStage.cost)
+    const tasksTotal = (stage.tasks || []).reduce((sum, t) => sum + parseCost(t.cost), 0)
+    
+    if (newStageCost < tasksTotal) {
+      setError(`Cannot save stage. Stage cost (₦${newStageCost.toLocaleString()}) must be greater than or equal to tasks total (₦${tasksTotal.toLocaleString()})`)
+      return
+    }
+    
     setSaving(true)
+    setError(null)
     try {
       const updatedTimeline = [...taskTimeline]
       updatedTimeline[stageIdx] = { ...editStage }
@@ -201,14 +214,31 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
   }
 
   const handleSaveTask = async (stageIdx) => {
-    if (!newTask.name || !newTask.dueDate || !newTask.cost) return
+    if (!newTask.name || !newTask.dueDate.start || !newTask.dueDate.end || !newTask.cost) {
+      setError("Please fill all required fields")
+      return
+    }
+    
+    // Validate: Check if adding this task would exceed stage cost
+    const stage = taskTimeline[stageIdx]
+    const stageCost = parseCost(stage.cost)
+    const existingTasksTotal = (stage.tasks || []).reduce((sum, t) => sum + parseCost(t.cost), 0)
+    const newTaskCost = parseCost(newTask.cost)
+    const totalTasksCost = existingTasksTotal + newTaskCost
+    
+    if (totalTasksCost > stageCost) {
+      const available = stageCost - existingTasksTotal
+      setError(`Cannot add task. Stage budget: ₦${stageCost.toLocaleString()}, Tasks total would be: ₦${totalTasksCost.toLocaleString()}. Available budget: ₦${available.toLocaleString()}`)
+      return
+    }
     
     setSaving(true)
+    setError(null)
     try {
       const updatedTimeline = [...taskTimeline]
-      const stage = { ...updatedTimeline[stageIdx] }
-      stage.tasks = [...(stage.tasks || []), { ...newTask, id: Date.now().toString() }]
-      updatedTimeline[stageIdx] = stage
+      const updatedStage = { ...updatedTimeline[stageIdx] }
+      updatedStage.tasks = [...(updatedStage.tasks || []), { ...newTask, id: Date.now().toString() }]
+      updatedTimeline[stageIdx] = updatedStage
       await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
       setTaskTimeline(updatedTimeline)
       setAddingTaskStageId(null)
@@ -229,6 +259,7 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
     if (!window.confirm("Delete this task?")) return
     
     setSaving(true)
+    setError(null)
     try {
       const updatedTimeline = [...taskTimeline]
       updatedTimeline[stageIdx].tasks = updatedTimeline[stageIdx].tasks.filter((_, idx) => idx !== taskIdx)
@@ -247,7 +278,24 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
   }
 
   const handleSaveEditTask = async (stageIdx, taskIdx) => {
+    // Validate: Check if editing this task would exceed stage cost
+    const stage = taskTimeline[stageIdx]
+    const stageCost = parseCost(stage.cost)
+    const otherTasksTotal = (stage.tasks || []).reduce((sum, t, idx) => {
+      if (idx === taskIdx) return sum // Skip the task being edited
+      return sum + parseCost(t.cost)
+    }, 0)
+    const editedTaskCost = parseCost(editTask.cost)
+    const totalTasksCost = otherTasksTotal + editedTaskCost
+    
+    if (totalTasksCost > stageCost) {
+      const available = stageCost - otherTasksTotal
+      setError(`Cannot save task. Stage budget: ₦${stageCost.toLocaleString()}, Tasks total would be: ₦${totalTasksCost.toLocaleString()}. Available budget: ₦${available.toLocaleString()}`)
+      return
+    }
+    
     setSaving(true)
+    setError(null)
     try {
       const updatedTimeline = [...taskTimeline]
       updatedTimeline[stageIdx].tasks[taskIdx] = { ...editTask }
@@ -300,11 +348,17 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
       <div className="lg:hidden">
         {/* Mobile Tabs */}
         <div className="bg-white border-b border-gray-200 flex">
-                      <TabsNavigation tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
+          <TabsNavigation tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
         </div>
         
         {/* Mobile Content */}
         <div className="p-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+          
           <CostSummary budgetSummary={budgetSummary} isMobile={true} />
           
           {/* Project Timeline Section */}
@@ -383,7 +437,13 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
             </div>
             
             {/* Main Content */}
-            <div className="flex gap-6 mx-6 mt-6">
+            <div className="flex flex-col gap-6 mx-6 mt-6">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                  {error}
+                </div>
+              )}
+              
               {/* Left Content */}
               <div className="flex-1 bg-white rounded-lg p-6">
                 <div className="flex items-center justify-between mb-6">
