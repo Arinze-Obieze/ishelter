@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -44,7 +44,6 @@ export default function BillingPage() {
               const projectData = projectSnap.data()
               const invoiceRefs = projectData.projectInvoices || []
               
-              // Fetch all invoices for this project
               const invoices = []
               for (const invoiceRef of invoiceRefs) {
                 try {
@@ -57,16 +56,13 @@ export default function BillingPage() {
                 }
               }
 
-              // Calculate project billing data
               const billingData = calculateProjectBilling(invoices)
               
-              // Aggregate totals
               if (billingData.hasOverdue) {
                 allOverdueAmount += billingData.overdueAmount
                 overdueProjectCount++
               }
 
-              // Track earliest due date across all projects
               if (billingData.nextDueDate) {
                 const dueDate = new Date(billingData.nextDueDate)
                 if (!earliestDueDate || dueDate < earliestDueDate) {
@@ -134,7 +130,7 @@ export default function BillingPage() {
 
     invoices.forEach(invoice => {
       const dueDate = new Date(invoice.dueDate)
-      const isOverdue = dueDate < today || invoice.status === 'overdue'
+      const isOverdue = dueDate < today
       const isPending = invoice.status === 'pending'
       const isPaid = invoice.status === 'paid'
 
@@ -237,15 +233,12 @@ export default function BillingPage() {
     }
   }
 
-  // Enhanced filter logic
   const filteredProjects = enrichedProjects.filter(project => {
     if (activeTab === "all projects") return true
     if (activeTab === "payments due") {
-      // Show projects with unpaid invoices (action or upcoming status)
-      return project.hasUnpaid && (project.status === "action" || project.status === "upcoming")
+      return project.hasUnpaid && project.status === "action"
     }
     if (activeTab === "paid") {
-      // Show projects where all invoices are paid (clear status) and has invoices
       return project.status === "clear" && project.hasInvoices
     }
     return true
