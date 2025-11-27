@@ -48,8 +48,7 @@ export const InvoiceProvider = ({ children }) => {
       ...docData,
       projectRef: docData.projectRef?.path,
       createdBy: docData.createdBy?.path,
-      // Ensure backward compatibility for existing invoices
-      paymentMethod: docData.paymentMethod || 'link', // Default to 'link' for existing invoices
+      paymentMethod: docData.paymentMethod || 'link',
       paymentLink: docData.paymentLink || null,
       accountName: docData.accountName || null,
       accountNumber: docData.accountNumber || null,
@@ -62,10 +61,9 @@ export const InvoiceProvider = ({ children }) => {
   // Fetch invoices for a specific project with real-time updates
   const fetchInvoices = useCallback((projectId) => {
     if (!projectId || currentProjectIdRef.current === projectId) {
-      return; // Already listening to this project
+      return;
     }
     
-    // Clean up previous listener
     if (unsubscribeRef.current) {
       unsubscribeRef.current();
       unsubscribeRef.current = null;
@@ -81,7 +79,6 @@ export const InvoiceProvider = ({ children }) => {
         where('projectRef', '==', doc(db, 'projects', projectId))
       );
       
-      // Set up new real-time listener
       unsubscribeRef.current = onSnapshot(
         invoicesQuery, 
         (snapshot) => {
@@ -115,53 +112,246 @@ export const InvoiceProvider = ({ children }) => {
     currentProjectIdRef.current = null;
   }, []);
 
+  // Helper function to build HTML email template
+  const buildInvoiceEmailHTML = (emailData) => {
+    const { invoiceNumber, amount, dueDate, description, projectName, paymentMethod, paymentLink, accountName, accountNumber, bankName } = emailData;
+    
+    const formattedAmount = `NGN ${Number(amount).toLocaleString()}`;
+    const formattedDueDate = new Date(dueDate).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Invoice</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f97316 0%, #fb923c 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">
+                i<span style="color: #ffffff;">SHELTER</span>
+              </h1>
+              <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">
+                Everythingshelter Nig Ltd
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              
+              <!-- Greeting -->
+              <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+                New Invoice Issued
+              </h2>
+              
+              <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
+                A new invoice has been generated for your project <strong>${projectName}</strong>.
+              </p>
+
+              <!-- Invoice Details Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 8px; margin: 30px 0;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <table width="100%" cellpadding="8" cellspacing="0">
+                      <tr>
+                        <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Invoice Number:</td>
+                        <td style="color: #1f2937; font-size: 14px; font-weight: 600; text-align: right; padding: 8px 0;">
+                          ${invoiceNumber}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Amount Due:</td>
+                        <td style="color: #f97316; font-size: 18px; font-weight: bold; text-align: right; padding: 8px 0;">
+                          ${formattedAmount}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Due Date:</td>
+                        <td style="color: #1f2937; font-size: 14px; font-weight: 600; text-align: right; padding: 8px 0;">
+                          ${formattedDueDate}
+                        </td>
+                      </tr>
+                      ${description ? `
+                      <tr>
+                        <td colspan="2" style="padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                          <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+                            <strong>Description:</strong><br/>
+                            ${description}
+                          </p>
+                        </td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Payment Information -->
+              <div style="margin: 30px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 18px; font-weight: 600;">
+                  Payment Information
+                </h3>
+                
+                ${paymentMethod === 'link' && paymentLink ? `
+                <!-- Payment Link -->
+                <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 4px; margin: 15px 0;">
+                  <p style="margin: 0 0 15px 0; color: #1f2937; font-size: 14px;">
+                    Click the button below to pay securely online via Flutterwave:
+                  </p>
+                  <table cellpadding="0" cellspacing="0" style="margin: 0;">
+                    <tr>
+                      <td style="background-color: #f97316; border-radius: 6px; text-align: center;">
+                        <a href="${paymentLink}" target="_blank" style="display: inline-block; padding: 14px 30px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">
+                          Pay Now
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 12px;">
+                    Or copy this link: <a href="${paymentLink}" style="color: #3b82f6; word-break: break-all;">${paymentLink}</a>
+                  </p>
+                </div>
+                ` : ''}
+
+                ${paymentMethod === 'account' ? `
+                <!-- Bank Transfer -->
+                <div style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; border-radius: 4px; margin: 15px 0;">
+                  <p style="margin: 0 0 15px 0; color: #1f2937; font-size: 14px; font-weight: 600;">
+                    Bank Transfer Details:
+                  </p>
+                  <table width="100%" cellpadding="5" cellspacing="0">
+                    <tr>
+                      <td style="color: #6b7280; font-size: 14px; padding: 5px 0;">Account Name:</td>
+                      <td style="color: #1f2937; font-size: 14px; font-weight: 600; text-align: right; padding: 5px 0;">
+                        ${accountName}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="color: #6b7280; font-size: 14px; padding: 5px 0;">Account Number:</td>
+                      <td style="color: #1f2937; font-size: 16px; font-weight: bold; font-family: 'Courier New', monospace; text-align: right; padding: 5px 0;">
+                        ${accountNumber}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="color: #6b7280; font-size: 14px; padding: 5px 0;">Bank Name:</td>
+                      <td style="color: #1f2937; font-size: 14px; font-weight: 600; text-align: right; padding: 5px 0;">
+                        ${bankName}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2" style="padding-top: 10px; border-top: 1px solid #bfdbfe; margin-top: 10px;">
+                        <p style="margin: 10px 0 0 0; color: #dc2626; font-size: 13px; font-weight: 600;">
+                          ⚠️ Important: Use <strong>${invoiceNumber}</strong> as your payment reference
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                ` : ''}
+              </div>
+
+              <!-- Important Notes -->
+              <div style="background-color: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 20px; margin: 30px 0;">
+                <p style="margin: 0 0 10px 0; color: #92400e; font-size: 14px; font-weight: 600;">
+                  📌 Important Notes:
+                </p>
+                <ul style="margin: 0; padding-left: 20px; color: #78350f; font-size: 13px; line-height: 1.6;">
+                  <li>Please ensure payment is made before the due date to avoid late fees</li>
+                  <li>Always include the invoice number (${invoiceNumber}) as your payment reference</li>
+                  <li>Contact us immediately if you have any questions about this invoice</li>
+                </ul>
+              </div>
+
+              <!-- Call to Action -->
+              <p style="margin: 30px 0 10px 0; color: #4b5563; font-size: 15px; line-height: 1.5;">
+                If you have any questions or concerns, please don't hesitate to reach out to our team.
+              </p>
+
+              <p style="margin: 20px 0 0 0; color: #1f2937; font-size: 15px;">
+                Best regards,<br/>
+                <strong>The iSHELTER Team</strong>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px;">
+                <strong>Everythingshelter Nig Ltd</strong>
+              </p>
+              <p style="margin: 0 0 5px 0; color: #9ca3af; font-size: 12px;">
+                📧 everything@everythingshelter.com.ng
+              </p>
+              <p style="margin: 0 0 5px 0; color: #9ca3af; font-size: 12px;">
+                📞 +234 803 484 5266
+              </p>
+              <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                🌐 <a href="https://ishelter.everythingshelter.com.ng" style="color: #f97316; text-decoration: none;">ishelter.everythingshelter.com.ng</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+  };
+
   // Create new invoice with support for both payment methods
   const createInvoice = useCallback(async (invoiceData, projectId) => {
     setLoading(true);
     setError(null);
     try {
-      // Generate invoice number
       const invoiceNumber = await generateInvoiceNumber(projectId);
       
-      // Prepare invoice data with proper structure
       const invoicePayload = {
-        // Core invoice fields
         invoiceNumber,
         amount: invoiceData.amount,
         description: invoiceData.description || '',
         dueDate: invoiceData.dueDate,
         status: 'pending',
-        
-        // Payment method fields (backward compatible)
-        paymentMethod: invoiceData.paymentMethod || 'link', // Default to 'link'
+        paymentMethod: invoiceData.paymentMethod || 'link',
         paymentLink: invoiceData.paymentLink || null,
         accountName: invoiceData.accountName || null,
         accountNumber: invoiceData.accountNumber || null,
         bankName: invoiceData.bankName || null,
-        
-        // References and timestamps
         projectRef: doc(db, 'projects', projectId),
         createdBy: doc(db, 'users', invoiceData.createdBy),
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      // Remove null values for cleaner data
       Object.keys(invoicePayload).forEach(key => {
         if (invoicePayload[key] === null) {
           delete invoicePayload[key];
         }
       });
 
-      // Create invoice in invoices collection
       const invoiceRef = await addDoc(collection(db, 'invoices'), invoicePayload);
 
-      // Add invoice reference to project's projectInvoices array
       await updateDoc(doc(db, 'projects', projectId), {
         projectInvoices: arrayUnion(invoiceRef)
       });
 
-      // Send email notifications
       await sendInvoiceEmails(invoicePayload, projectId, invoiceNumber);
 
       setLoading(false);
@@ -198,12 +388,10 @@ export const InvoiceProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      // Remove invoice reference from project
       await updateDoc(doc(db, 'projects', projectId), {
         projectInvoices: arrayRemove(doc(db, 'invoices', invoiceId))
       });
 
-      // Delete invoice document
       await deleteDoc(doc(db, 'invoices', invoiceId));
 
       setLoading(false);
@@ -229,15 +417,13 @@ export const InvoiceProvider = ({ children }) => {
       return `INV-${count.toString().padStart(3, '0')}`;
     } catch (err) {
       console.error('Error generating invoice number:', err);
-      // Fallback to timestamp-based number
       return `INV-${Date.now().toString().slice(-6)}`;
     }
   };
 
-  // Send email notifications to project clients (updated for payment methods)
+  // Send email notifications to project clients
   const sendInvoiceEmails = async (invoiceData, projectId, invoiceNumber) => {
     try {
-      // Fetch project data to get client emails
       const projectDoc = await getDoc(doc(db, 'projects', projectId));
       if (!projectDoc.exists()) {
         console.error('Project not found');
@@ -246,7 +432,6 @@ export const InvoiceProvider = ({ children }) => {
 
       const projectData = projectDoc.data();
       
-      // Resolve projectUsers references to get emails
       const clientEmails = [];
       if (projectData.projectUsers && Array.isArray(projectData.projectUsers)) {
         for (const userRef of projectData.projectUsers) {
@@ -255,7 +440,10 @@ export const InvoiceProvider = ({ children }) => {
             if (userDoc.exists()) {
               const userData = userDoc.data();
               if (userData.email && userData.role === 'client') {
-                clientEmails.push(userData.email);
+                clientEmails.push({
+                  email: userData.email,
+                  name: userData.displayName || userData.name || 'Valued Client'
+                });
               }
             }
           } catch (err) {
@@ -275,7 +463,6 @@ export const InvoiceProvider = ({ children }) => {
         dueDate: invoiceData.dueDate,
         description: invoiceData.description,
         projectName: projectData.projectName,
-        clientNames: clientEmails.join(', '),
         paymentMethod: invoiceData.paymentMethod || 'link',
         ...(invoiceData.paymentMethod === 'link' && {
           paymentLink: invoiceData.paymentLink
@@ -287,22 +474,34 @@ export const InvoiceProvider = ({ children }) => {
         })
       };
 
-      // Send email via your existing API
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: clientEmails,
-          subject: `New Invoice - ${projectData.projectName || 'Project'}`,
-          template: 'invoice-notification',
-          data: emailData
-        })
-      });
+      // Build the HTML message
+      const htmlMessage = buildInvoiceEmailHTML(emailData);
 
-      if (!response.ok) {
-        throw new Error('Failed to send email');
+      // Send individual emails to each client
+      const emailPromises = clientEmails.map(client => 
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: client.email,
+            name: client.name,
+            subject: `New Invoice #${invoiceNumber} - ${projectData.projectName || 'Your Project'}`,
+            message: htmlMessage
+          })
+        })
+      );
+
+      const results = await Promise.allSettled(emailPromises);
+      
+      const failedEmails = results.filter(result => result.status === 'rejected');
+      if (failedEmails.length > 0) {
+        console.error('Some emails failed to send:', failedEmails);
+        return { 
+          success: true, 
+          warning: `${failedEmails.length} email(s) failed to send` 
+        };
       }
 
       return { success: true };

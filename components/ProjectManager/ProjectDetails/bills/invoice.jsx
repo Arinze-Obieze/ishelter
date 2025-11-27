@@ -1,6 +1,6 @@
 import { useState } from "react"
 import toast from "react-hot-toast"
-import { FaPlus, FaEllipsisV, FaTimes, FaEdit, FaTrash, FaCreditCard, FaUniversity } from "react-icons/fa"
+import { FaPlus, FaTimes, FaEdit, FaTrash, FaCreditCard, FaUniversity } from "react-icons/fa"
 
 export default function InvoicesSection({ 
   invoices, 

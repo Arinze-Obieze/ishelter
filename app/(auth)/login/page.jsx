@@ -279,7 +279,7 @@ export default function LoginPage() {
               </div>
             </form>
 
-            <div className="my-6 flex items-center">
+            {/* <div className="my-6 flex items-center">
               <div className="flex-grow border-t border-gray-300"></div>
               <span className="mx-3 text-gray-400 text-sm">Or continue with</span>
               <div className="flex-grow border-t border-gray-300"></div>
@@ -287,7 +287,7 @@ export default function LoginPage() {
 
             <button className="w-full flex items-center justify-center gap-2 border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
               <FcGoogle size={20} /> Google Account
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
