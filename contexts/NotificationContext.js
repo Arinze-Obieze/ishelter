@@ -90,7 +90,9 @@ export const NotificationProvider = ({ children }) => {
     return () => unsubscribes.forEach((u) => (typeof u === 'function' ? u() : u && u()))
   }, [currentUser])
 
+  // Deprecated: use notifyUsers utility instead for new notification creation
   const createNotification = async (payload) => {
+    console.warn('createNotification is deprecated. Use notifyUsers utility instead.')
     try {
       const data = {
         title: payload.title || '',
@@ -107,7 +109,6 @@ export const NotificationProvider = ({ children }) => {
         read: false,
         createdAt: serverTimestamp(),
       }
-
       const ref = await addDoc(collection(db, 'notifications'), data)
       return { id: ref.id }
     } catch (err) {

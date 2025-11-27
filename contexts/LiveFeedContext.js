@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, onSnapshot, getDoc, deleteDoc, increment, deleteField } from "firebase/firestore"
+import { notifyUsers } from '@/utils/notifyUsers';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import { db, storage, auth } from "../lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
@@ -205,6 +206,27 @@ export function LiveFeedProvider({ children }) {
         // Increment update type count
         [`updateTypeCounts.${updateType}`]: increment(1)
       })
+
+      // 3. Notify all project users and admins about the new update
+      try {
+        const projectSnap = await getDoc(projectDocRef)
+        const projectData = projectSnap.exists() ? projectSnap.data() : null
+        const projectName = projectData?.projectName || 'Project'
+        const recipients = projectData?.projectUsers || []
+        await notifyUsers({
+          userRefs: recipients,
+          includeAdmins: true,
+          title: `${currentUser.displayName || 'Someone'} posted an update on ${projectName}`,
+          body: description ? description.slice(0, 240) : 'New update posted',
+          type: 'update',
+          projectId: projectId,
+          actionUrl: `/project-manager/project-details/${projectId}`,
+          senderId: currentUser.uid,
+          skipUserId: currentUser.uid
+        })
+      } catch (err) {
+        console.error('Failed to notify users about update:', err)
+      }
 
       setLoading(false)
       toast.success("Update posted successfully!", { id: toastId })

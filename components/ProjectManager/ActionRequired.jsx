@@ -35,7 +35,7 @@ export default function ActionRequired() {
     <div className="p-2 md:p-6 md:max-w-7xl mx-auto bg-white rounded-2xl shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h2 className="md:text-xl text-base font-bold text-gray-800 flex items-center gap-2">
-          ⚠️ Action Required
+          ⚠️ Notifications
         </h2>
         <a href="/project-manager/notifications" className="text-primary hover:text-orange-600 text-sm font-medium">
           View All

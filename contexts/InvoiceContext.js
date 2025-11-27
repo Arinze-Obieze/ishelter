@@ -11,8 +11,10 @@ import {
   arrayUnion,
   arrayRemove,
   getDocs,
-  getDoc
+  getDoc,
+  serverTimestamp
 } from 'firebase/firestore';
+import { notifyUsers } from '@/utils/notifyUsers';
 import { db } from '@/lib/firebase';
 
 const InvoiceContext = createContext();
@@ -353,6 +355,30 @@ export const InvoiceProvider = ({ children }) => {
       });
 
       await sendInvoiceEmails(invoicePayload, projectId, invoiceNumber);
+
+      // Notify all project users and admins about the new invoice
+      try {
+        const projectDoc = await getDoc(doc(db, 'projects', projectId))
+        if (projectDoc.exists()) {
+          const projectData = projectDoc.data()
+          const projectName = projectData?.projectName || 'Project'
+          const recipients = projectData?.projectUsers || []
+          await notifyUsers({
+            userRefs: recipients,
+            includeAdmins: true,
+            title: `New invoice ${invoiceNumber} - ${projectName}`,
+            body: `Amount: ${invoicePayload.amount} — ${invoicePayload.description || ''}`,
+            type: 'invoice',
+            relatedId: invoiceRef.id,
+            projectId: projectId,
+            actionUrl: `/project-manager/project-details/${projectId}`,
+            senderId: invoiceData.createdBy || null,
+            skipUserId: invoiceData.createdBy || null
+          })
+        }
+      } catch (err) {
+        console.error('Failed to notify users about invoice:', err)
+      }
 
       setLoading(false);
       return { success: true, invoiceId: invoiceRef.id };
