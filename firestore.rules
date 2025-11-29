@@ -4,27 +4,27 @@ service cloud.firestore {
     // USERS COLLECTION
     match /users/{userId} {
       allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow read, create: if request.auth != null && request.auth.token.admin == true;
+      allow read, create: if request.auth != null && isAdmin();
       allow read: if request.auth != null && (hasProjectManagerRole() || hasSuccessManagerRole());
       allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(userId)).data.role == 'project manager';
     }
 
     // PROJECTS COLLECTION
     match /projects/{projectId} {
-      allow create: if request.auth != null && (request.auth.token.admin == true || isAdmin());
+      allow create: if request.auth != null && isAdmin();
       allow read: if request.auth != null && (
-        request.auth.token.admin == true ||
+        isAdmin() ||
         hasValidRole() ||
         resource.data.projectUsers.hasAny([/databases/$(database)/documents/users/$(request.auth.uid)])
       );
       allow update: if request.auth != null && (
-        request.auth.token.admin == true || 
+        isAdmin() || 
         canUpdateProject() ||
         (hasProjectManagerRole() && 
          isProjectManagerForProject(projectId) &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['liveFeedRefs', 'updateTypeCounts', 'updatedAt']))
       );
-      allow delete: if request.auth != null && (request.auth.token.admin == true || isAdmin());
+      allow delete: if request.auth != null && isAdmin();
     }
 
     // INVOICES COLLECTION
@@ -55,73 +55,85 @@ service cloud.firestore {
     // CONSULTATION REGISTRATIONS
     match /consultation-registrations/{registrationId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null && request.auth.token.admin == true;
+      allow read, update, delete: if request.auth != null && isAdmin();
     }
 
     // CONSULTATION LEADS
     match /consultation-leads/{userId} {
-      allow create, read, update, delete: if request.auth != null && request.auth.token.admin == true;
+      allow create, read, update, delete: if request.auth != null && isAdmin();
     }
 
     // INVITATIONS COLLECTION
     match /invitations/{invitationId} {
-      allow create: if request.auth != null && request.auth.token.admin == true;
+      allow create: if request.auth != null && isAdmin();
       allow read: if request.auth != null;
       allow update, delete: if false;
     }
 
-    // NOTIFICATIONS COLLECTION
+    // NOTIFICATIONS COLLECTION - FIXED
     match /notifications/{notificationId} {
+      // Read: Users can read their own notifications (by recipientId, recipientIds array, role, or global)
       allow read: if request.auth != null && (
-        // Check auth token first (fastest)
-        request.auth.token.admin == true ||
-        // Check user role in Firestore
-        isAdmin() ||
-        // Recipients in recipientIds array
+        resource.data.recipientId == request.auth.uid ||
         (resource.data.recipientIds is list && request.auth.uid in resource.data.recipientIds) ||
-        // Global notifications
         resource.data.isGlobal == true ||
-        // Role-based notifications
-        (resource.data.roles is list && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in resource.data.roles)
+        (resource.data.roles is list && getUserRole() in resource.data.roles)
       );
+      
+      // Create: Admins and Project Managers can create notifications
       allow create: if request.auth != null && (
-        request.auth.token.admin == true ||
         isAdmin() ||
-        (hasProjectManagerRole() && isProjectManagerForProject(request.resource.data.projectId))
+        (hasProjectManagerRole() && request.resource.data.projectId != null && isProjectManagerForProject(request.resource.data.projectId))
       );
+      
+      // Update: Users can only mark their own notifications as read
       allow update: if request.auth != null && (
-        request.auth.token.admin == true ||
-        isAdmin() ||
-        ((resource.data.recipientIds is list && request.auth.uid in resource.data.recipientIds) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
-        request.resource.data.read == true)
-      );
+        resource.data.recipientId == request.auth.uid ||
+        (resource.data.recipientIds is list && request.auth.uid in resource.data.recipientIds)
+      ) &&
+      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
+      request.resource.data.read == true;
+      
       allow delete: if false;
     }
 
     // ========== HELPER FUNCTIONS ==========
+    function getUserRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role 
+        : null;
+    }
+    
     function isAdmin() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return getUserRole() == 'admin';
     }
+    
+    function isSuperAdmin() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.superAdmin == true;
+    }
+    
     function hasProjectManagerRole() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'project manager';
+      return getUserRole() == 'project manager';
     }
+    
     function hasSuccessManagerRole() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'success manager';
+      return getUserRole() == 'success manager';
     }
+    
     function canUpdateProject() {
       return isAdmin() || hasProjectManagerRole() || hasSuccessManagerRole();
     }
+    
     function hasValidRole() {
       return isAdmin() || hasProjectManagerRole() || hasSuccessManagerRole();
     }
+    
     function isProjectClient(projectRef) {
       let projectData = get(projectRef).data;
       return projectData.projectUsers.hasAny([/databases/$(database)/documents/users/$(request.auth.uid)]);
     }
+    
     function isValidInvoiceCreate() {
       return request.resource.data.keys().hasAll([
         'invoiceNumber', 'amount', 'dueDate', 'status', 'projectRef', 'createdBy'
@@ -131,24 +143,29 @@ service cloud.firestore {
       request.resource.data.status is string &&
       request.resource.data.status in ['pending', 'paid', 'overdue'];
     }
+    
     function isValidInvoiceUpdate() {
       let allowedFields = ['status', 'updatedAt'];
       let changedFields = request.resource.data.diff(resource.data).affectedKeys();
       return changedFields.hasOnly(allowedFields);
     }
+    
     function isValidInvoiceDelete() {
       return resource.data.status in ['pending', 'overdue'];
     }
+    
     function isProjectManagerForProject(projectId) {
       return exists(/databases/$(database)/documents/projects/$(projectId)) &&
              get(/databases/$(database)/documents/projects/$(projectId)).data.projectManager == 
              /databases/$(database)/documents/users/$(request.auth.uid);
     }
+    
     function isUserInProject(projectId) {
       return exists(/databases/$(database)/documents/projects/$(projectId)) &&
              get(/databases/$(database)/documents/projects/$(projectId)).data.projectUsers
                .hasAny([/databases/$(database)/documents/users/$(request.auth.uid)]);
     }
+    
     function isValidLiveUpdateCreate() {
       return request.resource.data.keys().hasAll([
         'projectId', 'description', 'updateType', 'createdBy', 'createdAt'

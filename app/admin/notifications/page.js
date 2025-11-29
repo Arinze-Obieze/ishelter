@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useNotifications } from '@/contexts/NotificationContext'
-import Link from 'next/link'
+import NotificationDebugger from '@/components/NotificationDebugger'
 
 const formatTime = (ts) => {
   if (!ts) return ''
@@ -28,6 +28,7 @@ const typeColors = {
 export default function AdminNotificationsPage() {
   const { notifications = [], loading, markAsRead, markAllAsRead, unreadCount } = useNotifications()
   const [filter, setFilter] = useState('all')
+  const [showDebug, setShowDebug] = useState(true) // Set to false after debugging
 
   const filteredNotifications =
     filter === 'all'
@@ -52,6 +53,19 @@ export default function AdminNotificationsPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
+      {/* Debug Info - Remove after fixing */}
+      {showDebug && (
+        <div className="mb-4">
+          <NotificationDebugger />
+          <button 
+            onClick={() => setShowDebug(false)}
+            className="text-xs text-gray-500 underline"
+          >
+            Hide Debug Info
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
         <div>

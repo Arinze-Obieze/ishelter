@@ -1,4 +1,3 @@
-// app/api/admin/delete-admin/route.js
 import { NextResponse } from 'next/server'
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin'
 import { headers } from 'next/headers'
@@ -42,7 +41,7 @@ export async function DELETE(request) {
     }
 
     // Get request body
-    const { adminId, deletedBy } = await request.json()
+    const { adminId } = await request.json()
 
     // Validate inputs
     if (!adminId) {
@@ -70,10 +69,29 @@ export async function DELETE(request) {
       )
     }
 
-    if (adminToDeleteDoc.data().role !== 'admin') {
+    const adminToDeleteData = adminToDeleteDoc.data()
+
+    if (adminToDeleteData.role !== 'admin') {
       return NextResponse.json(
         { error: 'User is not an admin' },
         { status: 400 }
+      )
+    }
+
+    // SUPERADMIN PROTECTION: Check if target is a superadmin
+    if (adminToDeleteData.superAdmin === true) {
+      return NextResponse.json(
+        { error: 'Cannot delete a Super Admin. Super Admins are protected from deletion.' },
+        { status: 403 }
+      )
+    }
+
+    // SUPERADMIN PROTECTION: Only superadmins can delete other admins
+    const requesterData = requesterDoc.data()
+    if (requesterData.superAdmin !== true) {
+      return NextResponse.json(
+        { error: 'Only Super Admins can delete other admin accounts' },
+        { status: 403 }
       )
     }
 
@@ -92,16 +110,12 @@ export async function DELETE(request) {
       )
     }
 
-    // Store admin data for audit log before deletion
-    const adminData = adminToDeleteDoc.data()
-
     // Delete from Firebase Authentication
     try {
       await adminAuth.deleteUser(adminId)
     } catch (error) {
       console.error('Error deleting from Auth:', error)
       if (error.code === 'auth/user-not-found') {
-        // Continue to delete from Firestore even if Auth user doesn't exist
         console.log('User not found in Auth, continuing with Firestore deletion')
       } else {
         throw error
@@ -117,14 +131,14 @@ export async function DELETE(request) {
       performedBy: requesterId,
       performedByEmail: requesterDoc.data().email,
       targetUserId: adminId,
-      targetUserEmail: adminData.email,
+      targetUserEmail: adminToDeleteData.email,
       timestamp: new Date(),
       details: {
-        displayName: adminData.displayName,
+        displayName: adminToDeleteData.displayName,
         deletedUserData: {
-          email: adminData.email,
-          displayName: adminData.displayName,
-          createdAt: adminData.createdAt
+          email: adminToDeleteData.email,
+          displayName: adminToDeleteData.displayName,
+          createdAt: adminToDeleteData.createdAt
         }
       }
     })
@@ -140,7 +154,6 @@ export async function DELETE(request) {
   } catch (error) {
     console.error('Error deleting admin:', error)
     
-    // Handle specific Firebase errors
     if (error.code === 'auth/user-not-found') {
       return NextResponse.json(
         { error: 'Admin account not found in authentication system' },

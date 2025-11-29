@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase'
  * @param {boolean} options.includeAdmins - Whether to notify all admins
  * @param {string} options.title - Notification title
  * @param {string} options.body - Notification body
- * @param {string} options.type - Notification type (e.g., 'invoice', 'update', 'document', 'task', 'payment')
+ * @param {string} options.type - Notification type (e.g., 'invoice', 'update')
  * @param {string} [options.relatedId] - Related entity id (e.g., invoice id)
  * @param {string} [options.projectId] - Project id
  * @param {string} [options.actionUrl] - URL to open on click
@@ -31,40 +31,24 @@ export async function notifyUsers({
 }) {
   const notified = new Set()
   
-  console.log('📧 Creating notifications:', { 
-    title, 
-    type, 
-    userRefsCount: userRefs.length, 
-    includeAdmins,
-    skipUserId 
-  })
-
   // Notify project users
   for (const userRef of userRefs) {
-    if (!userRef || !userRef.id) {
-      console.warn('⚠️ Invalid userRef:', userRef)
-      continue
-    }
-    if (skipUserId && userRef.id === skipUserId) {
-      console.log('⏭️ Skipping user:', userRef.id)
-      continue
-    }
+    if (!userRef || !userRef.id) continue
+    if (skipUserId && userRef.id === skipUserId) continue
+    
     try {
       const userDoc = await getDoc(userRef)
-      if (!userDoc.exists()) {
-        console.warn('⚠️ User document not found:', userRef.id)
-        continue
-      }
+      if (!userDoc.exists()) continue
+      
       const userData = userDoc.data()
-      if (userData.disabled) {
-        console.log('⏭️ Skipping disabled user:', userRef.id)
-        continue
-      }
+      // Don't notify disabled users
+      if (userData.disabled) continue
+      
       const notification = {
         title,
         body,
         type,
-        recipientIds: [userRef.id],
+        recipientId: userRef.id,
         relatedId,
         projectId,
         actionUrl,
@@ -74,15 +58,15 @@ export async function notifyUsers({
         createdAt: serverTimestamp(),
         ...extra,
       }
+      
       await addDoc(collection(db, 'notifications'), notification)
       notified.add(userRef.id)
-      console.log('✅ Notified user:', userRef.id, userData.email || userData.name)
     } catch (err) {
-      console.error('❌ Failed to notify user', userRef.id, err)
+      console.error('Failed to notify user', userRef.id, err)
     }
   }
-
-  // Notify all admins if requested
+  
+  // Notify all admins if requested - FIXED
   if (includeAdmins) {
     try {
       const adminsQuery = query(
@@ -90,23 +74,23 @@ export async function notifyUsers({
         where('role', '==', 'admin')
       )
       const adminsSnap = await getDocs(adminsQuery)
-      console.log('👑 Found admins:', adminsSnap.size)
-      for (const docSnap of adminsSnap.docs) {
+      
+      const adminNotifications = []
+      
+      adminsSnap.forEach((docSnap) => {
+        const user = docSnap.data()
         const adminId = docSnap.id
-        const adminData = docSnap.data()
-        if (notified.has(adminId) || (skipUserId && adminId === skipUserId)) {
-          console.log('⏭️ Skipping admin (already notified or is sender):', adminId)
-          continue
+        
+        // Skip if already notified, disabled, or is the sender
+        if (notified.has(adminId) || user.disabled || (skipUserId && adminId === skipUserId)) {
+          return
         }
-        if (adminData.disabled) {
-          console.log('⏭️ Skipping disabled admin:', adminId)
-          continue
-        }
-        const notification = {
+        
+        adminNotifications.push({
           title,
           body,
           type,
-          recipientIds: [adminId],
+          recipientId: adminId,
           relatedId,
           projectId,
           actionUrl,
@@ -115,20 +99,21 @@ export async function notifyUsers({
           read: false,
           createdAt: serverTimestamp(),
           ...extra,
-        }
-        try {
-          await addDoc(collection(db, 'notifications'), notification)
-          notified.add(adminId)
-          console.log('✅ Notified admin:', adminId, adminData.email || adminData.name)
-        } catch (err) {
-          console.error('❌ Failed to notify admin', adminId, err)
-        }
-      }
+        })
+        
+        notified.add(adminId)
+      })
+      
+      // Batch create admin notifications
+      const notificationPromises = adminNotifications.map(notification =>
+        addDoc(collection(db, 'notifications'), notification)
+      )
+      
+      await Promise.all(notificationPromises)
     } catch (err) {
-      console.error('❌ Failed to fetch/notify admins', err)
+      console.error('Failed to notify admins', err)
     }
   }
   
-  console.log('📧 Notification batch complete. Total notified:', notified.size)
-  return { success: true, notifiedCount: notified.size, notifiedUsers: Array.from(notified) }
+  return { success: true, notifiedCount: notified.size }
 }

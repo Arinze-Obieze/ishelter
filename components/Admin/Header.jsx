@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import NotificationDropdown from '@/components/ui/NotificationDropdown'
 import Image from 'next/image'
+import NotificationDropdown from '../ui/NotificationDropdown'
 
 export default function Header({ onMenuClick }) {
   const { currentUser, loading: authLoading } = useAuth()

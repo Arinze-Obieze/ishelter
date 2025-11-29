@@ -10,17 +10,65 @@ import {
   serverTimestamp,
   doc,
   updateDoc,
+  getDoc,
 } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
-import { useUsers } from './UserContext'
+import { db, auth } from '@/lib/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 
 const NotificationContext = createContext()
 
 export const NotificationProvider = ({ children }) => {
-  const { currentUser } = useUsers()
+  const [currentUser, setCurrentUser] = useState(null)
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // Listen to auth state and fetch user data from Firestore
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Fetch user data from Firestore to get role
+          const userDocRef = doc(db, 'users', firebaseUser.uid)
+          const userDoc = await getDoc(userDocRef)
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data()
+            setCurrentUser({
+              id: firebaseUser.uid,
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              role: userData.role || null,
+              displayName: userData.displayName || userData.name || firebaseUser.email,
+            })
+          } else {
+            // Fallback if user doc doesn't exist
+            setCurrentUser({
+              id: firebaseUser.uid,
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              role: null,
+              displayName: firebaseUser.email,
+            })
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error)
+          setCurrentUser({
+            id: firebaseUser.uid,
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            role: null,
+            displayName: firebaseUser.email,
+          })
+        }
+      } else {
+        setCurrentUser(null)
+      }
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  // Subscribe to notifications
   useEffect(() => {
     if (!currentUser || !currentUser.id) {
       setNotifications([])
@@ -29,69 +77,104 @@ export const NotificationProvider = ({ children }) => {
     }
 
     const uid = currentUser.id
-    const role = currentUser.role || currentUser?.roles || null
+    const role = currentUser.role
 
-    console.log('🔔 NotificationContext setup:', { uid, role, currentUser })
+    console.log('📬 Setting up notifications for:', { uid, role })
 
     const unsubscribes = []
     const received = new Map()
 
-    const addSnapshot = (snap) => {
+    const addSnapshot = (snap, queryName) => {
+      console.log(`📨 ${queryName} returned ${snap.docs.length} notifications`)
       snap.docs.forEach((d) => {
-        received.set(d.id, { id: d.id, ...d.data() })
+        const data = d.data()
+        received.set(d.id, { id: d.id, ...data })
       })
-      // convert map -> array and sort by createdAt desc
+      
+      // Convert map to array and sort by createdAt desc
       const arr = Array.from(received.values()).sort((a, b) => {
-        const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt || 0)
-        const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt || 0)
+        const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0)
+        const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0)
         return tb - ta
       })
-      console.log('✅ Received notifications:', arr.length, arr.map(n => ({ id: n.id, title: n.title })))
+      
+      console.log(`📊 Total unique notifications: ${arr.length}`)
       setNotifications(arr)
       setLoading(false)
     }
 
-    const errorHandler = (err) => {
-      console.warn('Notification query error:', err.code, err.message)
-      setLoading(false)
-    }
-
     try {
-      // Query 1: notifications with recipientIds array containing uid
+      // Query 1: notifications targeted at a single recipientId
       const q1 = query(
+        collection(db, 'notifications'),
+        where('recipientId', '==', uid),
+        orderBy('createdAt', 'desc')
+      )
+      unsubscribes.push(
+        onSnapshot(q1, 
+          (snap) => addSnapshot(snap, 'recipientId query'),
+          (error) => {
+            console.error('Error in recipientId query:', error)
+            setLoading(false)
+          }
+        )
+      )
+
+      // Query 2: notifications with recipientIds array containing uid
+      const q2 = query(
         collection(db, 'notifications'),
         where('recipientIds', 'array-contains', uid),
         orderBy('createdAt', 'desc')
       )
-      unsubscribes.push(onSnapshot(q1, addSnapshot, errorHandler))
+      unsubscribes.push(
+        onSnapshot(q2, 
+          (snap) => addSnapshot(snap, 'recipientIds array query'),
+          (error) => {
+            console.error('Error in recipientIds query:', error)
+          }
+        )
+      )
 
-      // Query 2: role-based notifications
+      // Query 3: role-based notifications (if user has a role)
       if (role) {
-        const q2 = query(
+        const q3 = query(
           collection(db, 'notifications'),
           where('roles', 'array-contains', role),
           orderBy('createdAt', 'desc')
         )
-        unsubscribes.push(onSnapshot(q2, addSnapshot, errorHandler))
+        unsubscribes.push(
+          onSnapshot(q3, 
+            (snap) => addSnapshot(snap, `roles query (${role})`),
+            (error) => {
+              console.error('Error in roles query:', error)
+            }
+          )
+        )
       }
 
-      // Query 3: global notifications
-      const q3 = query(
+      // Query 4: global notifications
+      const q4 = query(
         collection(db, 'notifications'),
         where('isGlobal', '==', true),
         orderBy('createdAt', 'desc')
       )
-      unsubscribes.push(onSnapshot(q3, addSnapshot, errorHandler))
-
-      setLoading(false)
+      unsubscribes.push(
+        onSnapshot(q4, 
+          (snap) => addSnapshot(snap, 'global notifications query'),
+          (error) => {
+            console.error('Error in global query:', error)
+          }
+        )
+      )
     } catch (err) {
-      console.error('Notifications subscription error:', err)
+      console.error('❌ Notifications subscription error:', err)
       setLoading(false)
     }
 
-    return () => unsubscribes.forEach((u) => (typeof u === 'function' ? u() : u && u()))
-
-    return () => unsubscribes.forEach((u) => (typeof u === 'function' ? u() : u && u()))
+    return () => {
+      console.log('🔌 Unsubscribing from notifications')
+      unsubscribes.forEach((u) => (typeof u === 'function' ? u() : u && u()))
+    }
   }, [currentUser])
 
   // Deprecated: use notifyUsers utility instead for new notification creation
@@ -102,7 +185,8 @@ export const NotificationProvider = ({ children }) => {
         title: payload.title || '',
         body: payload.body || payload.description || '',
         type: payload.type || 'generic',
-        recipientIds: payload.recipientIds || [],
+        recipientId: payload.recipientId || null,
+        recipientIds: payload.recipientIds || null,
         roles: payload.roles || null,
         relatedId: payload.relatedId || null,
         projectId: payload.projectId || null,
@@ -150,6 +234,7 @@ export const NotificationProvider = ({ children }) => {
     createNotification,
     markAsRead,
     markAllAsRead,
+    currentUser, // Expose for debugging
   }
 
   return (
