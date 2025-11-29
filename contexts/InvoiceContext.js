@@ -14,7 +14,7 @@ import {
   getDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { notifyUsers } from '@/utils/notifyUsers';
+import { notifyUsers } from '@/utils/notifications/notifyUsers';
 import { db } from '@/lib/firebase';
 
 const InvoiceContext = createContext();
@@ -363,21 +363,39 @@ export const InvoiceProvider = ({ children }) => {
           const projectData = projectDoc.data()
           const projectName = projectData?.projectName || 'Project'
           const recipients = projectData?.projectUsers || []
+          
+          // Format amount for notification
+          const formattedAmount = new Intl.NumberFormat('en-NG', {
+            style: 'currency',
+            currency: 'NGN',
+            minimumFractionDigits: 0
+          }).format(invoicePayload.amount)
+          
+          // Format due date
+          const dueDate = new Date(invoicePayload.dueDate).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+          })
+          
           await notifyUsers({
             userRefs: recipients,
             includeAdmins: true,
-            title: `New invoice ${invoiceNumber} - ${projectName}`,
-            body: `Amount: ${invoicePayload.amount} — ${invoicePayload.description || ''}`,
+            title: `New Invoice ${invoiceNumber} - ${projectName}`,
+            body: `Amount: ${formattedAmount} | Due: ${dueDate} | ${invoicePayload.description || 'Payment required'}`,
             type: 'invoice',
             relatedId: invoiceRef.id,
             projectId: projectId,
-            actionUrl: `/project-manager/project-details/${projectId}`,
+            actionUrl: `/dashboard/project-details/${projectId}`, // Clients go here
             senderId: invoiceData.createdBy || null,
-            skipUserId: invoiceData.createdBy || null
+            skipUserId: invoiceData.createdBy || null // Don't notify the PM who created it
           })
+          
+          console.log('✅ Invoice notifications sent successfully')
         }
       } catch (err) {
-        console.error('Failed to notify users about invoice:', err)
+        console.error('❌ Failed to notify users about invoice:', err)
+        // Don't throw - invoice was created successfully, notification is secondary
       }
 
       setLoading(false);

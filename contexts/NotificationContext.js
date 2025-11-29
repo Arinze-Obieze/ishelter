@@ -31,6 +31,8 @@ export const NotificationProvider = ({ children }) => {
     const uid = currentUser.id
     const role = currentUser.role || currentUser?.roles || null
 
+    console.log('🔔 NotificationContext setup:', { uid, role, currentUser })
+
     const unsubscribes = []
     const received = new Map()
 
@@ -44,48 +46,50 @@ export const NotificationProvider = ({ children }) => {
         const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt || 0)
         return tb - ta
       })
+      console.log('✅ Received notifications:', arr.length, arr.map(n => ({ id: n.id, title: n.title })))
       setNotifications(arr)
       setLoading(false)
     }
 
-    try {
-      // Query 1: notifications targeted at a single recipientId
-      const q1 = query(
-        collection(db, 'notifications'),
-        where('recipientId', '==', uid),
-        orderBy('createdAt', 'desc')
-      )
-      unsubscribes.push(onSnapshot(q1, addSnapshot))
+    const errorHandler = (err) => {
+      console.warn('Notification query error:', err.code, err.message)
+      setLoading(false)
+    }
 
-      // Query 2: notifications with recipientIds array containing uid
-      const q2 = query(
+    try {
+      // Query 1: notifications with recipientIds array containing uid
+      const q1 = query(
         collection(db, 'notifications'),
         where('recipientIds', 'array-contains', uid),
         orderBy('createdAt', 'desc')
       )
-      unsubscribes.push(onSnapshot(q2, addSnapshot))
+      unsubscribes.push(onSnapshot(q1, addSnapshot, errorHandler))
 
-      // Query 3: role-based notifications
+      // Query 2: role-based notifications
       if (role) {
-        const q3 = query(
+        const q2 = query(
           collection(db, 'notifications'),
           where('roles', 'array-contains', role),
           orderBy('createdAt', 'desc')
         )
-        unsubscribes.push(onSnapshot(q3, addSnapshot))
+        unsubscribes.push(onSnapshot(q2, addSnapshot, errorHandler))
       }
 
-      // Query 4: global notifications
-      const q4 = query(
+      // Query 3: global notifications
+      const q3 = query(
         collection(db, 'notifications'),
         where('isGlobal', '==', true),
         orderBy('createdAt', 'desc')
       )
-      unsubscribes.push(onSnapshot(q4, addSnapshot))
+      unsubscribes.push(onSnapshot(q3, addSnapshot, errorHandler))
+
+      setLoading(false)
     } catch (err) {
       console.error('Notifications subscription error:', err)
       setLoading(false)
     }
+
+    return () => unsubscribes.forEach((u) => (typeof u === 'function' ? u() : u && u()))
 
     return () => unsubscribes.forEach((u) => (typeof u === 'function' ? u() : u && u()))
   }, [currentUser])
@@ -98,8 +102,7 @@ export const NotificationProvider = ({ children }) => {
         title: payload.title || '',
         body: payload.body || payload.description || '',
         type: payload.type || 'generic',
-        recipientId: payload.recipientId || null,
-        recipientIds: payload.recipientIds || null,
+        recipientIds: payload.recipientIds || [],
         roles: payload.roles || null,
         relatedId: payload.relatedId || null,
         projectId: payload.projectId || null,

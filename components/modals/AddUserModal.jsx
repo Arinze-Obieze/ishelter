@@ -1,9 +1,10 @@
 import { useState } from "react"
 import { FiX } from "react-icons/fi"
 import { useUsers } from "@/contexts/UserContext"
+import { notifyProjectManagerAssignment, notifyClientsOfNewPM } from '@/utils/notifications'
 
 const AddUserModal = ({ isOpen, onClose, isSubmitting }) => {
-  const { users } = useUsers()
+  const { users, currentUser } = useUsers() // Get currentUser from context
   const [newUser, setNewUser] = useState({
     email: "",
     displayName: "",
@@ -56,6 +57,34 @@ const AddUserModal = ({ isOpen, onClose, isSubmitting }) => {
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error || "Account creation failed")
+
+      // SEND NOTIFICATIONS FOR PM ASSIGNMENT
+      if (newUser.role === "client" && newUser.projectManagerId && currentUser) {
+        try {
+          const selectedPM = projectManagers.find(pm => pm.id === newUser.projectManagerId)
+          
+          // Notify the Project Manager
+          await notifyProjectManagerAssignment({
+            projectId: null, // No specific project for user-level assignment
+            projectManagerId: newUser.projectManagerId,
+            assignedById: currentUser.id || currentUser.uid,
+            assignedByName: currentUser.displayName || currentUser.name || currentUser.email || 'Admin'
+          })
+
+          // Notify the client about their PM
+          await notifyClientsOfNewPM({
+            projectId: null, // No specific project for user-level assignment
+            projectManagerId: newUser.projectManagerId,
+            projectManagerName: selectedPM?.displayName || selectedPM?.name || selectedPM?.email || 'Your Project Manager',
+            assignedById: currentUser.id || currentUser.uid
+          })
+
+          console.log('✅ PM assignment notifications sent successfully')
+        } catch (notificationError) {
+          console.error('❌ Failed to send PM assignment notifications:', notificationError)
+          // Don't throw - user was created successfully, notifications are secondary
+        }
+      }
 
       // 2. Send email
       const emailRes = await fetch("/api/send-email", {

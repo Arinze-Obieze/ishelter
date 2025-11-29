@@ -5,11 +5,8 @@ import { useEffect, useState } from "react"
 import {
   AiOutlineSearch,
   AiOutlineCloudUpload,
-  AiOutlineClose,
-  AiOutlinePlus,
   AiOutlineFolder,
 } from "react-icons/ai"
-import { IoChevronDown } from "react-icons/io5"
 import { db, storage, auth } from "@/lib/firebase"
 import { doc, updateDoc, arrayUnion, getDoc, arrayRemove } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
@@ -22,6 +19,7 @@ import { DocumentsTableRow } from '@/components/ProjectManager/ProjectDetails/do
 import { DocumentCard } from '@/components/ProjectManager/ProjectDetails/documents/ui/DocumentCard';
 import { FilterButtons } from '@/components/ProjectManager/ProjectDetails/documents/ui/FilterButtons';
 import { DeleteModal } from '@/components/ProjectManager/ProjectDetails/documents/ui/DeleteModal';
+import { notifyDocumentStatusChange, notifyDocumentUpload } from '@/utils/notifications';
 
 export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,52 +95,68 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
     }
   };
 
-  const handleFileUpload = async () => {
-    if (!selectedFile || !selectedCategory || !selectedStatus) return;
+ const handleFileUpload = async () => {
+  if (!selectedFile || !selectedCategory || !selectedStatus) return;
 
-    setIsUploading(true);
-    setShowCategoryModal(false);
+  setIsUploading(true);
+  setShowCategoryModal(false);
 
+  try {
+    const storageRef = ref(storage, `projects/${projectId}/documents/${selectedFile.name}`);
+    await uploadBytes(storageRef, selectedFile);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    const uploaderName = currentUser?.displayName || currentUser?.name || currentUser?.email || 'Unknown User';
+    const uploaderRole = currentUser?.role || 'User';
+
+    // Determine status color based on selected status
+    const statusColor = selectedStatus === "Pending Approval" ? "orange" : "green";
+
+    const newDocument = {
+      name: selectedFile.name,
+      type: selectedFile.type.split("/").pop() || selectedFile.name.split('.').pop(),
+      size: `${(selectedFile.size / 1024).toFixed(1)} KB`,
+      uploader: uploaderName,
+      uploaderRole: uploaderRole,
+      uploaderId: currentUser?.uid || null,
+      date: new Date().toLocaleString(),
+      uploadDate: new Date(),
+      status: selectedStatus,
+      statusColor: statusColor,
+      category: selectedCategory,
+      url: downloadURL,
+    };
+    
+    const projectRef = doc(db, "projects", projectId);
+    await updateDoc(projectRef, {
+      documents: arrayUnion(newDocument),
+    });
+
+    // ADD NOTIFICATION HERE - RIGHT AFTER SUCCESSFUL UPLOAD
     try {
-      const storageRef = ref(storage, `projects/${projectId}/documents/${selectedFile.name}`);
-      await uploadBytes(storageRef, selectedFile);
-      const downloadURL = await getDownloadURL(storageRef);
-
-      const uploaderName = currentUser?.displayName || currentUser?.name || currentUser?.email || 'Unknown User';
-      const uploaderRole = currentUser?.role || 'User';
-
-      // Determine status color based on selected status
-      const statusColor = selectedStatus === "Pending Approval" ? "orange" : "green";
-
-      const newDocument = {
-        name: selectedFile.name,
-        type: selectedFile.type.split("/").pop() || selectedFile.name.split('.').pop(),
-        size: `${(selectedFile.size / 1024).toFixed(1)} KB`,
-        uploader: uploaderName,
-        uploaderRole: uploaderRole,
-        uploaderId: currentUser?.uid || null,
-        date: new Date().toLocaleString(),
-        uploadDate: new Date(),
-        status: selectedStatus,
-        statusColor: statusColor,
-        category: selectedCategory,
-        url: downloadURL,
-      };
-      
-      const projectRef = doc(db, "projects", projectId);
-      await updateDoc(projectRef, {
-        documents: arrayUnion(newDocument),
+      await notifyDocumentUpload({
+        projectId: projectId,
+        documentName: selectedFile.name,
+        documentType: selectedFile.type,
+        uploaderId: currentUser?.uid,
+        uploaderName: uploaderName,
+        category: selectedCategory
       });
-
-      setSelectedFile(null);
-      setSelectedCategory("");
-      setSelectedStatus("Pending Approval"); // Reset to default
-    } catch (error) {
-      console.error("Error uploading file: ", error);
-    } finally {
-      setIsUploading(false);
+      console.log('✅ Document upload notification sent successfully');
+    } catch (notificationError) {
+      console.error('❌ Failed to send document upload notification:', notificationError);
+      // Don't throw - document was uploaded successfully, notification is secondary
     }
-  };
+
+    setSelectedFile(null);
+    setSelectedCategory("");
+    setSelectedStatus("Pending Approval"); // Reset to default
+  } catch (error) {
+    console.error("Error uploading file: ", error);
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   const handleDeleteDocument = async () => {
     if (!documentToDelete) return;
@@ -195,36 +209,51 @@ export default function DocumentsTab({ projectId, tabs, activeTab, onTabChange }
     }
   };
 
-  const handleUpdateStatus = async () => {
-    if (!documentToEditStatus || !editStatus) return;
+ const handleUpdateStatus = async () => {
+  if (!documentToEditStatus || !editStatus) return;
 
+  try {
+    // Determine status color based on selected status
+    const statusColor = editStatus === "Pending Approval" ? "orange" : "green";
+
+    const updatedDocument = {
+      ...documentToEditStatus,
+      status: editStatus,
+      statusColor: statusColor
+    };
+
+    const projectRef = doc(db, "projects", projectId);
+    await updateDoc(projectRef, {
+      documents: arrayRemove(documentToEditStatus)
+    });
+    await updateDoc(projectRef, {
+      documents: arrayUnion(updatedDocument)
+    });
+
+    // ADD NOTIFICATION HERE - RIGHT AFTER SUCCESSFUL STATUS UPDATE
     try {
-      // Determine status color based on selected status
-      const statusColor = editStatus === "Pending Approval" ? "orange" : "green";
-
-      const updatedDocument = {
-        ...documentToEditStatus,
-        status: editStatus,
-        statusColor: statusColor
-      };
-
-      const projectRef = doc(db, "projects", projectId);
-      await updateDoc(projectRef, {
-        documents: arrayRemove(documentToEditStatus)
+      await notifyDocumentStatusChange({
+        projectId: projectId,
+        documentName: documentToEditStatus.name,
+        newStatus: editStatus.toLowerCase().replace(' ', '_'), // 'approved', 'rejected', 'pending_approval'
+        reviewerId: currentUser?.uid,
+        reviewerName: currentUser?.displayName || currentUser?.name || currentUser?.email || 'Unknown User'
       });
-      await updateDoc(projectRef, {
-        documents: arrayUnion(updatedDocument)
-      });
-
-      setShowEditStatusModal(false);
-      setDocumentToEditStatus(null);
-      setEditStatus("");
-      setShowActionsMenu(null);
-    } catch (error) {
-      console.error("Error updating status:", error);
-      alert("Failed to update status. Please try again.");
+      console.log('✅ Document status change notification sent successfully');
+    } catch (notificationError) {
+      console.error('❌ Failed to send status change notification:', notificationError);
+      // Don't throw - status was updated successfully, notification is secondary
     }
-  };
+
+    setShowEditStatusModal(false);
+    setDocumentToEditStatus(null);
+    setEditStatus("");
+    setShowActionsMenu(null);
+  } catch (error) {
+    console.error("Error updating status:", error);
+    alert("Failed to update status. Please try again.");
+  }
+};
 
   const openDeleteModal = (document) => {
     setDocumentToDelete(document);

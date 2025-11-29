@@ -1,6 +1,7 @@
 // components/modals/EditUserModal.jsx
 import { useState, useEffect } from 'react';
 import { FiX, FiSave } from 'react-icons/fi';
+import { useUsers } from '@/contexts/UserContext';
 
 const EditUserModal = ({ 
   isOpen, 
@@ -9,36 +10,44 @@ const EditUserModal = ({
   onSave,
   loading = false 
 }) => {
+  const { currentUser } = useUsers();
   const [formData, setFormData] = useState({
     displayName: '',
-    email: '',
     role: 'client',
     status: 'active'
   });
 
+  // Store original data to detect changes
+  const [originalData, setOriginalData] = useState(null);
+
   useEffect(() => {
     if (user && isOpen) {
-      setFormData({
+      const userData = {
         displayName: user.displayName || '',
-        email: user.email || '',
         role: user.role || 'client',
         status: user.status || 'active'
-      });
+      };
+      setFormData(userData);
+      setOriginalData(userData);
     }
   }, [user, isOpen]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(formData);
+    
+    // Save the user first
+    const result = await onSave(formData);
+    
+    // Notification sending removed - implement if needed
   };
 
   const handleClose = () => {
     setFormData({
       displayName: '',
-      email: '',
       role: 'client',
       status: 'active'
     });
+    setOriginalData(null);
     onClose();
   };
 
@@ -58,6 +67,15 @@ const EditUserModal = ({
           </button>
         </div>
 
+        {/* Display user email (read-only) */}
+        <div className="mb-4 p-3 bg-gray-50 rounded-md">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email Address
+          </label>
+          <p className="text-gray-900 font-medium">{user?.email}</p>
+          <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -70,20 +88,7 @@ const EditUserModal = ({
               onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
               disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              disabled={loading}
+              placeholder="Enter display name"
             />
           </div>
 
@@ -101,6 +106,7 @@ const EditUserModal = ({
               <option value="client">Client</option>
               <option value="project manager">Project Manager</option>
               <option value="admin">Admin</option>
+              <option value="success manager">Success Manager</option>
             </select>
           </div>
 

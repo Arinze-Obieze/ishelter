@@ -71,42 +71,7 @@ export default function Step2TeamFinancial({
       </h2>
 
       <div className="space-y-4 sm:space-y-6">
-        <FormField
-          label="Consultation Plan"
-          required
-          input={
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={() => setFormData({ ...formData, consultationPlan: "standard" })}
-                disabled={isSubmitting}
-                className={`p-3 rounded-lg border-2 text-left transition-all ${
-                  formData.consultationPlan === "standard"
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-gray-200 bg-white"
-                } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                <div className="font-semibold text-xs sm:text-sm text-gray-900 mb-1">Standard Plan</div>
-                <div className="text-[10px] sm:text-xs text-gray-600">
-                  Basic consultation services with regular check-ins and standard deliverables
-                </div>
-              </button>
-              <button
-                onClick={() => setFormData({ ...formData, consultationPlan: "premium" })}
-                disabled={isSubmitting}
-                className={`p-3 rounded-lg border-2 text-left transition-all ${
-                  formData.consultationPlan === "premium"
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-gray-200 bg-white"
-                } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                <div className="font-semibold text-xs sm:text-sm text-gray-900 mb-1">Premium Plan</div>
-                <div className="text-[10px] sm:text-xs text-gray-600">
-                  Enhanced consultation with priority support, detailed analysis, and premium deliverables
-                </div>
-              </button>
-            </div>
-          }
-        />
+    
 
         <FormField
           label="Initial Project Budget"

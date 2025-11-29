@@ -1,7 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
-import { db } from "@/lib/firebase"
-import { doc, getDoc, updateDoc } from "firebase/firestore"
+import { useState } from "react"
 import TabsNavigation from "../TabsNavigation"
 import ProjectTeam from "@/components/ProjectManager/ProjectDetails/ProjectTeam"
 import CostSummary from "./CostSummary"
@@ -11,10 +9,12 @@ import { useTimelineData } from "@/hooks/useTimelineData"
 import { useTimelineOperations } from "@/hooks/useTimelineOperations"
 import { calculateBudgetSummary } from "@/utils/calculations"
 import { FiPlus } from "react-icons/fi"
+import { useUsers } from '@/contexts/UserContext' 
 
 export default function TimelineTab({ projectId, tabs, activeTab, onTabChange }) {
   const [activeMobileTab, setActiveMobileTab] = useState("tasks")
-  
+  const { currentUser } = useUsers() // Get current user from context
+
   const {
     taskTimeline,
     expandedStages,
@@ -53,7 +53,7 @@ export default function TimelineTab({ projectId, tabs, activeTab, onTabChange })
     setNewTask,
     setEditStage,
     setEditTask
-  } = useTimelineOperations(projectId, taskTimeline, setTaskTimeline, setError)
+  } = useTimelineOperations(projectId, taskTimeline, setTaskTimeline, setError, currentUser)
 
   const budgetSummary = calculateBudgetSummary(taskTimeline)
 

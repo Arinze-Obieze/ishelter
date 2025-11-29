@@ -6,6 +6,7 @@ import TabsNavigation from "@/components/ProjectManager/ProjectDetails/TabsNavig
 import BudgetStats from "@/components/ProjectManager/ProjectDetails/bills/stats"
 import InvoicesSection from "@/components/ProjectManager/ProjectDetails/bills/invoice"
 import { useInvoice } from "@/contexts/InvoiceContext"
+import { notifyPaymentStatusChange } from '@/utils/notifications'
 
 export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) {
   const [budgetData, setBudgetData] = useState({
@@ -172,6 +173,28 @@ export default function BillingTab({ projectId, tabs, activeTab, onTabChange }) 
   // Handle update invoice status
   const handleUpdateInvoiceStatus = async (invoiceId, newStatus) => {
     const result = await updateInvoiceStatus(invoiceId, newStatus)
+    
+    // ADD PAYMENT STATUS CHANGE NOTIFICATION HERE
+    if (result.success) {
+      try {
+        const invoice = invoices.find(inv => inv.id === invoiceId)
+        if (invoice) {
+          await notifyPaymentStatusChange({
+            projectId: projectId,
+            invoiceNumber: invoice.invoiceNumber,
+            newStatus: newStatus, // 'paid', 'pending', 'overdue', 'cancelled'
+            amount: invoice.amount,
+            paidById: currentUser?.uid,
+            paidByName: currentUser?.displayName || currentUser?.email || 'Unknown User'
+          })
+          console.log('✅ Payment status change notification sent successfully')
+        }
+      } catch (notificationError) {
+        console.error('❌ Failed to send payment status change notification:', notificationError)
+        // Don't throw - invoice status was updated successfully, notification is secondary
+      }
+    }
+    
     return result
   }
 

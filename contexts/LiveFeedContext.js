@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, onSnapshot, getDoc, deleteDoc, increment, deleteField } from "firebase/firestore"
-import { notifyUsers } from '@/utils/notifyUsers';
+import { notifyUsers } from '@/utils/notifications/notifyUsers';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import { db, storage, auth } from "../lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
@@ -213,17 +213,43 @@ export function LiveFeedProvider({ children }) {
         const projectData = projectSnap.exists() ? projectSnap.data() : null
         const projectName = projectData?.projectName || 'Project'
         const recipients = projectData?.projectUsers || []
-        await notifyUsers({
-          userRefs: recipients,
-          includeAdmins: true,
-          title: `${currentUser.displayName || 'Someone'} posted an update on ${projectName}`,
-          body: description ? description.slice(0, 240) : 'New update posted',
-          type: 'update',
-          projectId: projectId,
-          actionUrl: `/project-manager/project-details/${projectId}`,
-          senderId: currentUser.uid,
-          skipUserId: currentUser.uid
-        })
+     try {
+  const projectSnap = await getDoc(projectDocRef)
+  const projectData = projectSnap.exists() ? projectSnap.data() : null
+  const projectName = projectData?.projectName || 'Project'
+  const recipients = projectData?.projectUsers || []
+  
+  const notificationBody = description 
+    ? description.slice(0, 200) + (description.length > 200 ? '...' : '')
+    : `New ${updateType} update posted`
+  
+  const formattedUpdateType = updateType
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+  
+  await notifyUsers({
+    userRefs: recipients,
+    includeAdmins: true,
+    title: `${formattedUpdateType} Update - ${projectName}`,
+    body: notificationBody,
+    type: 'project-update',
+    relatedId: updateDocRef.id,
+    projectId: projectId,
+    actionUrl: `/dashboard/project-details/${projectId}`,
+    senderId: currentUser.uid,
+    skipUserId: currentUser.uid,
+    extra: {
+      updateType: updateType,
+      hasMedia: media && media.length > 0,
+      mediaCount: media ? media.length : 0
+    }
+  })
+  
+  console.log('✅ Update notifications sent successfully')
+} catch (err) {
+  console.error('❌ Failed to notify users about update:', err)
+}
       } catch (err) {
         console.error('Failed to notify users about update:', err)
       }

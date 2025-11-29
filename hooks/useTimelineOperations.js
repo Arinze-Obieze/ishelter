@@ -4,6 +4,7 @@ import { useState } from "react"
 import { db } from "@/lib/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { parseCost } from "../utils/calculations"
+import { notifyPhaseCompletion, notifyTaskCompletion } from "@/utils/notifications"
 
 const DEFAULT_STAGE = {
   name: "",
@@ -20,7 +21,7 @@ const DEFAULT_TASK = {
   status: "Pending"
 }
 
-export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, setError) {
+export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, setError, currentUser) {
   const [addingStage, setAddingStage] = useState(false)
   const [addingTaskStageId, setAddingTaskStageId] = useState(null)
   const [newStage, setNewStage] = useState(DEFAULT_STAGE)
@@ -101,9 +102,27 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
     setError(null)
     try {
       const updatedTimeline = [...taskTimeline]
+      const oldStage = taskTimeline[stageIdx]
       updatedTimeline[stageIdx] = { ...editStage }
       await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
       setTaskTimeline(updatedTimeline)
+      
+      // NOTIFICATION: Check if stage status changed to completed
+      if (oldStage.status !== 'completed' && editStage.status === 'completed') {
+        try {
+          await notifyPhaseCompletion({
+            projectId: projectId,
+            phaseName: editStage.name || oldStage.name,
+            completedById: currentUser?.uid,
+            completedByName: currentUser?.displayName || currentUser?.name || currentUser?.email || 'Unknown User'
+          })
+          console.log('✅ Phase completion notification sent successfully')
+        } catch (notificationError) {
+          console.error('❌ Failed to send phase completion notification:', notificationError)
+          // Don't throw - stage was updated successfully, notification is secondary
+        }
+      }
+      
       setEditingStageIdx(null)
       setEditStage({})
     } catch (err) {
@@ -206,9 +225,28 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
     setError(null)
     try {
       const updatedTimeline = [...taskTimeline]
+      const oldTask = taskTimeline[stageIdx].tasks[taskIdx]
       updatedTimeline[stageIdx].tasks[taskIdx] = { ...editTask }
       await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
       setTaskTimeline(updatedTimeline)
+      
+      // NOTIFICATION: Check if task status changed to completed
+      if (oldTask.status !== 'completed' && editTask.status === 'completed') {
+        try {
+          await notifyTaskCompletion({
+            projectId: projectId,
+            taskName: editTask.name || oldTask.name,
+            stageName: stage.name,
+            completedById: currentUser?.uid,
+            completedByName: currentUser?.displayName || currentUser?.name || currentUser?.email || 'Unknown User'
+          })
+          console.log('✅ Task completion notification sent successfully')
+        } catch (notificationError) {
+          console.error('❌ Failed to send task completion notification:', notificationError)
+          // Don't throw - task was updated successfully, notification is secondary
+        }
+      }
+      
       setEditingTask({ stageIdx: null, taskIdx: null })
       setEditTask({})
     } catch (err) {

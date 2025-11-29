@@ -1,0 +1,163 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // USERS COLLECTION
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow read, create: if request.auth != null && request.auth.token.admin == true;
+      allow read: if request.auth != null && (hasProjectManagerRole() || hasSuccessManagerRole());
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(userId)).data.role == 'project manager';
+    }
+
+    // PROJECTS COLLECTION
+    match /projects/{projectId} {
+      allow create: if request.auth != null && (request.auth.token.admin == true || isAdmin());
+      allow read: if request.auth != null && (
+        request.auth.token.admin == true ||
+        hasValidRole() ||
+        resource.data.projectUsers.hasAny([/databases/$(database)/documents/users/$(request.auth.uid)])
+      );
+      allow update: if request.auth != null && (
+        request.auth.token.admin == true || 
+        canUpdateProject() ||
+        (hasProjectManagerRole() && 
+         isProjectManagerForProject(projectId) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['liveFeedRefs', 'updateTypeCounts', 'updatedAt']))
+      );
+      allow delete: if request.auth != null && (request.auth.token.admin == true || isAdmin());
+    }
+
+    // INVOICES COLLECTION
+    match /invoices/{invoiceId} {
+      allow create: if request.auth != null && (isAdmin() || hasProjectManagerRole()) && isValidInvoiceCreate();
+      allow read: if request.auth != null && (isAdmin() || hasProjectManagerRole() || isProjectClient(resource.data.projectRef));
+      allow update: if request.auth != null && (isAdmin() || hasProjectManagerRole()) && isValidInvoiceUpdate();
+      allow delete: if request.auth != null && (isAdmin() || hasProjectManagerRole()) && isValidInvoiceDelete();
+    }
+
+    // LIVE UPDATES COLLECTION
+    match /liveUpdates/{updateId} {
+      allow create: if request.auth != null && hasProjectManagerRole() && isProjectManagerForProject(request.resource.data.projectId) && isValidLiveUpdateCreate();
+      allow read: if request.auth != null && (
+        isAdmin() || hasProjectManagerRole() || hasSuccessManagerRole() || isUserInProject(resource.data.projectId)
+      );
+      allow update: if request.auth != null && (
+        resource.data.createdBy.uid == request.auth.uid ||
+        (hasProjectManagerRole() && isProjectManagerForProject(resource.data.projectId))
+      );
+      allow delete: if request.auth != null && (
+        resource.data.createdBy.uid == request.auth.uid ||
+        (hasProjectManagerRole() && isProjectManagerForProject(resource.data.projectId))
+      );
+      allow list: if request.auth != null;
+    }
+
+    // CONSULTATION REGISTRATIONS
+    match /consultation-registrations/{registrationId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // CONSULTATION LEADS
+    match /consultation-leads/{userId} {
+      allow create, read, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // INVITATIONS COLLECTION
+    match /invitations/{invitationId} {
+      allow create: if request.auth != null && request.auth.token.admin == true;
+      allow read: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // NOTIFICATIONS COLLECTION
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && (
+        // Check auth token first (fastest)
+        request.auth.token.admin == true ||
+        // Check user role in Firestore
+        isAdmin() ||
+        // Recipients in recipientIds array
+        (resource.data.recipientIds is list && request.auth.uid in resource.data.recipientIds) ||
+        // Global notifications
+        resource.data.isGlobal == true ||
+        // Role-based notifications
+        (resource.data.roles is list && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in resource.data.roles)
+      );
+      allow create: if request.auth != null && (
+        request.auth.token.admin == true ||
+        isAdmin() ||
+        (hasProjectManagerRole() && isProjectManagerForProject(request.resource.data.projectId))
+      );
+      allow update: if request.auth != null && (
+        request.auth.token.admin == true ||
+        isAdmin() ||
+        ((resource.data.recipientIds is list && request.auth.uid in resource.data.recipientIds) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
+        request.resource.data.read == true)
+      );
+      allow delete: if false;
+    }
+
+    // ========== HELPER FUNCTIONS ==========
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function hasProjectManagerRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'project manager';
+    }
+    function hasSuccessManagerRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'success manager';
+    }
+    function canUpdateProject() {
+      return isAdmin() || hasProjectManagerRole() || hasSuccessManagerRole();
+    }
+    function hasValidRole() {
+      return isAdmin() || hasProjectManagerRole() || hasSuccessManagerRole();
+    }
+    function isProjectClient(projectRef) {
+      let projectData = get(projectRef).data;
+      return projectData.projectUsers.hasAny([/databases/$(database)/documents/users/$(request.auth.uid)]);
+    }
+    function isValidInvoiceCreate() {
+      return request.resource.data.keys().hasAll([
+        'invoiceNumber', 'amount', 'dueDate', 'status', 'projectRef', 'createdBy'
+      ]) &&
+      request.resource.data.amount is number &&
+      request.resource.data.amount > 0 &&
+      request.resource.data.status is string &&
+      request.resource.data.status in ['pending', 'paid', 'overdue'];
+    }
+    function isValidInvoiceUpdate() {
+      let allowedFields = ['status', 'updatedAt'];
+      let changedFields = request.resource.data.diff(resource.data).affectedKeys();
+      return changedFields.hasOnly(allowedFields);
+    }
+    function isValidInvoiceDelete() {
+      return resource.data.status in ['pending', 'overdue'];
+    }
+    function isProjectManagerForProject(projectId) {
+      return exists(/databases/$(database)/documents/projects/$(projectId)) &&
+             get(/databases/$(database)/documents/projects/$(projectId)).data.projectManager == 
+             /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+    function isUserInProject(projectId) {
+      return exists(/databases/$(database)/documents/projects/$(projectId)) &&
+             get(/databases/$(database)/documents/projects/$(projectId)).data.projectUsers
+               .hasAny([/databases/$(database)/documents/users/$(request.auth.uid)]);
+    }
+    function isValidLiveUpdateCreate() {
+      return request.resource.data.keys().hasAll([
+        'projectId', 'description', 'updateType', 'createdBy', 'createdAt'
+      ]) &&
+      request.resource.data.description is string &&
+      request.resource.data.description.size() > 0 &&
+      request.resource.data.updateType is string &&
+      request.resource.data.updateType.size() > 0 &&
+      request.resource.data.createdBy.uid == request.auth.uid;
+    }
+  }
+}
