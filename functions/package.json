@@ -13,9 +13,11 @@
   },
   "main": "src/index.js",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "firebase-admin": "^13.6.0",
     "firebase-functions": "^7.0.1",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "zeptomail": "^7.0.0"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.4.1"

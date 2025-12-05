@@ -1,140 +1,108 @@
+// index.js - CORRECTED VERSION
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onRequest } = require("firebase-functions/v2/https");
+const { logger } = require("firebase-functions/v2");
 const admin = require('firebase-admin');
-const fetch = require('node-fetch');
+const { checkOverdueItems } = require('./scheduledChecks');
 
-// Lazy initialization for admin and db
-function getAdmin() {
-  if (!admin.apps.length) {
-    admin.initializeApp();
-  }
-  return admin;
+// Initialize Firebase Admin (once)
+if (!admin.apps.length) {
+  admin.initializeApp();
 }
 
-function getDb() {
-  return getAdmin().firestore();
-}
-
-async function checkOverdueItems() {
-  const db = getDb();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // start of day
-
-  const projectsSnapshot = await db.collection('projects').get();
-  let totalNotifications = 0;
-
-  for (const projectDoc of projectsSnapshot.docs) {
-    const projectId = projectDoc.id;
-    const projectData = projectDoc.data();
-
-    console.log(`📋 Checking project: ${projectData.projectName || projectId}`);
-
-    const invoiceCount = await checkOverdueInvoices(projectId, projectData, today);
-    const taskCount = await checkOverdueTasksAndStages(projectId, projectData, today);
-
-    totalNotifications += invoiceCount + taskCount;
-  }
-
-  console.log(`✅ Sent ${totalNotifications} overdue notifications`);
-  return totalNotifications;
-}
-
-// --- Overdue invoices ---
-async function checkOverdueInvoices(projectId, projectData, today) {
-  const db = getDb();
-
+// ============================================
+// SCHEDULED FUNCTION - Runs daily at midnight
+// ============================================
+exports.dailyOverdueCheck = onSchedule({
+  schedule: '0 0 * * *',
+  timeZone: 'Africa/Lagos',
+}, async (event) => {
   try {
-    const invoicesSnapshot = await db
-      .collection('invoices')
-      .where('projectRef', '==', db.doc(`projects/${projectId}`))
-      .where('status', '!=', 'paid')
-      .get();
-
-    let count = 0;
-
-    for (const invoiceDoc of invoicesSnapshot.docs) {
-      const invoice = invoiceDoc.data();
-      const dueDate = new Date(invoice.dueDate);
-
-      if (dueDate < today && !wasNotifiedToday(invoice.lastOverdueNotification)) {
-        await sendOverdueInvoiceNotification(projectId, projectData, invoice, invoiceDoc.id);
-
-        await invoiceDoc.ref.update({
-          lastOverdueNotification: admin.firestore.FieldValue.serverTimestamp()
-        });
-
-        count++;
-      }
-    }
-
-    return count;
+    logger.info('🕐 Starting daily overdue check...');
+    const count = await checkOverdueItems();
+    logger.info(`✅ Daily overdue check completed - sent ${count} notifications`);
+    return null;
   } catch (error) {
-    console.error('Error checking overdue invoices:', error);
-    return 0;
+    logger.error('❌ Error in daily overdue check:', error);
+    throw error;
   }
-}
+});
 
-// --- Overdue tasks & stages ---
-async function checkOverdueTasksAndStages(projectId, projectData, today) {
-  const db = getDb();
-
+// ============================================
+// MANUAL TRIGGER - For testing
+// ============================================
+exports.manualOverdueCheck = onRequest(async (req, res) => {
   try {
-    const taskTimeline = projectData.taskTimeline || [];
-    let count = 0;
-
-    for (const stage of taskTimeline) {
-      if (stage.status !== 'Completed' && stage.dueDate?.end) {
-        const stageEndDate = new Date(stage.dueDate.end);
-
-        if (stageEndDate < today && !wasNotifiedToday(stage.lastOverdueNotification)) {
-          await sendOverdueStageNotification(projectId, projectData, stage);
-          stage.lastOverdueNotification = new Date().toISOString();
-          count++;
-        }
-      }
-
-      if (stage.tasks) {
-        for (const task of stage.tasks) {
-          if (task.status !== 'Completed' && task.dueDate?.end) {
-            const taskEndDate = new Date(task.dueDate.end);
-
-            if (taskEndDate < today && !wasNotifiedToday(task.lastOverdueNotification)) {
-              await sendOverdueTaskNotification(projectId, projectData, stage, task);
-              task.lastOverdueNotification = new Date().toISOString();
-              count++;
-            }
-          }
-        }
-      }
-    }
-
-    if (count > 0) {
-      await db.collection('projects').doc(projectId).update({
-        taskTimeline
-      });
-    }
-
-    return count;
+    logger.info('🧪 Manual overdue check triggered...');
+    const count = await checkOverdueItems();
+    res.json({ 
+      success: true, 
+      message: 'Overdue check completed',
+      notificationsSent: count
+    });
   } catch (error) {
-    console.error('Error checking overdue tasks/stages:', error);
-    return 0;
+    logger.error('❌ Error in manual overdue check:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
-}
+});
 
-// --- Helpers ---
-function wasNotifiedToday(lastNotification) {
-  if (!lastNotification) return false;
-
-  const lastNotifDate = lastNotification.toDate 
-    ? lastNotification.toDate() 
-    : new Date(lastNotification);
-
-  const today = new Date();
-
-  return (
-    lastNotifDate.getDate() === today.getDate() &&
-    lastNotifDate.getMonth() === today.getMonth() &&
-    lastNotifDate.getFullYear() === today.getFullYear()
-  );
-}
-
-// --- Export ---
-module.exports = { checkOverdueItems };
+// ============================================
+// TEST EMAIL FUNCTION
+// ============================================
+exports.testEmail = onRequest(async (req, res) => {
+  try {
+    // Import inside function to avoid duplicate import issues
+    const { SendMailClient } = require("zeptomail");
+    
+    const client = new SendMailClient({
+      url: "https://api.zeptomail.com/v1.1/email",
+      token: process.env.ZEPTOMAIL_TOKEN
+    });
+    
+    await client.sendMail({
+      "from": {
+        "address": process.env.EMAIL_FROM_ADDRESS || "noreply@ishelter.everythingshelter.com.ng",
+        "name": process.env.EMAIL_FROM_NAME || "iShelter Test"
+      },
+      "to": [{
+        "email_address": {
+          "address": "everythingshelter.com.ng@gmail.com",
+          "name": "Test User"
+        }
+      }],
+      "subject": "✅ Test Email from iShelter Functions",
+      "htmlbody": `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .success { color: #10b981; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h1 class="success">✓ Test Successful!</h1>
+          <p>This test email was sent from Firebase Functions using ZeptoMail.</p>
+          <p>Timestamp: ${new Date().toISOString()}</p>
+        </body>
+        </html>
+      `,
+    });
+    
+    res.json({ 
+      success: true, 
+      message: "Test email sent successfully",
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error("Test email error:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
