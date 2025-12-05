@@ -268,11 +268,11 @@ export default function BillingPage() {
       <main className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Billing & Payments</h1>
+            <h1 className="text-base md:text-xl font-bold text-gray-900 mb-2">Billing & Payments</h1>
             <p className="text-gray-500">Manage all your project payments in one place</p>
           </div>
           <div className="text-center py-16 bg-white rounded-lg shadow-sm">
-            <div className="text-6xl mb-4">💳</div>
+            <div className="text-4xl mb-4">💳</div>
             <p className="text-xl font-semibold text-gray-900 mb-2">No projects assigned yet</p>
             <p className="text-gray-500">
               Projects assigned to you will appear here with their billing information
@@ -287,7 +287,7 @@ export default function BillingPage() {
     <main className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Billing & Payments</h1>
+          <h1 className="text-xl md:text-4xl font-bold text-gray-900 mb-2">Billing & Payments</h1>
           <p className="text-gray-500">Manage all your project payments in one place</p>
         </div>
 
@@ -306,13 +306,13 @@ export default function BillingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-12">
           <div className="bg-white rounded-lg p-6 md:p-8 border border-gray-200">
             <p className="text-gray-500 text-sm mb-2">TOTAL OUTSTANDING (OVERDUE)</p>
-            <p className="text-3xl md:text-4xl font-bold text-primary">
+            <p className="text-xl md:text-2xl font-bold text-primary">
               {formatCurrency(totalOutstanding)}
             </p>
           </div>
           <div className="bg-white rounded-lg p-6 md:p-8 border border-gray-200">
             <p className="text-gray-500 text-sm mb-2">NEXT PAYMENT DUE</p>
-            <p className="text-3xl md:text-4xl font-bold text-gray-900">
+            <p className="text-xl md:text-2xl font-bold text-gray-900">
               {nextPaymentDue || "No upcoming payments"}
             </p>
           </div>

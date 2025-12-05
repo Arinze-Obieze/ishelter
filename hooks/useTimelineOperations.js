@@ -4,7 +4,21 @@ import { useState } from "react"
 import { db } from "@/lib/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { parseCost } from "../utils/calculations"
-import { notifyPhaseCompletion, notifyTaskCompletion } from "@/utils/notifications"
+
+// Import ALL possible notification functions
+import { 
+  // Old pattern functions (if they exist)
+  notifyPhaseCompletion, 
+  notifyTaskCompletion, 
+  notifyTaskCreation,
+  // New pattern functions (if they exist)
+  notifyStageCreated, 
+  notifyStageUpdated, 
+  notifyStageDeleted,
+  notifyTaskCreated,
+  notifyTaskUpdated,
+  notifyTaskDeleted 
+} from "@/utils/notifications"
 
 const DEFAULT_STAGE = {
   name: "",
@@ -21,7 +35,98 @@ const DEFAULT_TASK = {
   status: "Pending"
 }
 
+// Helper function to check if a notification function exists
+const safeNotify = async (func, params) => {
+  if (typeof func === 'function') {
+    try {
+      await func(params)
+      console.log(`✅ Notification sent: ${func.name}`)
+    } catch (error) {
+      console.error(`❌ Notification failed: ${func.name}`, error)
+      // Don't throw - notifications are secondary
+    }
+  } else {
+    console.warn(`⚠️ Notification function not available: ${func}`)
+  }
+}
+
+// Compatibility wrapper functions
+const notifyStageCreatedCompat = async (params) => {
+  // Try new pattern first, fall back to old if needed
+  if (typeof notifyStageCreated === 'function') {
+    await safeNotify(notifyStageCreated, params)
+  }
+  // You could add fallback to old pattern here if needed
+}
+
+const notifyStageUpdatedCompat = async (params) => {
+  if (typeof notifyStageUpdated === 'function') {
+    await safeNotify(notifyStageUpdated, params)
+  }
+}
+
+const notifyStageDeletedCompat = async (params) => {
+  if (typeof notifyStageDeleted === 'function') {
+    await safeNotify(notifyStageDeleted, params)
+  }
+}
+
+const notifyTaskCreatedCompat = async (params) => {
+  // Try both patterns for maximum compatibility
+  if (typeof notifyTaskCreated === 'function') {
+    // New pattern
+    await safeNotify(notifyTaskCreated, {
+      projectId: params.projectId,
+      taskName: params.taskName,
+      stageName: params.stageName,
+      dueDate: params.dueDate || { start: params.startDate, end: params.endDate },
+      cost: params.cost || params.taskCost,
+      createdById: params.createdById,
+      createdByName: params.createdByName
+    })
+  } else if (typeof notifyTaskCreation === 'function') {
+    // Old pattern fallback
+    await safeNotify(notifyTaskCreation, {
+      projectId: params.projectId,
+      taskName: params.taskName,
+      stageName: params.stageName,
+      taskCost: params.cost || params.taskCost,
+      startDate: params.startDate || (params.dueDate?.start || ''),
+      endDate: params.endDate || (params.dueDate?.end || ''),
+      createdById: params.createdById,
+      createdByName: params.createdByName
+    })
+  }
+}
+
+const notifyTaskUpdatedCompat = async (params) => {
+  if (typeof notifyTaskUpdated === 'function') {
+    await safeNotify(notifyTaskUpdated, params)
+  }
+}
+
+const notifyTaskDeletedCompat = async (params) => {
+  if (typeof notifyTaskDeleted === 'function') {
+    await safeNotify(notifyTaskDeleted, params)
+  }
+}
+
+const notifyTaskCompletionCompat = async (params) => {
+  // Try old pattern first (since it's in the original code)
+  if (typeof notifyTaskCompletion === 'function') {
+    await safeNotify(notifyTaskCompletion, params)
+  }
+}
+
+const notifyPhaseCompletionCompat = async (params) => {
+  // Try old pattern first
+  if (typeof notifyPhaseCompletion === 'function') {
+    await safeNotify(notifyPhaseCompletion, params)
+  }
+}
+
 export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, setError, currentUser) {
+  // Use consistent state initialization (compatible with both patterns)
   const [addingStage, setAddingStage] = useState(false)
   const [addingTaskStageId, setAddingTaskStageId] = useState(null)
   const [newStage, setNewStage] = useState(DEFAULT_STAGE)
@@ -29,16 +134,23 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
   const [saving, setSaving] = useState(false)
   const [editingStageIdx, setEditingStageIdx] = useState(null)
   const [editingTask, setEditingTask] = useState({ stageIdx: null, taskIdx: null })
-  const [editStage, setEditStage] = useState({})
-  const [editTask, setEditTask] = useState({})
+  const [editStage, setEditStage] = useState(DEFAULT_STAGE) // Use DEFAULT instead of {} or null
+  const [editTask, setEditTask] = useState(DEFAULT_TASK) // Use DEFAULT instead of {} or null
 
+  // Helper to get user info safely
+  const getUserInfo = () => ({
+    uid: currentUser?.uid,
+    name: currentUser?.displayName || currentUser?.name || currentUser?.email || 'Project Manager'
+  })
+
+  // Stage Operations
   const handleAddStage = () => {
     setAddingStage(true)
     setNewStage(DEFAULT_STAGE)
   }
 
   const handleSaveStage = async () => {
-    if (!newStage.name || !newStage.dueDate.start || !newStage.dueDate.end || !newStage.cost) {
+    if (!newStage.name.trim() || !newStage.dueDate.start || !newStage.dueDate.end || !newStage.cost) {
       setError("Please fill all required fields")
       return
     }
@@ -46,16 +158,34 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
     setSaving(true)
     setError(null)
     try {
-      const updatedTimeline = [...taskTimeline, { 
+      const stageToAdd = { 
         ...newStage, 
         id: Date.now().toString(), 
         tasks: [] 
-      }]
-      await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
+      }
+      const updatedTimeline = [...taskTimeline, stageToAdd]
+      
+      await updateDoc(doc(db, "projects", projectId), { 
+        taskTimeline: updatedTimeline 
+      })
+      
       setTaskTimeline(updatedTimeline)
       setAddingStage(false)
+      
+      // NOTIFICATION: Stage created (compatible with both patterns)
+      const userInfo = getUserInfo()
+      await notifyStageCreatedCompat({
+        projectId,
+        stageName: stageToAdd.name,
+        dueDate: stageToAdd.dueDate,
+        cost: stageToAdd.cost,
+        createdById: userInfo.uid,
+        createdByName: userInfo.name
+      })
+      
       setNewStage(DEFAULT_STAGE)
     } catch (err) {
+      console.error('Error saving stage:', err)
       setError("Failed to add stage")
     } finally {
       setSaving(false)
@@ -73,10 +203,26 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
     setSaving(true)
     setError(null)
     try {
+      const stageToDelete = taskTimeline[stageIdx]
       const updatedTimeline = taskTimeline.filter((_, idx) => idx !== stageIdx)
-      await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
+      
+      await updateDoc(doc(db, "projects", projectId), { 
+        taskTimeline: updatedTimeline 
+      })
+      
       setTaskTimeline(updatedTimeline)
+      
+      // NOTIFICATION: Stage deleted
+      const userInfo = getUserInfo()
+      await notifyStageDeletedCompat({
+        projectId,
+        stageName: stageToDelete.name,
+        deletedById: userInfo.uid,
+        deletedByName: userInfo.name
+      })
+      
     } catch (err) {
+      console.error('Error deleting stage:', err)
       setError("Failed to delete stage")
     } finally {
       setSaving(false)
@@ -89,6 +235,12 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
   }
 
   const handleSaveEditStage = async (stageIdx) => {
+    // Validation (maintains backward compatibility with budget checks)
+    if (!editStage.name?.trim() || !editStage.dueDate?.start || !editStage.dueDate?.end || !editStage.cost) {
+      setError("Please fill all required fields")
+      return
+    }
+    
     const stage = taskTimeline[stageIdx]
     const newStageCost = parseCost(editStage.cost)
     const tasksTotal = (stage.tasks || []).reduce((sum, t) => sum + parseCost(t.cost), 0)
@@ -103,29 +255,48 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
     try {
       const updatedTimeline = [...taskTimeline]
       const oldStage = taskTimeline[stageIdx]
+      
       updatedTimeline[stageIdx] = { ...editStage }
-      await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
+      
+      await updateDoc(doc(db, "projects", projectId), { 
+        taskTimeline: updatedTimeline 
+      })
+      
       setTaskTimeline(updatedTimeline)
       
-      // NOTIFICATION: Check if stage status changed to completed
+      // Detect changes for notification
+      const changes = []
+      if (oldStage.name !== editStage.name) changes.push(`Name changed to "${editStage.name}"`)
+      if (oldStage.status !== editStage.status) changes.push(`Status changed to ${editStage.status}`)
+      if (oldStage.cost !== editStage.cost) changes.push(`Cost updated`)
+      if (JSON.stringify(oldStage.dueDate) !== JSON.stringify(editStage.dueDate)) {
+        changes.push(`Due date updated`)
+      }
+      
+      // NOTIFICATION: Stage updated
+      const userInfo = getUserInfo()
+      await notifyStageUpdatedCompat({
+        projectId,
+        stageName: editStage.name,
+        changes: changes.length > 0 ? changes : ['Stage details updated'],
+        updatedById: userInfo.uid,
+        updatedByName: userInfo.name
+      })
+      
+      // NOTIFICATION: Check if stage status changed to completed (backward compatible)
       if (oldStage.status !== 'completed' && editStage.status === 'completed') {
-        try {
-          await notifyPhaseCompletion({
-            projectId: projectId,
-            phaseName: editStage.name || oldStage.name,
-            completedById: currentUser?.uid,
-            completedByName: currentUser?.displayName || currentUser?.name || currentUser?.email || 'Unknown User'
-          })
-          console.log('✅ Phase completion notification sent successfully')
-        } catch (notificationError) {
-          console.error('❌ Failed to send phase completion notification:', notificationError)
-          // Don't throw - stage was updated successfully, notification is secondary
-        }
+        await notifyPhaseCompletionCompat({
+          projectId,
+          phaseName: editStage.name || oldStage.name,
+          completedById: userInfo.uid,
+          completedByName: userInfo.name
+        })
       }
       
       setEditingStageIdx(null)
-      setEditStage({})
+      setEditStage(DEFAULT_STAGE)
     } catch (err) {
+      console.error('Error updating stage:', err)
       setError("Failed to update stage")
     } finally {
       setSaving(false)
@@ -134,16 +305,17 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
 
   const handleCancelEditStage = () => {
     setEditingStageIdx(null)
-    setEditStage({})
+    setEditStage(DEFAULT_STAGE)
   }
 
+  // Task Operations
   const handleAddTask = (stageIdx) => {
     setAddingTaskStageId(stageIdx)
     setNewTask(DEFAULT_TASK)
   }
 
   const handleSaveTask = async (stageIdx) => {
-    if (!newTask.name || !newTask.dueDate.start || !newTask.dueDate.end || !newTask.cost) {
+    if (!newTask.name.trim() || !newTask.dueDate.start || !newTask.dueDate.end || !newTask.cost) {
       setError("Please fill all required fields")
       return
     }
@@ -165,13 +337,36 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
     try {
       const updatedTimeline = [...taskTimeline]
       const updatedStage = { ...updatedTimeline[stageIdx] }
-      updatedStage.tasks = [...(updatedStage.tasks || []), { ...newTask, id: Date.now().toString() }]
+      const taskToAdd = { ...newTask, id: Date.now().toString() }
+      
+      updatedStage.tasks = [...(updatedStage.tasks || []), taskToAdd]
       updatedTimeline[stageIdx] = updatedStage
-      await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
+      
+      await updateDoc(doc(db, "projects", projectId), { 
+        taskTimeline: updatedTimeline 
+      })
+      
       setTaskTimeline(updatedTimeline)
+      
+      // NOTIFICATION: Send task creation notification (backward compatible)
+      const userInfo = getUserInfo()
+      await notifyTaskCreatedCompat({
+        projectId,
+        taskName: taskToAdd.name,
+        stageName: updatedStage.name,
+        dueDate: taskToAdd.dueDate,
+        cost: taskToAdd.cost,
+        taskCost: taskToAdd.cost, // For old pattern compatibility
+        startDate: taskToAdd.dueDate.start,
+        endDate: taskToAdd.dueDate.end,
+        createdById: userInfo.uid,
+        createdByName: userInfo.name
+      })
+      
       setAddingTaskStageId(null)
       setNewTask(DEFAULT_TASK)
     } catch (err) {
+      console.error('Error saving task:', err)
       setError("Failed to add task")
     } finally {
       setSaving(false)
@@ -190,10 +385,29 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
     setError(null)
     try {
       const updatedTimeline = [...taskTimeline]
+      const stage = updatedTimeline[stageIdx]
+      const taskToDelete = stage.tasks[taskIdx]
+      
       updatedTimeline[stageIdx].tasks = updatedTimeline[stageIdx].tasks.filter((_, idx) => idx !== taskIdx)
-      await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
+      
+      await updateDoc(doc(db, "projects", projectId), { 
+        taskTimeline: updatedTimeline 
+      })
+      
       setTaskTimeline(updatedTimeline)
+      
+      // NOTIFICATION: Task deleted
+      const userInfo = getUserInfo()
+      await notifyTaskDeletedCompat({
+        projectId,
+        taskName: taskToDelete.name,
+        stageName: stage.name,
+        deletedById: userInfo.uid,
+        deletedByName: userInfo.name
+      })
+      
     } catch (err) {
+      console.error('Error deleting task:', err)
       setError("Failed to delete task")
     } finally {
       setSaving(false)
@@ -206,6 +420,11 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
   }
 
   const handleSaveEditTask = async (stageIdx, taskIdx) => {
+    if (!editTask.name?.trim() || !editTask.dueDate?.start || !editTask.dueDate?.end || !editTask.cost) {
+      setError("Please fill all required fields")
+      return
+    }
+    
     const stage = taskTimeline[stageIdx]
     const stageCost = parseCost(stage.cost)
     const otherTasksTotal = (stage.tasks || []).reduce((sum, t, idx) => {
@@ -226,30 +445,51 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
     try {
       const updatedTimeline = [...taskTimeline]
       const oldTask = taskTimeline[stageIdx].tasks[taskIdx]
-      updatedTimeline[stageIdx].tasks[taskIdx] = { ...editTask }
-      await updateDoc(doc(db, "projects", projectId), { taskTimeline: updatedTimeline })
+      const stage = updatedTimeline[stageIdx]
+      
+      stage.tasks[taskIdx] = { ...editTask }
+      
+      await updateDoc(doc(db, "projects", projectId), { 
+        taskTimeline: updatedTimeline 
+      })
+      
       setTaskTimeline(updatedTimeline)
       
-      // NOTIFICATION: Check if task status changed to completed
+      // Detect changes for notification
+      const changes = []
+      if (oldTask.name !== editTask.name) changes.push(`Name changed to "${editTask.name}"`)
+      if (oldTask.status !== editTask.status) changes.push(`Status changed to ${editTask.status}`)
+      if (oldTask.cost !== editTask.cost) changes.push(`Cost updated`)
+      if (JSON.stringify(oldTask.dueDate) !== JSON.stringify(editTask.dueDate)) {
+        changes.push(`Due date updated`)
+      }
+      
+      // NOTIFICATION: Task updated
+      const userInfo = getUserInfo()
+      await notifyTaskUpdatedCompat({
+        projectId,
+        taskName: editTask.name,
+        stageName: stage.name,
+        changes: changes.length > 0 ? changes : ['Task details updated'],
+        updatedById: userInfo.uid,
+        updatedByName: userInfo.name
+      })
+      
+      // NOTIFICATION: Check if task status changed to completed (backward compatible)
       if (oldTask.status !== 'completed' && editTask.status === 'completed') {
-        try {
-          await notifyTaskCompletion({
-            projectId: projectId,
-            taskName: editTask.name || oldTask.name,
-            stageName: stage.name,
-            completedById: currentUser?.uid,
-            completedByName: currentUser?.displayName || currentUser?.name || currentUser?.email || 'Unknown User'
-          })
-          console.log('✅ Task completion notification sent successfully')
-        } catch (notificationError) {
-          console.error('❌ Failed to send task completion notification:', notificationError)
-          // Don't throw - task was updated successfully, notification is secondary
-        }
+        await notifyTaskCompletionCompat({
+          projectId,
+          taskName: editTask.name || oldTask.name,
+          stageName: stage.name,
+          completedById: userInfo.uid,
+          completedByName: userInfo.name
+        })
       }
       
       setEditingTask({ stageIdx: null, taskIdx: null })
-      setEditTask({})
+      setEditTask(DEFAULT_TASK)
     } catch (err) {
+      console.error('Error updating task:', err)
       setError("Failed to update task")
     } finally {
       setSaving(false)
@@ -258,7 +498,7 @@ export function useTimelineOperations(projectId, taskTimeline, setTaskTimeline, 
 
   const handleCancelEditTask = () => {
     setEditingTask({ stageIdx: null, taskIdx: null })
-    setEditTask({})
+    setEditTask(DEFAULT_TASK)
   }
 
   return {

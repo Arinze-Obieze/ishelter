@@ -22,7 +22,17 @@ export {
   notifyPhaseCompletion,
   notifyTaskCompletion,
   notifyDeadlineApproaching,
-  notifyTimelineUpdate
+  notifyTimelineUpdate,
+  notifyTaskCreation,
+  notifyOverdueTasks,
+
+  // NEW EXPORTS
+  notifyStageCreated,
+  notifyStageUpdated,
+  notifyStageDeleted,
+  notifyTaskCreated,
+  notifyTaskUpdated,
+  notifyTaskDeleted
 } from './taskNotifications'
 
 // Payment & Invoice notifications

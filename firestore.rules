@@ -70,32 +70,39 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // NOTIFICATIONS COLLECTION - FIXED
-    match /notifications/{notificationId} {
-      // Read: Users can read their own notifications (by recipientId, recipientIds array, role, or global)
-      allow read: if request.auth != null && (
-        resource.data.recipientId == request.auth.uid ||
-        (resource.data.recipientIds is list && request.auth.uid in resource.data.recipientIds) ||
-        resource.data.isGlobal == true ||
-        (resource.data.roles is list && getUserRole() in resource.data.roles)
-      );
-      
-      // Create: Admins and Project Managers can create notifications
-      allow create: if request.auth != null && (
-        isAdmin() ||
-        (hasProjectManagerRole() && request.resource.data.projectId != null && isProjectManagerForProject(request.resource.data.projectId))
-      );
-      
-      // Update: Users can only mark their own notifications as read
-      allow update: if request.auth != null && (
-        resource.data.recipientId == request.auth.uid ||
-        (resource.data.recipientIds is list && request.auth.uid in resource.data.recipientIds)
-      ) &&
-      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
-      request.resource.data.read == true;
-      
-      allow delete: if false;
-    }
+    // NOTIFICATIONS COLLECTION - IMPROVED
+match /notifications/{notificationId} {
+  // Read: Users can read their own notifications (by recipientId, recipientIds array, role, or global)
+  allow read: if request.auth != null && (
+    resource.data.recipientId == request.auth.uid ||
+    (resource.data.recipientIds is list && request.auth.uid in resource.data.recipientIds) ||
+    resource.data.isGlobal == true ||
+    (resource.data.roles is list && getUserRole() in resource.data.roles)
+  );
+  
+  // Create: Admins and Project Managers can create notifications
+  allow create: if request.auth != null && (
+    isAdmin() ||
+    (hasProjectManagerRole() && request.resource.data.projectId != null && isProjectManagerForProject(request.resource.data.projectId))
+  );
+  
+  // Update: Users can update their own notifications (primarily for marking as read)
+  allow update: if request.auth != null && (
+    // User is the recipient (single recipient)
+    resource.data.recipientId == request.auth.uid ||
+    // User is in the recipient list (multiple recipients)
+    (resource.data.recipientIds is list && request.auth.uid in resource.data.recipientIds)
+  ) && (
+    // Allow only specific fields to be updated
+    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
+     request.resource.data.read == true) ||
+    // Or allow updating other non-sensitive fields if needed
+    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']) &&
+     request.resource.data.read == true)
+  );
+  
+  allow delete: if false;
+}
 
     // ========== HELPER FUNCTIONS ==========
     function getUserRole() {
@@ -178,3 +185,4 @@ service cloud.firestore {
     }
   }
 }
+

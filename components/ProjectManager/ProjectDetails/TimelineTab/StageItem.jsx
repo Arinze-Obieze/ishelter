@@ -1,6 +1,6 @@
 "use client"
 
-import { FiChevronRight, FiChevronDown, FiEdit2, FiTrash2, FiPlus } from "react-icons/fi"
+import { FiChevronRight, FiChevronDown, FiEdit2, FiTrash2, FiPlus, FiCheck, FiX } from "react-icons/fi"
 import { getStatusColor, renderDateRange, parseCost } from "@/utils/calculations"
 import TaskForm from "./TaskForm"
 import TaskItem from "./TaskItem"
@@ -152,3 +152,4 @@ export default function StageItem({
     </div>
   )
 }
+
