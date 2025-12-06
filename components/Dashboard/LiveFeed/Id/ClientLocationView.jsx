@@ -2,13 +2,16 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Wrapper, Status } from "@googlemaps/react-wrapper"
-import { FiMapPin, FiLayers, FiMap } from "react-icons/fi"
+import { FiMapPin, FiLayers, FiMap, FiMaximize, FiMinimize } from "react-icons/fi"
 import { MdSatellite, MdTerrain } from "react-icons/md"
+import { FaStreetView } from "react-icons/fa"
 
-// Map Component
-function MapComponent({ center, zoom, marker, mapType }) {
+// Map Component with Street View
+function MapComponent({ center, zoom, marker, mapType, showStreetView, onStreetViewAvailabilityChange }) {
   const ref = useRef(null)
+  const streetViewRef = useRef(null)
   const [map, setMap] = useState(null)
+  const [streetView, setStreetView] = useState(null)
   const [advancedMarker, setAdvancedMarker] = useState(null)
   const [markerLibrary, setMarkerLibrary] = useState(null)
 
@@ -37,7 +40,7 @@ function MapComponent({ center, zoom, marker, mapType }) {
         mapTypeId: mapType,
         mapTypeControl: false,
         streetViewControl: false,
-        fullscreenControl: true,
+        fullscreenControl: false,
         zoomControl: true,
         gestureHandling: "greedy",
         mapId: "CLIENT_VIEW_MAP",
@@ -45,6 +48,46 @@ function MapComponent({ center, zoom, marker, mapType }) {
       setMap(newMap)
     }
   }, [ref, map, center, zoom, mapType])
+
+  // Initialize Street View
+  useEffect(() => {
+    if (streetViewRef.current && !streetView) {
+      const panorama = new window.google.maps.StreetViewPanorama(streetViewRef.current, {
+        position: center,
+        pov: { heading: 34, pitch: 10 },
+        zoom: 1,
+        addressControl: true,
+        linksControl: true,
+        panControl: true,
+        enableCloseButton: false,
+      })
+      setStreetView(panorama)
+    }
+  }, [streetViewRef, streetView, center])
+
+  // Check Street View availability when marker changes
+  useEffect(() => {
+    if (marker && map && onStreetViewAvailabilityChange) {
+      const streetViewService = new window.google.maps.StreetViewService()
+      streetViewService.getPanorama(
+        { location: marker, radius: 50 },
+        (data, status) => {
+          if (status === "OK") {
+            onStreetViewAvailabilityChange(true)
+          } else {
+            onStreetViewAvailabilityChange(false)
+          }
+        }
+      )
+    }
+  }, [marker, map, onStreetViewAvailabilityChange])
+
+  // Update Street View position when marker changes
+  useEffect(() => {
+    if (streetView && marker && showStreetView) {
+      streetView.setPosition(marker)
+    }
+  }, [streetView, marker, showStreetView])
 
   // Update map type
   useEffect(() => {
@@ -79,7 +122,12 @@ function MapComponent({ center, zoom, marker, mapType }) {
     }
   }, [map, marker])
 
-  return <div ref={ref} className="w-full h-full" />
+  return (
+    <>
+      <div ref={ref} className="w-full h-full" style={{ display: showStreetView ? 'none' : 'block' }} />
+      <div ref={streetViewRef} className="w-full h-full" style={{ display: showStreetView ? 'block' : 'none' }} />
+    </>
+  )
 }
 
 // Loading Component
@@ -115,6 +163,10 @@ export default function ClientLocationView({ projectId, projectData }) {
   const [mapType, setMapType] = useState("hybrid")
   const [marker, setMarker] = useState(null)
   const [address, setAddress] = useState("")
+  const [showStreetView, setShowStreetView] = useState(false)
+  const [streetViewAvailable, setStreetViewAvailable] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const mapContainerRef = useRef(null)
 
   const defaultCenter = { lat: 6.5244, lng: 3.3792 }
 
@@ -130,6 +182,40 @@ export default function ClientLocationView({ projectId, projectData }) {
       setMapType(location.mapType || "hybrid")
     }
   }, [projectData])
+
+  // Handle fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  const toggleStreetView = () => {
+    if (!marker) {
+      return
+    }
+    if (!streetViewAvailable && !showStreetView) {
+      return
+    }
+    setShowStreetView(!showStreetView)
+  }
+
+  const toggleFullscreen = async () => {
+    if (!mapContainerRef.current) return
+
+    try {
+      if (!isFullscreen) {
+        await mapContainerRef.current.requestFullscreen()
+      } else {
+        await document.exitFullscreen()
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err)
+    }
+  }
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
@@ -174,55 +260,91 @@ export default function ClientLocationView({ projectId, projectData }) {
       {/* Map Container */}
       <div className="relative mb-4">
         <Wrapper apiKey={apiKey} libraries={["places", "marker"]} render={MapLoadingStatus}>
-          <div className="h-96 rounded-lg overflow-hidden border-2 border-gray-200">
+          <div 
+            ref={mapContainerRef}
+            className="h-96 rounded-lg overflow-hidden border-2 border-gray-200 relative"
+          >
             <MapComponent
               center={marker || defaultCenter}
               zoom={15}
               marker={marker}
               mapType={mapType}
+              showStreetView={showStreetView}
+              onStreetViewAvailabilityChange={setStreetViewAvailable}
             />
+
+            {/* Map Type & View Controls */}
+            <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+              <button
+                onClick={() => {
+                  setMapType("roadmap")
+                  setShowStreetView(false)
+                }}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
+                  mapType === "roadmap" && !showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+              >
+                <FiMap className="w-4 h-4" />
+                Map
+              </button>
+              <button
+                onClick={() => {
+                  setMapType("satellite")
+                  setShowStreetView(false)
+                }}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
+                  mapType === "satellite" && !showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+              >
+                <MdSatellite className="w-4 h-4" />
+                Satellite
+              </button>
+              <button
+                onClick={() => {
+                  setMapType("hybrid")
+                  setShowStreetView(false)
+                }}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
+                  mapType === "hybrid" && !showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+              >
+                <FiLayers className="w-4 h-4" />
+                Hybrid
+              </button>
+              <button
+                onClick={() => {
+                  setMapType("terrain")
+                  setShowStreetView(false)
+                }}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
+                  mapType === "terrain" && !showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+              >
+                <MdTerrain className="w-4 h-4" />
+                Terrain
+              </button>
+              <button
+                onClick={toggleStreetView}
+                disabled={!marker || (!streetViewAvailable && !showStreetView)}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+                title={!marker ? "Location not set" : !streetViewAvailable && !showStreetView ? "Street View not available" : "Street View"}
+              >
+                <FaStreetView className="w-4 h-4" />
+                Street View
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors text-gray-700"
+                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+              >
+                {isFullscreen ? <FiMinimize className="w-4 h-4" /> : <FiMaximize className="w-4 h-4" />}
+                {isFullscreen ? "Exit" : "Fullscreen"}
+              </button>
+            </div>
           </div>
         </Wrapper>
-
-        {/* Map Type Controls */}
-        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-          <button
-            onClick={() => setMapType("roadmap")}
-            className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
-              mapType === "roadmap" ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
-            }`}
-          >
-            <FiMap className="w-4 h-4" />
-            Map
-          </button>
-          <button
-            onClick={() => setMapType("satellite")}
-            className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
-              mapType === "satellite" ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
-            }`}
-          >
-            <MdSatellite className="w-4 h-4" />
-            Satellite
-          </button>
-          <button
-            onClick={() => setMapType("hybrid")}
-            className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
-              mapType === "hybrid" ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
-            }`}
-          >
-            <FiLayers className="w-4 h-4" />
-            Hybrid
-          </button>
-          <button
-            onClick={() => setMapType("terrain")}
-            className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors ${
-              mapType === "terrain" ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
-            }`}
-          >
-            <MdTerrain className="w-4 h-4" />
-            Terrain
-          </button>
-        </div>
       </div>
 
       {/* Location Info */}
