@@ -2,17 +2,20 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Wrapper, Status } from "@googlemaps/react-wrapper"
-import { FiMapPin, FiSearch, FiSave, FiX, FiMap } from "react-icons/fi"
+import { FiMapPin, FiSearch, FiSave, FiX, FiMap, FiMaximize, FiMinimize } from "react-icons/fi"
 import { FiLayers } from "react-icons/fi"
 import { doc, updateDoc, onSnapshot, serverTimestamp } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import { toast } from "react-hot-toast"
 import { MdSatellite, MdTerrain } from "react-icons/md"
+import { FaStreetView } from "react-icons/fa"
 
-// Map Component with Advanced Markers
-function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapType, onMapLoad }) {
+// Map Component with Advanced Markers and Street View
+function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapType, onMapLoad, showStreetView, onStreetViewAvailabilityChange }) {
   const ref = useRef(null)
+  const streetViewRef = useRef(null)
   const [map, setMap] = useState(null)
+  const [streetView, setStreetView] = useState(null)
   const [advancedMarker, setAdvancedMarker] = useState(null)
   const [markerLibrary, setMarkerLibrary] = useState(null)
 
@@ -44,12 +47,52 @@ function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapTy
         fullscreenControl: false,
         zoomControl: true,
         gestureHandling: "greedy",
-        mapId: "PROJECT_LOCATION_MAP", // Required for Advanced Markers
+        mapId: "PROJECT_LOCATION_MAP",
       })
       setMap(newMap)
       onMapLoad?.(newMap)
     }
   }, [ref, map, center, zoom, mapType, onMapLoad])
+
+  // Initialize Street View
+  useEffect(() => {
+    if (streetViewRef.current && !streetView) {
+      const panorama = new window.google.maps.StreetViewPanorama(streetViewRef.current, {
+        position: center,
+        pov: { heading: 34, pitch: 10 },
+        zoom: 1,
+        addressControl: true,
+        linksControl: true,
+        panControl: true,
+        enableCloseButton: false,
+      })
+      setStreetView(panorama)
+    }
+  }, [streetViewRef, streetView, center])
+
+  // Check Street View availability when marker changes
+  useEffect(() => {
+    if (marker && map && onStreetViewAvailabilityChange) {
+      const streetViewService = new window.google.maps.StreetViewService()
+      streetViewService.getPanorama(
+        { location: marker, radius: 50 },
+        (data, status) => {
+          if (status === "OK") {
+            onStreetViewAvailabilityChange(true)
+          } else {
+            onStreetViewAvailabilityChange(false)
+          }
+        }
+      )
+    }
+  }, [marker, map, onStreetViewAvailabilityChange])
+
+  // Update Street View position when marker changes
+  useEffect(() => {
+    if (streetView && marker && showStreetView) {
+      streetView.setPosition(marker)
+    }
+  }, [streetView, marker, showStreetView])
 
   // Update map type
   useEffect(() => {
@@ -77,18 +120,15 @@ function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapTy
       const { AdvancedMarkerElement } = markerLibrary
 
       if (advancedMarker) {
-        // Update existing marker position
         advancedMarker.position = marker
       } else {
-        // Create new Advanced Marker
         const newMarker = new AdvancedMarkerElement({
           map,
           position: marker,
-          gmpDraggable: true, // Note: different property name for Advanced Markers
+          gmpDraggable: true,
           title: "Project Location",
         })
 
-        // Add dragend listener
         newMarker.addListener("dragend", (e) => {
           onMarkerDragEnd?.({
             lat: e.latLng.lat(),
@@ -99,7 +139,6 @@ function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapTy
         setAdvancedMarker(newMarker)
       }
     } else if (advancedMarker && !marker) {
-      // Remove marker
       advancedMarker.map = null
       setAdvancedMarker(null)
     }
@@ -112,10 +151,15 @@ function MapComponent({ center, zoom, onMapClick, marker, onMarkerDragEnd, mapTy
     }
   }, [map, marker])
 
-  return <div ref={ref} className="w-full h-full" />
+  return (
+    <>
+      <div ref={ref} className="w-full h-full" style={{ display: showStreetView ? 'none' : 'block' }} />
+      <div ref={streetViewRef} className="w-full h-full" style={{ display: showStreetView ? 'block' : 'none' }} />
+    </>
+  )
 }
 
-// Search Box Component - Using Legacy Autocomplete (More Reliable)
+// Search Box Component
 function SearchBox({ onPlaceSelect }) {
   const inputRef = useRef(null)
   const autocompleteRef = useRef(null)
@@ -123,21 +167,13 @@ function SearchBox({ onPlaceSelect }) {
   useEffect(() => {
     const initAutocomplete = () => {
       if (inputRef.current && window.google?.maps?.places && !autocompleteRef.current) {
-        console.log("=== Initializing Legacy Autocomplete ===")
-        
         try {
-          // Create legacy Autocomplete
           const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
             fields: ["geometry", "formatted_address", "name"],
           })
           
-          console.log("Legacy Autocomplete created:", autocomplete)
-          
-          // Listen for place selection
           autocomplete.addListener("place_changed", () => {
-            console.log("=== place_changed event fired ===")
             const place = autocomplete.getPlace()
-            console.log("Place object:", place)
             
             if (place.geometry && place.geometry.location) {
               const locationData = {
@@ -145,26 +181,20 @@ function SearchBox({ onPlaceSelect }) {
                 lng: place.geometry.location.lng(),
                 address: place.formatted_address || place.name,
               }
-              console.log("Calling onPlaceSelect with:", locationData)
               onPlaceSelect?.(locationData)
-            } else {
-              console.error("No geometry in place object")
             }
           })
           
           autocompleteRef.current = autocomplete
-          console.log("=== Legacy Autocomplete initialization complete ===")
         } catch (err) {
           console.error("Error initializing Autocomplete:", err)
         }
       }
     }
 
-    // Wait for Google Maps to be loaded
     if (window.google?.maps?.places) {
       initAutocomplete()
     } else {
-      // Retry after a short delay if not loaded yet
       const timer = setTimeout(initAutocomplete, 500)
       return () => clearTimeout(timer)
     }
@@ -224,10 +254,13 @@ export default function ProjectLocationMap({ projectId }) {
   const [mapType, setMapType] = useState("hybrid")
   const [hasChanges, setHasChanges] = useState(false)
   const [saving, setSaving] = useState(false)
-  const mapRef = useRef(null) // Use ref instead of state to avoid stale closures
+  const [showStreetView, setShowStreetView] = useState(false)
+  const [streetViewAvailable, setStreetViewAvailable] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const mapRef = useRef(null)
+  const mapContainerRef = useRef(null)
   const [currentUser, setCurrentUser] = useState(null)
 
-  // Default center: Lagos, Nigeria
   const defaultCenter = { lat: 6.5244, lng: 3.3792 }
 
   // Get current user
@@ -259,54 +292,45 @@ export default function ProjectLocationMap({ projectId }) {
     return () => unsubscribe()
   }, [projectId])
 
-  // Handle map load - use ref to always have current map instance
-  const handleMapLoad = useCallback((map) => {
-    console.log("=== Map loaded ===")
-    console.log("Map instance:", map)
-    mapRef.current = map
-    console.log("mapRef.current set:", !!mapRef.current)
+  // Handle fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
-  // Handle map click
+  const handleMapLoad = useCallback((map) => {
+    mapRef.current = map
+  }, [])
+
   const handleMapClick = useCallback((location) => {
     setMarker(location)
     setHasChanges(true)
-    // Reverse geocode to get address
     reverseGeocode(location)
   }, [])
 
-  // Handle marker drag
   const handleMarkerDragEnd = useCallback((location) => {
     setMarker(location)
     setHasChanges(true)
     reverseGeocode(location)
   }, [])
 
-  // Handle place select from search - NO dependencies, uses ref
   const handlePlaceSelect = useCallback((place) => {
-    console.log("=== handlePlaceSelect called ===")
-    console.log("Place data:", place)
-    console.log("mapRef.current exists:", !!mapRef.current)
-    
     const newMarker = { lat: place.lat, lng: place.lng }
-    console.log("New marker:", newMarker)
     
     setMarker(newMarker)
     setAddress(place.address || "")
     setHasChanges(true)
     
-    // Use ref to get current map instance - this solves the stale closure issue!
     if (mapRef.current) {
-      console.log("Attempting to pan map to:", newMarker)
       mapRef.current.panTo(newMarker)
       mapRef.current.setZoom(15)
-      console.log("Map pan and zoom completed")
-    } else {
-      console.error("Map ref is null!")
     }
-  }, []) // Empty dependency array - uses ref instead
+  }, [])
 
-  // Reverse geocode
   const reverseGeocode = async (location) => {
     try {
       const geocoder = new window.google.maps.Geocoder()
@@ -320,7 +344,6 @@ export default function ProjectLocationMap({ projectId }) {
     }
   }
 
-  // Save location
   const handleSave = async () => {
     if (!marker || !currentUser) return
 
@@ -351,20 +374,46 @@ export default function ProjectLocationMap({ projectId }) {
     }
   }
 
-  // Clear location
   const handleClear = () => {
     if (window.confirm("Are you sure you want to remove the project location?")) {
       setMarker(null)
       setAddress("")
       setHasChanges(true)
+      setShowStreetView(false)
     }
   }
 
-  // Center on marker
   const handleCenterOnMarker = () => {
     if (mapRef.current && marker) {
       mapRef.current.panTo(marker)
       mapRef.current.setZoom(15)
+    }
+  }
+
+  const toggleStreetView = () => {
+    if (!marker) {
+      toast.error("Please set a location marker first")
+      return
+    }
+    if (!streetViewAvailable && !showStreetView) {
+      toast.error("Street View is not available for this location")
+      return
+    }
+    setShowStreetView(!showStreetView)
+  }
+
+  const toggleFullscreen = async () => {
+    if (!mapContainerRef.current) return
+
+    try {
+      if (!isFullscreen) {
+        await mapContainerRef.current.requestFullscreen()
+      } else {
+        await document.exitFullscreen()
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err)
+      toast.error("Failed to toggle fullscreen")
     }
   }
 
@@ -405,7 +454,10 @@ export default function ProjectLocationMap({ projectId }) {
       {/* Map Container */}
       <div className="relative mb-4">
         <Wrapper apiKey={apiKey} libraries={["places", "marker"]} render={MapLoadingStatus}>
-          <div className="h-96 rounded-lg overflow-hidden border-2 border-gray-200">
+          <div 
+            ref={mapContainerRef}
+            className="h-96 rounded-lg overflow-hidden border-2 border-gray-200 relative"
+          >
             <MapComponent
               center={marker || defaultCenter}
               zoom={15}
@@ -414,61 +466,86 @@ export default function ProjectLocationMap({ projectId }) {
               onMarkerDragEnd={handleMarkerDragEnd}
               mapType={mapType}
               onMapLoad={handleMapLoad}
+              showStreetView={showStreetView}
+              onStreetViewAvailabilityChange={setStreetViewAvailable}
             />
+
+            {/* Map Type & View Controls - Overlay */}
+            <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+              <button
+                onClick={() => {
+                  setMapType("roadmap")
+                  setHasChanges(true)
+                  setShowStreetView(false)
+                }}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
+                  mapType === "roadmap" && !showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+              >
+                <FiMap className="w-4 h-4" />
+                Map
+              </button>
+              <button
+                onClick={() => {
+                  setMapType("satellite")
+                  setHasChanges(true)
+                  setShowStreetView(false)
+                }}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
+                  mapType === "satellite" && !showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+              >
+                <MdSatellite className="w-4 h-4" />
+                Satellite
+              </button>
+              <button
+                onClick={() => {
+                  setMapType("hybrid")
+                  setHasChanges(true)
+                  setShowStreetView(false)
+                }}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
+                  mapType === "hybrid" && !showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+              >
+                <FiLayers className="w-4 h-4" />
+                Hybrid
+              </button>
+              <button
+                onClick={() => {
+                  setMapType("terrain")
+                  setHasChanges(true)
+                  setShowStreetView(false)
+                }}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
+                  mapType === "terrain" && !showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+              >
+                <MdTerrain className="w-4 h-4" />
+                Terrain
+              </button>
+              <button
+                onClick={toggleStreetView}
+                disabled={!marker}
+                className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  showStreetView ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
+                }`}
+                title={!marker ? "Set a location first" : !streetViewAvailable && !showStreetView ? "Street View not available" : "Street View"}
+              >
+                <FaStreetView className="w-4 h-4" />
+                Street View
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors text-gray-700"
+                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+              >
+                {isFullscreen ? <FiMinimize className="w-4 h-4" /> : <FiMaximize className="w-4 h-4" />}
+                {isFullscreen ? "Exit" : "Fullscreen"}
+              </button>
+            </div>
           </div>
         </Wrapper>
-
-        {/* Map Type Controls - Overlay */}
-        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-          <button
-            onClick={() => {
-              setMapType("roadmap")
-              setHasChanges(true)
-            }}
-            className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
-              mapType === "roadmap" ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
-            }`}
-          >
-            <FiMap className="w-4 h-4" />
-            Map
-          </button>
-          <button
-            onClick={() => {
-              setMapType("satellite")
-              setHasChanges(true)
-            }}
-            className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
-              mapType === "satellite" ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
-            }`}
-          >
-            <MdSatellite className="w-4 h-4" />
-            Satellite
-          </button>
-          <button
-            onClick={() => {
-              setMapType("hybrid")
-              setHasChanges(true)
-            }}
-            className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors border-b border-gray-200 ${
-              mapType === "hybrid" ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
-            }`}
-          >
-            <FiLayers className="w-4 h-4" />
-            Hybrid
-          </button>
-          <button
-            onClick={() => {
-              setMapType("terrain")
-              setHasChanges(true)
-            }}
-            className={`px-3 py-2 text-sm font-medium flex items-center gap-2 hover:bg-gray-50 transition-colors ${
-              mapType === "terrain" ? "bg-primary text-white hover:bg-orange-600" : "text-gray-700"
-            }`}
-          >
-            <MdTerrain className="w-4 h-4" />
-            Terrain
-          </button>
-        </div>
       </div>
 
       {/* Location Info */}
