@@ -336,7 +336,7 @@ async function sendOverdueEmail({ projectName, recipients, type, details }) {
     for (const userRef of recipients) {
       if (userRef && userRef.id) {
         const userDoc = await db.collection('users').doc(userRef.id).get();
-        if (userDoc.exists()) {
+        if (userDoc.exists) {
           const userData = userDoc.data();
           if (userData.email && !userData.disabled) {
             emails.push({

@@ -1,4 +1,4 @@
-// index.js - CORRECTED VERSION
+require('dotenv').config();
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions/v2");
