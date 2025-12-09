@@ -1,8 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { FiSearch, FiChevronDown, FiPlus, FiMoreVertical, FiChevronLeft, FiChevronRight } from "react-icons/fi"
+import { FiSearch, FiChevronDown, FiPlus, FiMoreVertical, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2 } from "react-icons/fi"
 import AddNewProjectModal from "@/components/modals/AddNewProjectModal"
+import EditProjectModal from "@/components/modals/EditProjectModal"
+import DeleteProjectModal from "@/components/modals/DeleteProjectModal"
 import { useProjects } from "@/contexts/ProjectContext"
 import { getDoc } from "firebase/firestore"
 
@@ -18,6 +20,10 @@ export default function ProjectOverview() {
   const [currentPage, setCurrentPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [managerNames, setManagerNames] = useState({})
+  const [selectedProject, setSelectedProject] = useState(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(null)
   const itemsPerPage = 6
 
   // Use projects from context with fallback
@@ -129,6 +135,24 @@ export default function ProjectOverview() {
     return project.progress || 0;
   }
 
+  // Parse cost from string or number
+  const parseCost = (cost) => {
+    if (!cost) return 0
+    if (typeof cost === "number") return cost
+    return parseInt(cost.toString().replace(/[^\d]/g, "")) || 0
+  }
+
+  // Calculate live budget from task timeline
+  const calculateLiveBudget = (project) => {
+    if (!project.taskTimeline || !Array.isArray(project.taskTimeline)) {
+      return 0
+    }
+    return project.taskTimeline.reduce((sum, stage) => {
+      const stageCost = parseCost(stage.cost)
+      return sum + stageCost
+    }, 0)
+  }
+
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
@@ -167,6 +191,34 @@ export default function ProjectOverview() {
 
   const openModal = () => setIsModalOpen(true)
   const closeModal = () => setIsModalOpen(false)
+
+  const handleEditClick = (project) => {
+    setSelectedProject(project)
+    setEditModalOpen(true)
+    setMobileMenuOpen(null)
+  }
+
+  const handleDeleteClick = (project) => {
+    setSelectedProject(project)
+    setDeleteModalOpen(true)
+    setMobileMenuOpen(null)
+  }
+
+  const handleEditClose = () => {
+    setEditModalOpen(false)
+    setSelectedProject(null)
+  }
+
+  const handleDeleteClose = () => {
+    setDeleteModalOpen(false)
+    setSelectedProject(null)
+  }
+
+  const handleRefresh = () => {
+    // Data will auto-refresh via ProjectContext's Firebase listener
+    handleEditClose()
+    handleDeleteClose()
+  }
 
   if (loading) {
     return (
@@ -244,10 +296,10 @@ export default function ProjectOverview() {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Project Manager</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Progress</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Budget</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Budget (Initial / Live)</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Start Date</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Est. Completion</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Plan</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -277,11 +329,31 @@ export default function ProjectOverview() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatBudget(project.initialBudget)}
+                        <div className="flex flex-col">
+                          <span className="font-medium">{formatBudget(project.initialBudget)}</span>
+                          <span className="text-xs text-gray-500">({formatBudget(calculateLiveBudget(project))})</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{formatDate(project.startDate)}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{formatDate(project.completionDate)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{formatPlan(project.consultationPlan)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEditClick(project)}
+                            className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded transition"
+                            title="Edit project"
+                          >
+                            <FiEdit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(project)}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition"
+                            title="Delete project"
+                          >
+                            <FiTrash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -309,9 +381,30 @@ export default function ProjectOverview() {
                           {formatStatus(project.projectStatus)}
                         </span>
                       </div>
-                      <button className="text-gray-400">
-                        <FiMoreVertical size={20} />
-                      </button>
+                      <div className="relative">
+                        <button 
+                          onClick={() => setMobileMenuOpen(mobileMenuOpen === project.id ? null : project.id)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <FiMoreVertical size={20} />
+                        </button>
+                        {mobileMenuOpen === project.id && (
+                          <div className="absolute right-0 mt-2 w-40 rounded-lg border border-gray-200 bg-white shadow-lg z-10">
+                            <button
+                              onClick={() => handleEditClick(project)}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition"
+                            >
+                              <FiEdit2 size={16} /> Edit Project
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(project)}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition border-t border-gray-200"
+                            >
+                              <FiTrash2 size={16} /> Delete Project
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mb-3 space-y-1 text-sm">
@@ -325,9 +418,10 @@ export default function ProjectOverview() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Budget:</span>
-                        <span className="text-gray-900">
-                          {formatBudget(project.initialBudget)}
-                        </span>
+                        <div className="text-right">
+                          <div className="text-gray-900 font-medium">{formatBudget(project.initialBudget)}</div>
+                          <div className="text-xs text-gray-500">(Live: {formatBudget(calculateLiveBudget(project))})</div>
+                        </div>
                       </div>
                     </div>
 
@@ -352,10 +446,6 @@ export default function ProjectOverview() {
                       <div className="flex justify-between">
                         <span>Est. Completion:</span>
                         <span>{formatDate(project.completionDate)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Plan:</span>
-                        <span>{formatPlan(project.consultationPlan)}</span>
                       </div>
                     </div>
                   </div>
@@ -419,6 +509,18 @@ export default function ProjectOverview() {
         <AddNewProjectModal 
           isOpen={isModalOpen} 
           onClose={closeModal} 
+        />
+        <EditProjectModal
+          isOpen={editModalOpen}
+          onClose={handleEditClose}
+          project={selectedProject}
+          onUpdate={handleRefresh}
+        />
+        <DeleteProjectModal
+          isOpen={deleteModalOpen}
+          onClose={handleDeleteClose}
+          project={selectedProject}
+          onDelete={handleRefresh}
         />
       </div>
     </div>

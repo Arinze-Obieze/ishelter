@@ -54,7 +54,7 @@ export default function AdminNotificationsPage() {
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
       {/* Debug Info - Remove after fixing */}
-      {showDebug && (
+      {/* {showDebug && (
         <div className="mb-4">
           <NotificationDebugger />
           <button 
@@ -64,7 +64,7 @@ export default function AdminNotificationsPage() {
             Hide Debug Info
           </button>
         </div>
-      )}
+      )} */}
 
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
