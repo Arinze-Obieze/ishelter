@@ -27,8 +27,8 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
     projectAddress: "",
     projectManager: "",
     projectManagerId: "",
-    successManagers: [],
-    successManagerIds: [],
+    // successManagers: [],
+    // successManagerIds: [],
     consultationPlan: "standard",
     initialBudget: "",
     startDate: "",
@@ -63,13 +63,13 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
         setProjectManagers(pmList)
 
         // Fetch success managers
-        const smQuery = query(usersRef, where('role', '==', 'success manager'))
-        const smSnapshot = await getDocs(smQuery)
-        const smList = smSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }))
-        setSuccessManagers(smList)
+        // const smQuery = query(usersRef, where('role', '==', 'success manager'))
+        // const smSnapshot = await getDocs(smQuery)
+        // const smList = smSnapshot.docs.map(doc => ({
+        //   id: doc.id,
+        //   ...doc.data()
+        // }))
+        // setSuccessManagers(smList)
 
       } catch (error) {
         console.error('Error fetching users:', error)

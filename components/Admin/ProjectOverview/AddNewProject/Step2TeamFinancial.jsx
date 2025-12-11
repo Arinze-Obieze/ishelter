@@ -36,34 +36,7 @@ export default function Step2TeamFinancial({
           }
         />
 
-        {/* Success Managers Selection */}
-        <FormField
-          label="Success Managers"
-          input={
-            <div>
-              <UserDropdown
-                users={successManagers}
-                selectedUsers={formData.successManagers}
-                selectedUserIds={formData.successManagerIds}
-                placeholder={loadingUsers ? "Loading..." : "Add Success Managers"}
-                onSelectUser={onSelectSuccessManager}
-                isSubmitting={isSubmitting || loadingUsers}
-                type="successManager"
-              />
-              
-              <SuccessManagerTags
-                successManagers={formData.successManagers}
-                successManagerIds={formData.successManagerIds}
-                onRemoveSuccessManager={onRemoveSuccessManager}
-                isSubmitting={isSubmitting}
-              />
-              
-              <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
-                Select success managers to assign to this project
-              </p>
-            </div>
-          }
-        />
+     
       </div>
 
       <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 pb-2 border-b-2 border-orange-500">
