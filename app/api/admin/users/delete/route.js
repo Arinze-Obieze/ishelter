@@ -13,6 +13,16 @@ export async function POST(req) {
       );
     }
 
+    // SUPERADMIN PROTECTION: Check if target is a superAdmin
+    const userToDeleteDoc = await adminDb.collection("users").doc(userId).get();
+    
+    if (userToDeleteDoc.exists && userToDeleteDoc.data().superAdmin === true) {
+      return NextResponse.json(
+        { error: "Cannot delete a Super Admin. Super Admins are protected from deletion." },
+        { status: 403 }
+      );
+    }
+
     // 1. Delete user from Firebase Authentication
     await adminAuth.deleteUser(userId);
 

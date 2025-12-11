@@ -12,6 +12,16 @@ export async function POST(req) {
       );
     }
 
+    // SUPERADMIN PROTECTION: Check if target is a superAdmin
+    const userToUpdateDoc = await adminDb.collection("users").doc(userId).get();
+    
+    if (userToUpdateDoc.exists && userToUpdateDoc.data().superAdmin === true) {
+      return NextResponse.json(
+        { error: "Cannot update a Super Admin. Super Admins are protected from modification." },
+        { status: 403 }
+      );
+    }
+
     // Remove any undefined fields and the id field
     const cleanUpdates = { ...updates };
     delete cleanUpdates.id;

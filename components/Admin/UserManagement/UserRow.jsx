@@ -70,20 +70,29 @@ const UserRow = ({ user, onEdit, onDelete }) => {
               />
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-20">
                 <div className="py-1">
-                  <button
-                    onClick={handleEdit}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    <FiEdit className="w-4 h-4" />
-                    Edit User
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <FiTrash2 className="w-4 h-4" />
-                    Delete User
-                  </button>
+                  {!user.superAdmin && (
+                    <>
+                      <button
+                        onClick={handleEdit}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        <FiEdit className="w-4 h-4" />
+                        Edit User
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                        Delete User
+                      </button>
+                    </>
+                  )}
+                  {user.superAdmin && (
+                    <div className="px-4 py-2 text-xs text-gray-500 italic">
+                      Super Admin - Protected from modification
+                    </div>
+                  )}
                 </div>
               </div>
             </>
