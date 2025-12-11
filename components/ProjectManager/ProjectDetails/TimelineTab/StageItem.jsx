@@ -106,7 +106,13 @@ export default function StageItem({
                   </button>
                   <button 
                     className="p-1.5 border border-gray-300 rounded" 
-                    onClick={() => onAddTask(stageIdx)} 
+                    onClick={() => {
+                      onAddTask(stageIdx)
+                      // Auto-expand stage on mobile when adding task
+                      if (isMobile && !isExpanded) {
+                        onToggle(stageIdx)
+                      }
+                    }} 
                     disabled={addingTaskStageId !== null || saving}
                   >
                     <FiPlus size={14} />
