@@ -173,7 +173,7 @@ const AddUserModal = ({ isOpen, onClose, isSubmitting }) => {
               Role *
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {["Admin", "Project Manager", "Success Manager", "Client"].map((role) => (
+              {["Admin", "Project Manager", "Client"].map((role) => (
                 <button
                   key={role}
                   type="button"
