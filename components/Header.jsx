@@ -30,7 +30,7 @@ const Header = () => {
         </div>
 
         {/* Desktop navigation - hidden on mobile */}
-        <div className=' place-items-center space-x-12 md:flex hidden'>
+        <div className=' place-items-center space-x-12 lg:flex hidden'>
           <nav className='space-x-8'>
             {navLinks.map((link, index) => (
               <a 
@@ -53,7 +53,7 @@ const Header = () => {
         </div>
 
         {/* Mobile menu button - visible only on small screens */}
-        <div className='md:hidden flex items-center'>
+        <div className='lg:hidden flex items-center'>
           <button 
             onClick={toggleMenu}
             className='text-secondary focus:outline-none'
@@ -73,7 +73,7 @@ const Header = () => {
 
       {/* Mobile menu - appears when hamburger icon is clicked */}
       {isMenuOpen && (
-        <div className='md:hidden bg-white shadow-lg py-4 px-6 absolute w-full z-10'>
+        <div className='lg:hidden bg-white shadow-lg py-4 px-6 absolute w-full z-10'>
           <nav className='flex flex-col space-y-4'>
             {navLinks.map((link, index) => (
               <a 
