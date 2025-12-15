@@ -15,6 +15,8 @@ const montserrat = Montserrat({
 export const metadata = {
   title: "iShelter",
   description: "Manage Your Construction Project, Anywhere in the World",
+  manifest: "/manifest.json",       
+  themeColor: "#1F2937",            
 };
 
 export default function RootLayout({ children }) {

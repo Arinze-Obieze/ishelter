@@ -1,5 +1,4 @@
 import UserDropdown from './UserDropdown'
-import SuccessManagerTags from './SuccessManagerTags'
 import FormField from './FormField'
 
 export default function Step2TeamFinancial({
@@ -7,11 +6,8 @@ export default function Step2TeamFinancial({
   setFormData,
   isSubmitting,
   projectManagers,
-  successManagers,
   loadingUsers,
-  onSelectProjectManager,
-  onSelectSuccessManager,
-  onRemoveSuccessManager
+  onSelectProjectManager
 }) {
   return (
     <div>

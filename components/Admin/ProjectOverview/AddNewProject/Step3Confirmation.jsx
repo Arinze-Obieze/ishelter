@@ -37,12 +37,6 @@ export default function Step3Confirmation({
             onEdit={() => setCurrentStep(2)}
             isSubmitting={isSubmitting}
           />
-          <ReviewField
-            label="Success Managers"
-            value={formData.successManagers.length > 0 ? formData.successManagers.join(', ') : "None assigned"}
-            onEdit={() => setCurrentStep(2)}
-            isSubmitting={isSubmitting}
-          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

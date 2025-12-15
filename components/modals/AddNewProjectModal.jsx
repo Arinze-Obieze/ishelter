@@ -18,7 +18,6 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [projectManagers, setProjectManagers] = useState([])
-  const [successManagers, setSuccessManagers] = useState([])
   const [loadingUsers, setLoadingUsers] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -27,8 +26,6 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
     projectAddress: "",
     projectManager: "",
     projectManagerId: "",
-    // successManagers: [],
-    // successManagerIds: [],
     consultationPlan: "standard",
     initialBudget: "",
     startDate: "",
@@ -62,15 +59,6 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
         }))
         setProjectManagers(pmList)
 
-        // Fetch success managers
-        // const smQuery = query(usersRef, where('role', '==', 'success manager'))
-        // const smSnapshot = await getDocs(smQuery)
-        // const smList = smSnapshot.docs.map(doc => ({
-        //   id: doc.id,
-        //   ...doc.data()
-        // }))
-        // setSuccessManagers(smList)
-
       } catch (error) {
         console.error('Error fetching users:', error)
         toast.error('Failed to load team members')
@@ -98,8 +86,6 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
       projectAddress: "",
       projectManager: "",
       projectManagerId: "",
-      successManagers: [],
-      successManagerIds: [],
       consultationPlan: "standard",
       initialBudget: "",
       startDate: "",
@@ -123,16 +109,13 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
     try {
       // Build Firestore references
       const projectManagerRef = doc(db, 'users', formData.projectManagerId)
-      const successManagerRefs = formData.successManagerIds.map(id => doc(db, 'users', id))
       // Use projectUsers directly (already DocumentReferences)
       const projectDataWithRefs = {
         ...formData,
         projectManager: projectManagerRef,
-        successManagers: successManagerRefs,
         // projectUsers is already an array of DocumentReferences
       }
       delete projectDataWithRefs.projectManagerId
-      delete projectDataWithRefs.successManagerIds
 
       await addProjectToFirestore(projectDataWithRefs)
       toast.success('Project created successfully!')
@@ -144,8 +127,6 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
         projectAddress: "",
         projectManager: "",
         projectManagerId: "",
-        successManagers: [],
-        successManagerIds: [],
         consultationPlan: "standard",
         initialBudget: "",
         startDate: "",
@@ -169,25 +150,6 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
       ...formData,
       projectManager: manager.displayName,
       projectManagerId: manager.id
-    })
-  }
-
-  const selectSuccessManager = (manager) => {
-    // Check if already selected
-    if (!formData.successManagerIds.includes(manager.id)) {
-      setFormData({
-        ...formData,
-        successManagers: [...formData.successManagers, manager.displayName],
-        successManagerIds: [...formData.successManagerIds, manager.id]
-      })
-    }
-  }
-
-  const removeSuccessManager = (managerName, managerId) => {
-    setFormData({
-      ...formData,
-      successManagers: formData.successManagers.filter(name => name !== managerName),
-      successManagerIds: formData.successManagerIds.filter(id => id !== managerId)
     })
   }
 
@@ -225,11 +187,8 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
             setFormData={setFormData}
             isSubmitting={isSubmitting}
             projectManagers={projectManagers}
-            successManagers={successManagers}
             loadingUsers={loadingUsers}
             onSelectProjectManager={selectProjectManager}
-            onSelectSuccessManager={selectSuccessManager}
-            onRemoveSuccessManager={removeSuccessManager}
           />
         )}
         

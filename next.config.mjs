@@ -1,10 +1,26 @@
+// next.config.mjs
+import nextPWA from "next-pwa";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images:{
-        domains:[
-        "firebasestorage.googleapis.com"
-    ]
-    }
+images: {
+  remotePatterns: [
+    {
+      protocol: "https",
+      hostname: "firebasestorage.googleapis.com",
+      port: "",
+      pathname: "/**",
+    },
+  ],
+},
+  turbopack: {},
 };
 
-export default nextConfig;
+const withPWA = nextPWA({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+});
+
+export default withPWA(nextConfig);
