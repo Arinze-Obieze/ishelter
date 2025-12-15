@@ -34,7 +34,7 @@ export default function Testimonials() {
         </p>
 
         {/* Testimonials Grid */}
-        <div className="grid max-md:max-w-[300px] md:grid-cols-3 gap-8">
+        <div className="grid max-md:max-w-[300px] md:grid-cols-3 gap-8 max-md:mx-auto">
           {testimonials.map((item, idx) => (
             <div
               key={idx}

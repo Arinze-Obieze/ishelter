@@ -29,7 +29,7 @@ export default function CoreServices() {
     ]
   
     return (
-      <section className="bg-background md:pt-24 py-20 md:pb-24 px-4">
+      <section className="bg-background md:pt-24 py-20 md:pb-24 px-4 ">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
@@ -41,7 +41,8 @@ export default function CoreServices() {
           </div>
   
           {/* Service Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+         <div className="max-md:flex justify-center">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-md:">
             {services.map((service) => (
               <div key={service.id} className="bg-white w-[346px] rounded-lg shadow-md overflow-hidden">
                 {/* Image Header */}
@@ -68,6 +69,7 @@ export default function CoreServices() {
               </div>
             ))}
           </div>
+         </div>
         </div>
       </section>
     )
