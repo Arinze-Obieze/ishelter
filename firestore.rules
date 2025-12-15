@@ -22,7 +22,7 @@ service cloud.firestore {
         canUpdateProject() ||
         (hasProjectManagerRole() && 
          isProjectManagerForProject(projectId) &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['liveFeedRefs', 'updateTypeCounts', 'updatedAt']))
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['liveFeedRefs', 'updateTypeCounts', 'updatedAt', 'projectTeam', 'whatsappLinks']))
       );
       allow delete: if request.auth != null && isAdmin();
     }

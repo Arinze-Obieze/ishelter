@@ -6,7 +6,13 @@ const WhatsAppGroupsCard = () => {
   const { projects, loading } = usePersonalProjects();
   
   // Get the first project's WhatsApp links (assuming single project for now)
-  const whatsappLinks = projects[0]?.whatsappLinks || [];
+// Aggregate all WhatsApp links from all projects
+const whatsappLinks = projects.flatMap(project => 
+  (project.whatsappLinks || []).map(link => ({
+    ...link,
+    projectName: project.projectName // Add project context
+  }))
+);
 
   if (loading) {
     return (

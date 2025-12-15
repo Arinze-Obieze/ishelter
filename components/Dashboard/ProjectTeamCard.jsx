@@ -11,8 +11,13 @@ function getInitials(name) {
 const ProjectTeamCard = () => {
   const { projects, loading } = usePersonalProjects();
   
-  // Get the first project's team (assuming single project for now)
-  const projectTeam = projects[0]?.projectTeam || [];
+  const projectTeam = projects.flatMap(project => 
+  (project.projectTeam || []).map(member => ({
+    ...member,
+    projectName: project.projectName // Add project context
+  }))
+);
+
 
   if (loading) {
     return (
