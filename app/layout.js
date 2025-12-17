@@ -22,12 +22,17 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#1F2937" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+      </head>
       <body className={`${montserrat.variable}`}>
         <AuthProvider>
-      <ToastProvider position="top-right" />
-        <InvitationsProvider>
-          {children}
-        </InvitationsProvider>
+          <ToastProvider position="top-right" />
+          <InvitationsProvider>
+            {children}
+          </InvitationsProvider>
         </AuthProvider>
       </body>
     </html>
