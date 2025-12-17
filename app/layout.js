@@ -1,10 +1,8 @@
-import Footer from "@/components/Dashboard/Footer";
 import "./globals.css";
 import { Montserrat } from "next/font/google"
 import { InvitationsProvider } from "@/components/InvitationsContext";
 import ToastProvider from "@/components/ui/ToastProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
-
 
 const montserrat = Montserrat({
   subsets: ["latin"],   
@@ -15,8 +13,6 @@ const montserrat = Montserrat({
 export const metadata = {
   title: "iShelter",
   description: "Manage Your Construction Project, Anywhere in the World",
-  manifest: "/manifest.json",       
-  themeColor: "#1F2937",            
 };
 
 export default function RootLayout({ children }) {
@@ -26,6 +22,24 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1F2937" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('ServiceWorker registration successful');
+                    },
+                    function(err) {
+                      console.log('ServiceWorker registration failed: ', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        />
       </head>
       <body className={`${montserrat.variable}`}>
         <AuthProvider>
