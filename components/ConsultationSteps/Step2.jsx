@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
 import { IoInformationCircle } from 'react-icons/io5';
 
@@ -45,9 +46,48 @@ const CONSULTATION_MESSAGES = {
 export default function ConsultationForm() {
   const [bookingCompleted, setBookingCompleted] = useState(false);
   const [calendlyLoading, setCalendlyLoading] = useState(true);
+  const [affiliateId, setAffiliateId] = useState('');
+  const [finalCalendlyUrl, setFinalCalendlyUrl] = useState('');
 
+  const searchParams = useSearchParams();
   const showCalendly = process.env.NEXT_PUBLIC_SHOW_CALENDLY === 'true';
-  const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_WIDGET_URL;
+  const baseCalendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_WIDGET_URL;
+
+  // Initialize affiliate ID from URL or localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Get affiliate ID from URL parameter or localStorage
+    const urlAffiliateId = searchParams.get('sa');
+    const savedAffiliateId = localStorage.getItem('affiliateId');
+    
+    let finalAffiliateId = '';
+
+    if (urlAffiliateId) {
+      // Priority: URL parameter > localStorage
+      finalAffiliateId = urlAffiliateId;
+      localStorage.setItem('affiliateId', urlAffiliateId);
+    } else if (savedAffiliateId) {
+      // Use saved affiliate ID from localStorage
+      finalAffiliateId = savedAffiliateId;
+    }
+
+    setAffiliateId(finalAffiliateId);
+  }, [searchParams]);
+
+  // Build Calendly URL with affiliate ID
+  useEffect(() => {
+    if (!baseCalendlyUrl) return;
+
+    let urlWithParams = baseCalendlyUrl;
+    
+    if (affiliateId) {
+      const separator = baseCalendlyUrl.includes('?') ? '&' : '?';
+      urlWithParams = `${baseCalendlyUrl}${separator}utm_source=${encodeURIComponent(affiliateId)}`;
+    }
+
+    setFinalCalendlyUrl(urlWithParams);
+  }, [baseCalendlyUrl, affiliateId]);
 
   // Load Calendly script
   useEffect(() => {
@@ -77,11 +117,42 @@ export default function ConsultationForm() {
     const handleMessage = (event) => {
       if (event.data.event === 'calendly.event_scheduled') {
         setBookingCompleted(true);
+        
+        // Submit affiliate ID to backend
+        if (affiliateId) {
+          submitAffiliateIdToBackend(affiliateId);
+        }
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [showCalendly]);
+  }, [showCalendly, affiliateId]);
+
+  // Submit affiliate ID to backend
+  const submitAffiliateIdToBackend = async (id) => {
+    try {
+      const response = await fetch('/api/consultation/submit-affiliate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          affiliateId: id,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (response.ok) {
+        console.log('Affiliate ID submitted successfully');
+        // Optionally clear localStorage after successful submission
+        // localStorage.removeItem('affiliateId');
+      } else {
+        console.error('Failed to submit affiliate ID');
+      }
+    } catch (error) {
+      console.error('Error submitting affiliate ID:', error);
+    }
+  };
 
   const BenefitsSidebar = () => (
     <div className="bg-white rounded-xl shadow-md p-6 md:w-96 flex-shrink-0">
@@ -126,6 +197,21 @@ export default function ConsultationForm() {
             </p>
           </div>
 
+          {/* Affiliate ID Input */}
+          {affiliateId && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Affiliate ID
+              </label>
+              <input
+                type="text"
+                value={affiliateId}
+                readOnly
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+              />
+            </div>
+          )}
+
           {bookingCompleted && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center">
               <FaCheckCircle className="text-green-500 mr-3 text-xl flex-shrink-0" />
@@ -147,7 +233,7 @@ export default function ConsultationForm() {
 
           <div
             className="calendly-inline-widget"
-            data-url={calendlyUrl}
+            data-url={finalCalendlyUrl || baseCalendlyUrl}
             style={{ minWidth: '220px', height: '500px', display: calendlyLoading ? 'none' : 'block' }}
           ></div>
 
