@@ -3,6 +3,45 @@ import { useState, useEffect } from 'react';
 import { FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
 import { IoInformationCircle } from 'react-icons/io5';
 
+const CONSULTATION_BENEFITS = [
+  {
+    id: 1,
+    text: 'Get expert guidance tailored to your specific construction needs'
+  },
+  {
+    id: 2,
+    text: 'Understand potential costs and timelines before committing'
+  },
+  {
+    id: 3,
+    text: 'Receive personalized recommendations based on your location and requirements'
+  },
+  {
+    id: 4,
+    text: 'Explore various design options with professional feedback'
+  },
+  {
+    id: 5,
+    text: 'Identify potential challenges before they become costly problems'
+  }
+];
+
+const CONSULTATION_MESSAGES = {
+  sidebar: {
+    title: 'Why Request a Consultation?',
+    description: 'Our expert consultation provides valuable insights to help you make informed decisions about your construction project.'
+  },
+  mainTitle: 'Schedule Your Consultation',
+  mainDescription: 'Choose a convenient time for your consultation. Our experts are ready to help you with your construction project.',
+  successAlert: {
+    title: 'Appointment Scheduled Successfully!',
+    message: 'You\'ll receive a confirmation email with meeting details shortly.'
+  },
+  loadingMessage: 'Loading scheduling calendar...',
+  disabledMessage: 'Calendly scheduling is currently disabled.',
+  infoAlert: 'After booking your appointment, you\'ll receive a confirmation email with meeting details and a calendar invite.'
+};
+
 export default function ConsultationForm() {
   const [bookingCompleted, setBookingCompleted] = useState(false);
   const [calendlyLoading, setCalendlyLoading] = useState(true);
@@ -46,32 +85,18 @@ export default function ConsultationForm() {
 
   const BenefitsSidebar = () => (
     <div className="bg-white rounded-xl shadow-md p-6 md:w-96 flex-shrink-0">
-      <h3 className="font-bold text-xl text-gray-900 mb-4">Why Request a Consultation?</h3>
+      <h3 className="font-bold text-xl text-gray-900 mb-4">{CONSULTATION_MESSAGES.sidebar.title}</h3>
       <p className="text-gray-500 mb-6">
-        Our expert consultation provides valuable insights to help you make informed decisions about your construction project.
+        {CONSULTATION_MESSAGES.sidebar.description}
       </p>
 
       <ul className="space-y-4">
-        <li className="flex items-start">
-          <FaCheckCircle className="text-amber-500 mt-1 mr-3 flex-shrink-0" size={18} />
-          <span className="text-gray-700">Get expert guidance tailored to your specific construction needs</span>
-        </li>
-        <li className="flex items-start">
-          <FaCheckCircle className="text-amber-500 mt-1 mr-3 flex-shrink-0" size={18} />
-          <span className="text-gray-700">Understand potential costs and timelines before committing</span>
-        </li>
-        <li className="flex items-start">
-          <FaCheckCircle className="text-amber-500 mt-1 mr-3 flex-shrink-0" size={18} />
-          <span className="text-gray-700">Receive personalized recommendations based on your location and requirements</span>
-        </li>
-        <li className="flex items-start">
-          <FaCheckCircle className="text-amber-500 mt-1 mr-3 flex-shrink-0" size={18} />
-          <span className="text-gray-700">Explore various design options with professional feedback</span>
-        </li>
-        <li className="flex items-start">
-          <FaCheckCircle className="text-amber-500 mt-1 mr-3 flex-shrink-0" size={18} />
-          <span className="text-gray-700">Identify potential challenges before they become costly problems</span>
-        </li>
+        {CONSULTATION_BENEFITS.map((benefit) => (
+          <li key={benefit.id} className="flex items-start">
+            <FaCheckCircle className="text-amber-500 mt-1 mr-3 flex-shrink-0" size={18} />
+            <span className="text-gray-700">{benefit.text}</span>
+          </li>
+        ))}
       </ul>
     </div>
   );
@@ -79,7 +104,7 @@ export default function ConsultationForm() {
   if (!showCalendly) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-        <p className="text-gray-700 text-lg">Calendly scheduling is currently disabled.</p>
+        <p className="text-gray-700 text-lg">{CONSULTATION_MESSAGES.disabledMessage}</p>
       </div>
     );
   }
@@ -94,10 +119,10 @@ export default function ConsultationForm() {
           <div className="text-center mb-6">
             <h1 className="md:text-3xl text-xl font-bold text-amber-500 mb-2 flex items-center justify-center gap-2">
               <FaCalendarAlt />
-              Schedule Your Consultation
+              {CONSULTATION_MESSAGES.mainTitle}
             </h1>
             <p className="text-gray-600 md:text-base text-sm max-w-3xl mx-auto">
-              Choose a convenient time for your consultation. Our experts are ready to help you with your construction project.
+              {CONSULTATION_MESSAGES.mainDescription}
             </p>
           </div>
 
@@ -105,8 +130,8 @@ export default function ConsultationForm() {
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center">
               <FaCheckCircle className="text-green-500 mr-3 text-xl flex-shrink-0" />
               <div>
-                <p className="text-green-800 font-semibold">Appointment Scheduled Successfully!</p>
-                <p className="text-green-700 text-sm">You'll receive a confirmation email with meeting details shortly.</p>
+                <p className="text-green-800 font-semibold">{CONSULTATION_MESSAGES.successAlert.title}</p>
+                <p className="text-green-700 text-sm">{CONSULTATION_MESSAGES.successAlert.message}</p>
               </div>
             </div>
           )}
@@ -115,7 +140,7 @@ export default function ConsultationForm() {
             <div className="flex justify-center items-center h-96">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading scheduling calendar...</p>
+                <p className="text-gray-600">{CONSULTATION_MESSAGES.loadingMessage}</p>
               </div>
             </div>
           )}
@@ -129,7 +154,7 @@ export default function ConsultationForm() {
           <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mt-4 flex items-start">
             <IoInformationCircle className="text-blue-500 mr-2 text-2xl mt-0.5 flex-shrink-0" />
             <p className="text-blue-800 text-sm">
-              After booking your appointment, you'll receive a confirmation email with meeting details and a calendar invite.
+              {CONSULTATION_MESSAGES.infoAlert}
             </p>
           </div>
         </div>

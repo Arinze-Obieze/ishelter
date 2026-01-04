@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
+import { createAccountSchema, validateData } from "@/lib/validationSchemas";
+import { logAccountCreated } from "@/lib/auditLog";
+import { randomBytes } from "crypto";
 
 function generatePassword(length = 12) {
   const lowercase = "abcdefghijklmnopqrstuvwxyz";
@@ -7,43 +10,43 @@ function generatePassword(length = 12) {
   const numbers = "0123456789";
   const symbols = "!@#$%^&*()";
   
-  // Ensure at least one character from each category
+  // Ensure at least one character from each category using cryptographically secure random
   let password = [
-    lowercase[Math.floor(Math.random() * lowercase.length)],
-    uppercase[Math.floor(Math.random() * uppercase.length)],
-    numbers[Math.floor(Math.random() * numbers.length)],
-    symbols[Math.floor(Math.random() * symbols.length)]
+    lowercase[randomBytes(1)[0] % lowercase.length],
+    uppercase[randomBytes(1)[0] % uppercase.length],
+    numbers[randomBytes(1)[0] % numbers.length],
+    symbols[randomBytes(1)[0] % symbols.length]
   ].join('');
   
-  // Fill remaining characters
+  // Fill remaining characters with cryptographically secure random
   const allChars = lowercase + uppercase + numbers + symbols;
   for (let i = password.length; i < length; i++) {
-    password += allChars.charAt(Math.floor(Math.random() * allChars.length));
+    password += allChars.charAt(randomBytes(1)[0] % allChars.length);
   }
   
-  // Shuffle the password
-  return password.split('').sort(() => Math.random() - 0.5).join('');
+  // Fisher-Yates shuffle using cryptographically secure random
+  const arr = password.split('');
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randomBytes(1)[0] % (i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.join('');
 }
 
 export async function POST(req) {
   try {
-    const { email, displayName, role, projectManagerId } = await req.json();
-
-    if (!email) {
+    const body = await req.json();
+    
+    // Validate request body
+    const validation = validateData(body, createAccountSchema);
+    if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: "Email is required" },
+        { success: false, error: validation.error },
         { status: 400 }
       );
     }
 
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid email format" },
-        { status: 400 }
-      );
-    }
+    const { email, displayName, role, projectManagerId } = validation.data;
 
     const password = generatePassword();
 
@@ -74,11 +77,51 @@ export async function POST(req) {
     // 4. Add user to Firestore
     await adminDb.collection('users').doc(userRecord.uid).set(userData);
 
+    // Log account creation
+    await logAccountCreated(userRecord.uid, email, role || 'client', req).catch(err => 
+      console.error('Failed to log account creation:', err)
+    );
+
+    // 5. Send login credentials email to the new user
+    try {
+      const emailSubject = "Your iShelter Account Details";
+      const emailMessage = `Hello ${displayName || email},<br><br>Your account has been created on iShelter.<br><br><b>Login Credentials:</b><br>Email: <b>${email}</b><br>Password: <b>${password}</b><br><br>Please log in and change your password immediately for security.<br><br>Login at: <a href='https://ishelter.everythingshelter.com.ng/login'>https://ishelter.everythingshelter.com.ng/login</a>`;
+      
+      const internalKey = process.env.INTERNAL_API_KEY;
+      console.log('📧 create-account: Sending email with internal key:', !!internalKey);
+      
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const sendUrl = new URL(`${baseUrl}/api/send-email`);
+      sendUrl.searchParams.append('internal_api_key', internalKey || '');
+      
+      const emailResponse = await fetch(sendUrl.toString(), {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-internal-api-key': internalKey || ''
+        },
+        body: JSON.stringify({
+          to: email,
+          subject: emailSubject,
+          message: emailMessage,
+          name: displayName || email
+        })
+      });
+
+      if (!emailResponse.ok) {
+        console.error('Failed to send welcome email:', await emailResponse.text());
+      }
+    } catch (emailError) {
+      console.error('Error sending welcome email:', emailError);
+      // Don't fail the account creation if email fails
+    }
+
     return NextResponse.json({
       success: true,
       uid: userRecord.uid,
       email: userRecord.email,
-      password, // Only for development
+      password: password,
+      message: 'Account created. Login credentials have been sent to the email address.',
     });
   } catch (error) {
     console.error("Firebase createUser error:", error);
