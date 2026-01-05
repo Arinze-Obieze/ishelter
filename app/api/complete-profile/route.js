@@ -1,7 +1,27 @@
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
+import { getClientIP } from "@/lib/ipUtils";
+import { checkRateLimitByIP, recordAttemptByIP } from "@/lib/rateLimit";
 
 export async function POST(req) {
   try {
+    // RATE LIMITING: Max 10 profile completions per IP per hour
+    const ipAddress = getClientIP(req);
+    const rateLimitCheck = await checkRateLimitByIP(ipAddress, 'complete-profile', 10, 60);
+    
+    if (!rateLimitCheck.allowed) {
+      console.warn(`[SECURITY] Rate limit exceeded for complete-profile from IP: ${ipAddress}`);
+      
+      await recordAttemptByIP(ipAddress, 'complete-profile', {
+        blocked: true,
+        reason: 'rate-limit-exceeded'
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: "Too many requests. Please try again later.",
+        resetTime: rateLimitCheck.resetTime
+      }), { status: 429 });
+    }
+
     const { email, password, role } = await req.json();
     if (!email || !password || !role) {
       return new Response(JSON.stringify({ error: "Missing fields" }), { status: 400 });
@@ -29,6 +49,12 @@ export async function POST(req) {
       email,
       role,
       completedAt: new Date(),
+    });
+
+    // Record successful attempt
+    await recordAttemptByIP(ipAddress, 'complete-profile', {
+      email,
+      success: true
     });
 
     return new Response(JSON.stringify({ message: "Profile completed" }), { status: 200 });

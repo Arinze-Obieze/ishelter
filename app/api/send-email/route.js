@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { SendMailClient } from "zeptomail";
+import { getClientIP } from "@/lib/ipUtils";
+import { checkRateLimitEmail, recordEmailAttempt } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 const url = "api.zeptomail.com/";
@@ -13,6 +15,26 @@ export async function POST(req) {
   }
 
   try {
+    // RATE LIMITING: Max 50 emails per IP per hour
+    const ipAddress = getClientIP(req);
+    const emailRateLimit = await checkRateLimitEmail(ipAddress, 'ip', 50);
+    
+    if (!emailRateLimit.allowed) {
+      console.warn(`[SECURITY] Email rate limit exceeded from IP: ${ipAddress}`);
+      
+      await recordEmailAttempt(ipAddress, 'ip', 0).catch(err =>
+        console.error('Failed to record blocked email attempt:', err)
+      );
+      
+      return NextResponse.json(
+        { 
+          error: "Too many email requests. Please try again later.",
+          resetTime: emailRateLimit.resetTime
+        },
+        { status: 429 }
+      );
+    }
+
     const { to, subject, message, name } = await req.json();
 
     // Check if 'to' is an array (multiple recipients) or a single email
@@ -49,6 +71,12 @@ export async function POST(req) {
       subject: subject,
       htmlbody: `<div>${message}</div>`,
     });
+
+    // Record successful email attempt
+    const recipientCount = recipients.length;
+    await recordEmailAttempt(ipAddress, 'ip', recipientCount).catch(err =>
+      console.error('Failed to record email attempt:', err)
+    );
 
     return NextResponse.json({ 
       success: true, 

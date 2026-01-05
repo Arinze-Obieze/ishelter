@@ -3,6 +3,8 @@ import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { createAccountSchema, validateData } from "@/lib/validationSchemas";
 import { logAccountCreated } from "@/lib/auditLog";
 import { randomBytes } from "crypto";
+import { getClientIP } from "@/lib/ipUtils";
+import { checkRateLimitByIP, recordAttemptByIP } from "@/lib/rateLimit";
 
 function generatePassword(length = 12) {
   const lowercase = "abcdefghijklmnopqrstuvwxyz";
@@ -35,6 +37,28 @@ function generatePassword(length = 12) {
 
 export async function POST(req) {
   try {
+    // RATE LIMITING: Max 5 account creations per IP per hour
+    const ipAddress = getClientIP(req);
+    const rateLimitCheck = await checkRateLimitByIP(ipAddress, 'create-account', 5, 60);
+    
+    if (!rateLimitCheck.allowed) {
+      console.warn(`[SECURITY] Rate limit exceeded for create-account from IP: ${ipAddress}`);
+      
+      await recordAttemptByIP(ipAddress, 'create-account', { 
+        blocked: true,
+        reason: 'rate-limit-exceeded'
+      });
+      
+      return NextResponse.json(
+        { 
+          success: false,
+          error: "Too many account creation attempts. Please try again later.",
+          resetTime: rateLimitCheck.resetTime
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     
     // Validate request body
@@ -115,6 +139,12 @@ export async function POST(req) {
       console.error('Error sending welcome email:', emailError);
       // Don't fail the account creation if email fails
     }
+
+    // Record successful attempt for rate limiting
+    await recordAttemptByIP(ipAddress, 'create-account', {
+      email,
+      success: true
+    });
 
     return NextResponse.json({
       success: true,

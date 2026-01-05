@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { notifyOverdueTasks } from '@/utils/notifications'
+import { getClientIP } from '@/lib/ipUtils'
+import { checkRateLimitByIP, recordAttemptByIP } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 
@@ -22,6 +24,27 @@ export const runtime = 'nodejs'
  */
 export async function POST(req) {
   try {
+    // RATE LIMITING: Max 20 checks per IP per hour (for cron/external services)
+    const ipAddress = getClientIP(req)
+    const rateLimitCheck = await checkRateLimitByIP(ipAddress, 'check-overdue-tasks', 20, 60)
+    
+    if (!rateLimitCheck.allowed) {
+      console.warn(`[SECURITY] Rate limit exceeded for check-overdue-tasks from IP: ${ipAddress}`)
+      
+      await recordAttemptByIP(ipAddress, 'check-overdue-tasks', {
+        blocked: true,
+        reason: 'rate-limit-exceeded'
+      })
+      
+      return NextResponse.json(
+        { 
+          error: 'Too many requests. Please try again later.',
+          resetTime: rateLimitCheck.resetTime
+        },
+        { status: 429 }
+      )
+    }
+
     console.log('📋 Starting overdue tasks check...')
     
     // Optional: Add authentication check here
@@ -36,6 +59,12 @@ export async function POST(req) {
 
     // Call the overdue tasks notification function
     await notifyOverdueTasks()
+
+    // Record successful attempt
+    await recordAttemptByIP(ipAddress, 'check-overdue-tasks', {
+      projectId: projectId || null,
+      success: true
+    })
 
     return NextResponse.json(
       {
@@ -63,10 +92,38 @@ export async function POST(req) {
  */
 export async function GET(req) {
   try {
+    // RATE LIMITING: Max 20 checks per IP per hour
+    const ipAddress = getClientIP(req)
+    const rateLimitCheck = await checkRateLimitByIP(ipAddress, 'check-overdue-tasks', 20, 60)
+    
+    if (!rateLimitCheck.allowed) {
+      console.warn(`[SECURITY] Rate limit exceeded for check-overdue-tasks GET from IP: ${ipAddress}`)
+      
+      await recordAttemptByIP(ipAddress, 'check-overdue-tasks', {
+        blocked: true,
+        reason: 'rate-limit-exceeded',
+        method: 'GET'
+      })
+      
+      return NextResponse.json(
+        { 
+          error: 'Too many requests. Please try again later.',
+          resetTime: rateLimitCheck.resetTime
+        },
+        { status: 429 }
+      )
+    }
+
     console.log('📋 Starting manual overdue tasks check (GET)...')
     
     // Call the overdue tasks notification function
     await notifyOverdueTasks()
+
+    // Record successful attempt
+    await recordAttemptByIP(ipAddress, 'check-overdue-tasks', {
+      method: 'GET',
+      success: true
+    })
 
     return NextResponse.json(
       {

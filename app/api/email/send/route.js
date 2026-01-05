@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getClientIP } from '@/lib/ipUtils';
+import { checkRateLimitEmail, recordEmailAttempt } from '@/lib/rateLimit';
 
 /**
  * Internal email wrapper endpoint
@@ -11,6 +13,26 @@ import { NextResponse } from 'next/server';
 export async function POST(req) {
   console.log('🎯 Email wrapper POST called');
   try {
+    // RATE LIMITING: Max 50 emails per IP per hour
+    const ipAddress = getClientIP(req);
+    const emailRateLimit = await checkRateLimitEmail(ipAddress, 'ip', 50);
+    
+    if (!emailRateLimit.allowed) {
+      console.warn(`[SECURITY] Email rate limit exceeded from IP: ${ipAddress}`);
+      
+      await recordEmailAttempt(ipAddress, 'ip', 0).catch(err => 
+        console.error('Failed to record blocked email attempt:', err)
+      );
+      
+      return NextResponse.json(
+        { 
+          error: "Too many email requests. Please try again later.",
+          resetTime: emailRateLimit.resetTime
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     
     // Validate required fields
@@ -70,6 +92,12 @@ export async function POST(req) {
         { status: response.status }
       );
     }
+
+    // Record successful email attempt (count recipients)
+    const recipientCount = Array.isArray(body.to) ? body.to.length : 1;
+    await recordEmailAttempt(ipAddress, 'ip', recipientCount).catch(err =>
+      console.error('Failed to record email attempt:', err)
+    );
 
     console.log('✅ Email sent successfully via wrapper');
     return NextResponse.json(data, { status: 200 });
