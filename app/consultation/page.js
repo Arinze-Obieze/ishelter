@@ -1,7 +1,17 @@
 'use client'
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import SchedulingPage from '@/components/ConsultationSteps/Step2';
 import Link from 'next/link';
+
+function ConsultationContent({ bookingCompleted, setBookingCompleted }) {
+  return (
+    <SchedulingPage 
+      bookingCompleted={bookingCompleted}
+      setBookingCompleted={setBookingCompleted}
+      onBack={() => {}}
+    />
+  );
+}
 
 export default function ConsultationForm() {
   const [bookingCompleted, setBookingCompleted] = useState(false);
@@ -19,11 +29,12 @@ export default function ConsultationForm() {
       </div>
 
       {/* Scheduling Page */}
-      <SchedulingPage 
-        bookingCompleted={bookingCompleted}
-        setBookingCompleted={setBookingCompleted}
-        onBack={() => {}}
-      />
+      <Suspense fallback={<div className="text-center py-12">Loading consultation form...</div>}>
+        <ConsultationContent 
+          bookingCompleted={bookingCompleted}
+          setBookingCompleted={setBookingCompleted}
+        />
+      </Suspense>
     </div>
   );
 }
