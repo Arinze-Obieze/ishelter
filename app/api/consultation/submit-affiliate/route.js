@@ -1,20 +1,17 @@
-import { firebaseAdmin } from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
 
 export async function POST(req) {
   try {
     const { affiliateId, timestamp } = await req.json();
 
     if (!affiliateId) {
-      return Response.json(
-        { error: 'Affiliate ID is required' },
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: 'Affiliate ID is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Store affiliate booking data in Firestore
-    const db = firebaseAdmin.firestore();
-    const affiliateBookingsRef = db.collection('affiliateBookings');
-
+    const affiliateBookingsRef = adminDb.collection('affiliateBookings');
     const docRef = await affiliateBookingsRef.add({
       affiliateId,
       submittedAt: timestamp || new Date().toISOString(),
@@ -23,19 +20,19 @@ export async function POST(req) {
 
     console.log('Affiliate booking recorded:', docRef.id);
 
-    return Response.json(
-      {
+    return new Response(
+      JSON.stringify({
         success: true,
         message: 'Affiliate ID recorded successfully',
         bookingId: docRef.id,
-      },
-      { status: 200 }
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error submitting affiliate booking:', error);
-    return Response.json(
-      { error: 'Failed to submit affiliate booking' },
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: 'Failed to submit affiliate booking' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }

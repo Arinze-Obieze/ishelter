@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp, getDoc, getDocs, query, where } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, getDoc, getDocs, query, where, writeBatch } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
 /**
@@ -31,42 +31,67 @@ export async function notifyUsers({
 }) {
   const notified = new Set()
   
-  // Notify project users
-  for (const userRef of userRefs) {
-    if (!userRef || !userRef.id) continue
-    if (skipUserId && userRef.id === skipUserId) continue
+  // Notify project users - OPTIMIZED: Batch load users in parallel
+  try {
+    // Filter out invalid refs and skip the sender
+    const validRefs = userRefs.filter(ref => ref && ref.id && (!skipUserId || ref.id !== skipUserId))
     
-    try {
-      const userDoc = await getDoc(userRef)
-      if (!userDoc.exists()) continue
+    if (validRefs.length > 0) {
+      // Load all user docs in parallel (instead of sequential awaits)
+      const userDocPromises = validRefs.map(userRef => getDoc(userRef))
+      const userDocs = await Promise.all(userDocPromises)
       
-      const userData = userDoc.data()
-      // Don't notify disabled users
-      if (userData.disabled) continue
+      // Build notifications from loaded docs
+      const userNotifications = []
+      userDocs.forEach((userDoc, index) => {
+        if (!userDoc.exists()) return
+        
+        const userData = userDoc.data()
+        // Don't notify disabled users
+        if (userData.disabled) return
+        
+        const userId = validRefs[index].id
+        
+        userNotifications.push({
+          notification: {
+            title,
+            body,
+            type,
+            recipientId: userId,
+            relatedId,
+            projectId,
+            actionUrl,
+            senderId,
+            isGlobal: false,
+            read: false,
+            createdAt: serverTimestamp(),
+            ...extra,
+          },
+          userId
+        })
+      })
       
-      const notification = {
-        title,
-        body,
-        type,
-        recipientId: userRef.id,
-        relatedId,
-        projectId,
-        actionUrl,
-        senderId,
-        isGlobal: false,
-        read: false,
-        createdAt: serverTimestamp(),
-        ...extra,
+      // Create all notifications in parallel using writeBatch
+      if (userNotifications.length > 0) {
+        const batch = writeBatch(db)
+        const notificationsRef = collection(db, 'notifications')
+        
+        userNotifications.forEach(({ notification }) => {
+          const docRef = batch.doc(notificationsRef)
+          batch.set(docRef, notification)
+        })
+        
+        await batch.commit()
+        
+        // Track notified users
+        userNotifications.forEach(({ userId }) => notified.add(userId))
       }
-      
-      await addDoc(collection(db, 'notifications'), notification)
-      notified.add(userRef.id)
-    } catch (err) {
-      console.error('Failed to notify user', userRef.id, err)
     }
+  } catch (err) {
+    console.error('Failed to notify project users', err)
   }
   
-  // Notify all admins if requested - FIXED
+  // Notify all admins if requested
   if (includeAdmins) {
     try {
       const adminsQuery = query(
@@ -104,12 +129,18 @@ export async function notifyUsers({
         notified.add(adminId)
       })
       
-      // Batch create admin notifications
-      const notificationPromises = adminNotifications.map(notification =>
-        addDoc(collection(db, 'notifications'), notification)
-      )
-      
-      await Promise.all(notificationPromises)
+      // Batch create admin notifications using writeBatch
+      if (adminNotifications.length > 0) {
+        const batch = writeBatch(db)
+        const notificationsRef = collection(db, 'notifications')
+        
+        adminNotifications.forEach(notification => {
+          const docRef = batch.doc(notificationsRef)
+          batch.set(docRef, notification)
+        })
+        
+        await batch.commit()
+      }
     } catch (err) {
       console.error('Failed to notify admins', err)
     }

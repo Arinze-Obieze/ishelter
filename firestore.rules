@@ -58,6 +58,12 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null && isAdmin();
     }
 
+    // RATE LIMITS COLLECTION (for tracking booking attempts and IP abuse)
+    match /rate_limits/{document=**} {
+      allow read: if request.auth != null && isAdmin();
+      allow write: if false; // Only backend writes via admin SDK
+    }
+
     // CONSULTATION LEADS
     match /consultation-leads/{userId} {
       allow create, read, update, delete: if request.auth != null && isAdmin();
