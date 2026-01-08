@@ -40,7 +40,9 @@ export const CsrfProvider = ({ children }) => {
         setCsrfToken(data.csrfToken);
         
         // Store in sessionStorage as backup
-        sessionStorage.setItem('csrf_token', data.csrfToken);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('csrf_token', data.csrfToken);
+        }
         
         console.log('[CSRF] Token generated successfully');
       } else {
@@ -59,7 +61,9 @@ export const CsrfProvider = ({ children }) => {
   useEffect(() => {
     if (!currentUser) {
       setCsrfToken(null);
-      sessionStorage.removeItem('csrf_token');
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('csrf_token');
+      }
       return;
     }
 
@@ -79,7 +83,7 @@ export const CsrfProvider = ({ children }) => {
    * Restore token from sessionStorage on page load
    */
   useEffect(() => {
-    if (currentUser && !csrfToken) {
+    if (currentUser && !csrfToken && typeof window !== 'undefined') {
       const storedToken = sessionStorage.getItem('csrf_token');
       if (storedToken) {
         setCsrfToken(storedToken);
@@ -94,10 +98,12 @@ export const CsrfProvider = ({ children }) => {
   const getToken = useCallback(() => {
     if (csrfToken) return csrfToken;
     
-    const storedToken = sessionStorage.getItem('csrf_token');
-    if (storedToken) {
-      setCsrfToken(storedToken);
-      return storedToken;
+    if (typeof window !== 'undefined') {
+      const storedToken = sessionStorage.getItem('csrf_token');
+      if (storedToken) {
+        setCsrfToken(storedToken);
+        return storedToken;
+      }
     }
     
     return null;

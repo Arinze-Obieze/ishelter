@@ -231,7 +231,6 @@ const AdminManagement = ({ currentUserProfile }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'X-CSRF-Token': csrfToken
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           adminId: selectedAdmin.id,
