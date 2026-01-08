@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin'
 import { headers } from 'next/headers'
+import { validateCsrfToken } from '@/lib/csrf'
 
 export async function POST(request) {
   try {
@@ -29,6 +30,13 @@ export async function POST(request) {
     }
 
     const requesterId = decodedToken.uid
+
+    // CSRF Protection (log-only mode)
+    const csrfToken = headersList.get('x-csrf-token')
+    const csrfValidation = await validateCsrfToken(requesterId, csrfToken, false)
+    if (!csrfValidation.valid) {
+      console.warn('[CSRF] Validation failed for create-admin:', csrfValidation.reason)
+    }
 
     // Check if the requester is an admin
     const requesterDoc = await adminDb.collection('users').doc(requesterId).get()

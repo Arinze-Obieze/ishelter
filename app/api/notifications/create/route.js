@@ -1,4 +1,5 @@
 import { adminDb, adminAuth } from '@/lib/firebaseAdmin'
+import { validateCsrfToken } from '@/lib/csrf'
 
 export async function POST(req) {
   try {
@@ -18,6 +19,13 @@ export async function POST(req) {
     }
 
     const userId = decodedToken.uid
+
+    // CSRF Protection (log-only mode)
+    const csrfToken = req.headers.get('x-csrf-token')
+    const csrfValidation = await validateCsrfToken(userId, csrfToken, false)
+    if (!csrfValidation.valid) {
+      console.warn('[CSRF] Validation failed for notifications/create:', csrfValidation.reason)
+    }
 
     // Check if user is admin or project manager
     const userDoc = await adminDb.collection('users').doc(userId).get()

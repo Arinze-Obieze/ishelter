@@ -1,9 +1,21 @@
 // /api/admin/users/delete/route.js
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
+import { validateCsrfToken } from "@/lib/csrf";
+import { getUserIdFromToken } from "@/lib/ipUtils";
 
 export async function POST(req) {
   try {
+    // CSRF Protection (log-only mode)
+    const authHeader = req.headers.get('authorization');
+    const authToken = authHeader?.split('Bearer ')[1];
+    const requesterId = await getUserIdFromToken(authToken);
+    const csrfToken = req.headers.get('x-csrf-token');
+    const csrfValidation = await validateCsrfToken(requesterId, csrfToken, false);
+    if (!csrfValidation.valid) {
+      console.warn('[CSRF] Validation failed for users/delete:', csrfValidation.reason);
+    }
+
     const { userId, userEmail, deletedByAdmin } = await req.json();
 
     if (!userId || !userEmail || !deletedByAdmin) {

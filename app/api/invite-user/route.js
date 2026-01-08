@@ -1,6 +1,8 @@
 import { getAuth } from 'firebase-admin/auth';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getApps } from 'firebase-admin/app';
+import { validateCsrfToken } from '@/lib/csrf';
+import { getUserIdFromToken } from '@/lib/ipUtils';
 
 // Read the Base64 service account key and projectId from environment variables
 const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
@@ -19,6 +21,16 @@ if (!getApps().length) {
 }
 
 export async function POST(req) {
+  // CSRF Protection (log-only mode)
+  const authHeader = req.headers.get('authorization');
+  const authToken = authHeader?.split('Bearer ')[1];
+  const requesterId = await getUserIdFromToken(authToken);
+  const csrfToken = req.headers.get('x-csrf-token');
+  const csrfValidation = await validateCsrfToken(requesterId, csrfToken, false);
+  if (!csrfValidation.valid) {
+    console.warn('[CSRF] Validation failed for invite-user:', csrfValidation.reason);
+  }
+
   const { email } = await req.json();
   const auth = getAuth();
 

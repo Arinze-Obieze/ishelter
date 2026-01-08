@@ -3,6 +3,7 @@ import { Montserrat } from "next/font/google"
 import { InvitationsProvider } from "@/components/InvitationsContext";
 import ToastProvider from "@/components/ui/ToastProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CsrfProvider } from "@/contexts/CsrfContext";
 
 const montserrat = Montserrat({
   subsets: ["latin"],   
@@ -43,10 +44,12 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${montserrat.variable}`}>
         <AuthProvider>
-          <ToastProvider position="top-right" />
-          <InvitationsProvider>
-            {children}
-          </InvitationsProvider>
+          <CsrfProvider>
+            <ToastProvider position="top-right" />
+            <InvitationsProvider>
+              {children}
+            </InvitationsProvider>
+          </CsrfProvider>
         </AuthProvider>
       </body>
     </html>

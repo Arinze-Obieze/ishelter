@@ -3,8 +3,9 @@ import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { createAccountSchema, validateData } from "@/lib/validationSchemas";
 import { logAccountCreated } from "@/lib/auditLog";
 import { randomBytes } from "crypto";
-import { getClientIP } from "@/lib/ipUtils";
+import { getClientIP, getUserIdFromToken } from "@/lib/ipUtils";
 import { checkRateLimitByIP, recordAttemptByIP } from "@/lib/rateLimit";
+import { validateCsrfToken } from "@/lib/csrf";
 
 function generatePassword(length = 12) {
   const lowercase = "abcdefghijklmnopqrstuvwxyz";
@@ -57,6 +58,16 @@ export async function POST(req) {
         },
         { status: 429 }
       );
+    }
+
+    // CSRF Protection (log-only mode)
+    const authHeader = req.headers.get('authorization');
+    const authToken = authHeader?.split('Bearer ')[1];
+    const requesterId = await getUserIdFromToken(authToken);
+    const csrfToken = req.headers.get('x-csrf-token');
+    const csrfValidation = await validateCsrfToken(requesterId, csrfToken, false);
+    if (!csrfValidation.valid) {
+      console.warn('[CSRF] Validation failed for create-account:', csrfValidation.reason);
     }
 
     const body = await req.json();

@@ -1,6 +1,7 @@
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
-import { getClientIP } from "@/lib/ipUtils";
+import { getClientIP, getUserIdFromToken } from "@/lib/ipUtils";
 import { checkRateLimitByIP, recordAttemptByIP } from "@/lib/rateLimit";
+import { validateCsrfToken } from "@/lib/csrf";
 
 export async function POST(req) {
   try {
@@ -20,6 +21,16 @@ export async function POST(req) {
         error: "Too many requests. Please try again later.",
         resetTime: rateLimitCheck.resetTime
       }), { status: 429 });
+    }
+
+    // CSRF Protection (log-only mode)
+    const authHeader = req.headers.get('authorization');
+    const authToken = authHeader?.split('Bearer ')[1];
+    const requesterId = await getUserIdFromToken(authToken);
+    const csrfToken = req.headers.get('x-csrf-token');
+    const csrfValidation = await validateCsrfToken(requesterId, csrfToken, false);
+    if (!csrfValidation.valid) {
+      console.warn('[CSRF] Validation failed for complete-profile:', csrfValidation.reason);
     }
 
     const { email, password, role } = await req.json();

@@ -45,11 +45,21 @@ export const getInitials = (user) => {
     }
   }
   
-  export async function addUser({ email, fullName, role = "user" }) {
+  export async function addUser({ email, fullName, role = "user", currentUser, csrfToken }) {
+    // Note: currentUser and csrfToken should be passed from the calling component
+    
     // 1. Create account
+    const headers = { "Content-Type": "application/json" };
+    
+    if (currentUser && csrfToken) {
+      const authToken = await currentUser.getIdToken();
+      headers["Authorization"] = `Bearer ${authToken}`;
+      headers["X-CSRF-Token"] = csrfToken;
+    }
+    
     const createRes = await fetch("/api/create-account", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ email }),
     });
     const createData = await createRes.json();
@@ -62,7 +72,7 @@ export const getInitials = (user) => {
     const message = `Hello ${fullName || email},<br><br>Your account has been created.<br>Email: <b>${email}</b><br>Password: <b>${createData.password}</b><br><br>Please log in and change your password.`;
     const sendEmailRes = await fetch("/api/send-email", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({
         to: email,
         subject,

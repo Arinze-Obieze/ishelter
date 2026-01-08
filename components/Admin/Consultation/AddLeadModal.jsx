@@ -3,8 +3,12 @@
 import { useState, useEffect } from "react"
 import { FiPlus, FiX } from "react-icons/fi"
 import { toast } from 'react-hot-toast'
+import { useAuth } from '@/contexts/AuthContext'
+import { useCsrf } from '@/contexts/CsrfContext'
 
 export default function AddLeadModal({ isOpen, onClose, onLeadAdded }) {
+  const { currentUser } = useAuth()
+  const { getToken: getCsrfToken } = useCsrf()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -69,9 +73,16 @@ export default function AddLeadModal({ isOpen, onClose, onLeadAdded }) {
       }
 
       // 2. Create Firebase user via API
+      const token = await currentUser.getIdToken()
+      const csrfToken = getCsrfToken()
+      
       const createRes = await fetch("/api/create-account", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "X-CSRF-Token": csrfToken
+        },
         body: JSON.stringify({ email: formData.email }),
       })
       const createData = await createRes.json().catch(() => ({}))

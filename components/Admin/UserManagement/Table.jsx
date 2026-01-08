@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { useUsers } from "@/contexts/UserContext"
 import { auth } from "@/lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
+import { useCsrf } from "@/contexts/CsrfContext"
 import UserTableHeader from "@/components/Admin/UserManagement/UserTableHeader"
 import UserTableDesktop from "@/components/Admin/UserManagement/UserTableDesktop"
 import UserTableMobile from "@/components/Admin/UserManagement/UserTableMobile"
@@ -16,6 +17,7 @@ import toast from "react-hot-toast"
 
 const UserTable = () => {
   const { users, loading, error } = useUsers()
+  const { getToken: getCsrfToken } = useCsrf()
   const [currentUser, setCurrentUser] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("All Role")
@@ -65,10 +67,15 @@ const UserTable = () => {
 
     setActionLoading(true)
     try {
+      const token = await currentUser.getIdToken()
+      const csrfToken = getCsrfToken()
+      
       const response = await fetch('/api/admin/users/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken
         },
         body: JSON.stringify({
           userId: selectedUser.id,
@@ -106,10 +113,15 @@ const UserTable = () => {
 
     setActionLoading(true)
     try {
+      const token = await currentUser.getIdToken()
+      const csrfToken = getCsrfToken()
+      
       const response = await fetch('/api/admin/users/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken
         },
         body: JSON.stringify({
           userId: selectedUser.id,

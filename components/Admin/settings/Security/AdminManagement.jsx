@@ -4,11 +4,13 @@ import { FiUsers, FiUserPlus, FiTrash2, FiMail, FiLock, FiUser, FiAlertTriangle,
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db, auth } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useCsrf } from '@/contexts/CsrfContext'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
 
 const AdminManagement = ({ currentUserProfile }) => {
   const { currentUser } = useAuth()
+  const { getToken: getCsrfToken } = useCsrf()
   const [admins, setAdmins] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -113,12 +115,14 @@ const AdminManagement = ({ currentUserProfile }) => {
 
     try {
       const token = await getAuthToken()
+      const csrfToken = getCsrfToken()
 
       const response = await fetch('/api/admin/create-admin', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken
         },
         body: JSON.stringify({
           email: formData.email.toLowerCase().trim(),
@@ -219,11 +223,14 @@ const AdminManagement = ({ currentUserProfile }) => {
 
     try {
       const token = await getAuthToken()
+      const csrfToken = getCsrfToken()
 
       const response = await fetch('/api/admin/delete-admin', {
         method: 'DELETE',
         headers: { 
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({

@@ -1,10 +1,12 @@
 import { useState } from "react"
 import { FiX } from "react-icons/fi"
 import { useUsers } from "@/contexts/UserContext"
+import { useCsrf } from "@/contexts/CsrfContext"
 import { notifyProjectManagerAssignment, notifyClientsOfNewPM } from '@/utils/notifications'
 
 const AddUserModal = ({ isOpen, onClose, isSubmitting }) => {
   const { users, currentUser } = useUsers() // Get currentUser from context
+  const { getToken: getCsrfToken } = useCsrf()
   const [newUser, setNewUser] = useState({
     email: "",
     displayName: "",
@@ -50,9 +52,16 @@ const AddUserModal = ({ isOpen, onClose, isSubmitting }) => {
         payload.projectManagerId = newUser.projectManagerId
       }
 
+      const token = await currentUser.getIdToken()
+      const csrfToken = getCsrfToken()
+
       const res = await fetch("/api/create-account", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "X-CSRF-Token": csrfToken
+        },
         body: JSON.stringify(payload)
       })
       const data = await res.json()
