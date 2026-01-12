@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { FaEdit, FaSave, FaTimes, FaSearch } from 'react-icons/fa';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 export default function AffiliatesPage() {
   const [affiliates, setAffiliates] = useState([]);
@@ -10,6 +11,7 @@ export default function AffiliatesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editEmail, setEditEmail] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     const q = query(
@@ -55,6 +57,81 @@ export default function AffiliatesPage() {
     }
   };
 
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    data: null, // holds affiliatesToNotify
+  });
+
+
+
+  const openNotifyModal = (affiliatesToNotify) => {
+    if (affiliatesToNotify.length === 0) {
+        alert("No affiliates with email addresses selected.");
+        return;
+    }
+
+    const message = affiliatesToNotify.length === 1 
+        ? `Are you sure you want to send a performance update email to ${affiliatesToNotify[0].email}?`
+        : `Are you sure you want to send performance update emails to ${affiliatesToNotify.length} affiliates?`;
+
+    setModalState({
+        isOpen: true,
+        title: 'Send Performance Updates',
+        message: message,
+        data: affiliatesToNotify
+    });
+  };
+
+  const closeModal = () => {
+    setModalState(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleConfirmNotify = async () => {
+    const affiliatesToNotify = modalState.data;
+    setSendingEmail(true);
+    try {
+      const response = await fetch('/api/affiliates/notify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipients: affiliatesToNotify.map(a => ({
+            email: a.email,
+            bookings: a.bookings || 0,
+            affiliateId: a.affiliateId
+          }))
+        }),
+      });
+
+      const data = await response.json();
+
+      closeModal(); // Close confirmation modal
+
+      if (response.ok) {
+        if (data.summary.failed > 0) {
+            alert(`Emails sent: ${data.summary.sent}. Failed: ${data.summary.failed}. Check console for details.`);
+        } else {
+            alert(`Successfully sent ${data.summary.sent} email(s).`);
+        }
+      } else {
+        alert(data.error || 'Failed to send emails');
+      }
+    } catch (error) {
+      console.error("Error sending emails:", error);
+      alert("An unexpected error occurred.");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleNotifyAll = () => {
+    const validAffiliates = affiliates.filter(a => a.email && a.email.trim() !== '');
+    openNotifyModal(validAffiliates);
+  };
+
   const filteredAffiliates = affiliates.filter(affiliate => 
     affiliate.affiliateId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (affiliate.email && affiliate.email.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -68,17 +145,30 @@ export default function AffiliatesPage() {
           <p className="text-gray-500">Track bookings and manage affiliate contact details</p>
         </div>
         
-        <div className="relative w-full md:w-64">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <FaSearch className="text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search affiliates..."
-            className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+             <button
+                onClick={handleNotifyAll}
+                disabled={loading || sendingEmail}
+                className={`px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors flex items-center justify-center ${
+                    (loading || sendingEmail) ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                title="Sends email to all affiliates with a valid email address"
+            >
+                {sendingEmail ? 'Sending...' : `Notify All (${affiliates.filter(a => a.email).length})`}
+            </button>
+
+            <div className="relative w-full md:w-64">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaSearch className="text-gray-400" />
+            </div>
+            <input
+                type="text"
+                placeholder="Search affiliates..."
+                className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            </div>
         </div>
       </div>
 
@@ -148,7 +238,8 @@ export default function AffiliatesPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {editingId === affiliate.id ? (
+                      <div className="flex items-center space-x-3">
+                        {editingId === affiliate.id ? (
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleSaveEmail(affiliate.id)}
@@ -166,6 +257,7 @@ export default function AffiliatesPage() {
                           </button>
                         </div>
                       ) : (
+                        <>
                         <button
                           onClick={() => handleEditClick(affiliate)}
                           className="text-amber-600 hover:text-amber-900"
@@ -173,7 +265,18 @@ export default function AffiliatesPage() {
                         >
                           <FaEdit size={18} />
                         </button>
+                        
+                        <button
+                            onClick={() => openNotifyModal([affiliate])}
+                            disabled={sendingEmail || !affiliate.email}
+                            className="ml-2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            title={affiliate.email ? "Send Update Email" : "Add email to send update"}
+                        >
+                            EMAIL
+                        </button>
+                        </>
                       )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -182,6 +285,16 @@ export default function AffiliatesPage() {
           </table>
         </div>
       </div>
+      
+      <ConfirmationModal 
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        onConfirm={handleConfirmNotify}
+        title={modalState.title}
+        message={modalState.message}
+        isLoading={sendingEmail}
+        confirmText="Send Emails"
+      />
     </div>
   );
 }
