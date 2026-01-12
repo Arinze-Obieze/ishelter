@@ -138,7 +138,7 @@ export default function AffiliatesPage() {
   );
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6 max-w-[100vw] overflow-hidden">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Affiliate Management</h1>
@@ -173,7 +173,9 @@ export default function AffiliatesPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -284,6 +286,87 @@ export default function AffiliatesPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden">
+          {loading ? (
+            <div className="p-4 text-center text-sm text-gray-500">Loading data...</div>
+          ) : filteredAffiliates.length === 0 ? (
+            <div className="p-4 text-center text-sm text-gray-500">No affiliates found matching your search.</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 p-4">
+              {filteredAffiliates.map((affiliate) => (
+                <div key={affiliate.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 shadow-sm flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-gray-900">{affiliate.affiliateId}</h3>
+                      <p className="text-xs text-gray-500">ID: {affiliate.id}</p>
+                    </div>
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      {affiliate.bookings} {affiliate.bookings === 1 ? 'Booking' : 'Bookings'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-500 font-semibold uppercase">Email</span>
+                    {editingId === affiliate.id ? (
+                      <div className="flex items-center gap-2">
+                         <input
+                            type="email"
+                            value={editEmail}
+                            onChange={(e) => setEditEmail(e.target.value)}
+                            className="flex-1 px-3 py-1 text-sm border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 border"
+                            placeholder="Enter email"
+                          />
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-700 break-all">
+                        {affiliate.email || <span className="text-gray-400 italic">No email added</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end items-center gap-3 mt-2 border-t pt-3 border-gray-200">
+                    {editingId === affiliate.id ? (
+                      <>
+                        <button
+                          onClick={() => handleSaveEmail(affiliate.id)}
+                          className="flex items-center gap-1 text-green-600 hover:text-green-800 text-sm font-medium"
+                        >
+                          <FaSave /> Save
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="flex items-center gap-1 text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          <FaTimes /> Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleEditClick(affiliate)}
+                          className="flex items-center gap-1 text-amber-600 hover:text-amber-800 text-sm font-medium"
+                        >
+                          <FaEdit /> Edit Email
+                        </button>
+                        
+                        <button
+                            onClick={() => openNotifyModal([affiliate])}
+                            disabled={sendingEmail || !affiliate.email}
+                            className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            SEND EMAIL
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
       </div>
       
       <ConfirmationModal 

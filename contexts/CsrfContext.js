@@ -7,23 +7,36 @@
  * Automatically generates and refreshes tokens based on authentication state.
  */
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 
 const CsrfContext = createContext();
 
 export const CsrfProvider = ({ children }) => {
-  const { currentUser } = useAuth();
-  const [csrfToken, setCsrfToken] = useState(null);
+  const { currentUser, loading } = useAuth();
+  
+  // Initialize from sessionStorage to prevent unnecessary regeneration on reload
+  const [csrfToken, setCsrfToken] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('csrf_token') || null;
+    }
+    return null;
+  });
+  
+  const isGeneratingRef = useRef(false);
+  // Keep state for UI components that might need to know loading status, 
+  // but don't use it in generateToken's dependency array
   const [isGenerating, setIsGenerating] = useState(false);
 
   /**
    * Generate a new CSRF token from the server
    */
   const generateToken = useCallback(async () => {
-    if (!currentUser || isGenerating) return;
+    if (!currentUser || isGeneratingRef.current) return;
 
+    isGeneratingRef.current = true;
     setIsGenerating(true);
+    
     try {
       const idToken = await currentUser.getIdToken();
       
@@ -51,14 +64,18 @@ export const CsrfProvider = ({ children }) => {
     } catch (error) {
       console.error('[CSRF] Error generating token:', error);
     } finally {
+      isGeneratingRef.current = false;
       setIsGenerating(false);
     }
-  }, [currentUser, isGenerating]);
+  }, [currentUser]);
 
   /**
    * Refresh token periodically (every 30 minutes)
    */
   useEffect(() => {
+    // Wait for auth loading to complete before making decisions
+    if (loading) return;
+
     if (!currentUser) {
       setCsrfToken(null);
       if (typeof window !== 'undefined') {
@@ -67,8 +84,10 @@ export const CsrfProvider = ({ children }) => {
       return;
     }
 
-    // Generate initial token
-    generateToken();
+    // Generate initial token only if missing
+    if (!csrfToken) {
+      generateToken();
+    }
 
     // Refresh token every 30 minutes
     const refreshInterval = setInterval(() => {
@@ -77,7 +96,7 @@ export const CsrfProvider = ({ children }) => {
     }, 30 * 60 * 1000);
 
     return () => clearInterval(refreshInterval);
-  }, [currentUser, generateToken]);
+  }, [currentUser, loading, generateToken, csrfToken]);
 
   /**
    * Restore token from sessionStorage on page load
