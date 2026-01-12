@@ -43,6 +43,26 @@ export async function POST(req) {
 
     console.log('Affiliate booking recorded:', docRef.id);
 
+    // Update affiliates collection
+    const affiliateRef = adminDb.collection('affiliates').doc(affiliateId);
+    await adminDb.runTransaction(async (t) => {
+      const doc = await t.get(affiliateRef);
+      if (!doc.exists) {
+        t.set(affiliateRef, {
+          affiliateId,
+          bookings: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          email: '' // Initialize with empty email
+        });
+      } else {
+        t.update(affiliateRef, {
+          bookings: adminDb.constructor.FieldValue.increment(1),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    });
+
     // Record successful attempt
     await recordAttemptByIP(ipAddress, 'affiliate-submit', {
       affiliateId,

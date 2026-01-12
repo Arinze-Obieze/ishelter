@@ -20,6 +20,7 @@ export default function Sidebar({ isOpen = false, onClose }) {
       title: "BUSINESS",
       items: [
         { name: "Billing Reports", icon: FaFileInvoiceDollar, href: "/admin/billing" },
+        { name: "Affiliates", icon: FaUsers, href: "/admin/affiliates" },
         // { name: "Consultation Leads", icon: FaHandshake, href: "/admin/consultation-leads" }
       ]
     },
