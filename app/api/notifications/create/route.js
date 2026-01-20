@@ -28,13 +28,19 @@ export async function POST(req) {
     }
 
     // Check if user is admin or project manager
-    const userDoc = await adminDb.collection('users').doc(userId).get()
-    if (!userDoc.exists) {
-      return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 })
-    }
+    // OPTIMIZATION: Check custom claims first to avoid Firestore read
+    let userRole = decodedToken.role;
 
-    const userData = userDoc.data()
-    const userRole = userData.role
+    // Fallback to Firestore if custom claim is missing (for backward compatibility/migration)
+    if (!userRole) {
+      console.log(`[AUTH] Custom claim 'role' missing for user ${userId}, falling back to Firestore read.`);
+      const userDoc = await adminDb.collection('users').doc(userId).get()
+      if (!userDoc.exists) {
+        return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 })
+      }
+      const userData = userDoc.data()
+      userRole = userData.role
+    }
 
     if (userRole !== 'admin' && userRole !== 'project manager') {
       return new Response(

@@ -25,6 +25,7 @@
     "react-select": "^5.10.2",
     "react-select-country-list": "^2.2.3",
     "recharts": "^3.3.0",
+    "sharp": "^0.34.5",
     "zeptomail": "^6.2.1",
     "zod": "^4.1.5"
   },

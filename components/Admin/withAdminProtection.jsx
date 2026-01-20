@@ -23,8 +23,11 @@ export default function withAdminProtection(WrappedComponent) {
         }
         
         try {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
-          if (userDoc.exists() && userDoc.data().role === "admin") {
+          // OPTIMIZATION: Check custom claims instead of Firestore fetch
+          const idTokenResult = await user.getIdTokenResult();
+          const role = idTokenResult.claims.role;
+          
+          if (role === "admin") {
             setIsAdmin(true);
           } else {
             router.replace("/admin");

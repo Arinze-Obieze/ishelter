@@ -118,9 +118,8 @@ match /notifications/{notificationId} {
 
     // ========== HELPER FUNCTIONS ==========
     function getUserRole() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role 
-        : null;
+      // OPTIMIZATION: Use Custom Claims to avoid Firestore read
+      return request.auth.token.role;
     }
     
     function isAdmin() {
@@ -128,6 +127,9 @@ match /notifications/{notificationId} {
     }
     
     function isSuperAdmin() {
+      // Super admin status still needs DB check as it's not in standard claims yet,
+      // or we could add it to claims too. For now keeping DB check to be safe 
+      // or simpler: just check specific admin tasks
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.superAdmin == true;
     }

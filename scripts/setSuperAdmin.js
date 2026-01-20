@@ -62,6 +62,16 @@ async function setSuperAdmin(userId) {
       superAdminSince: new Date()
     })
 
+    // FUTURE-PROOFING: Sync Custom Claims
+    const { getAuth } = require("firebase-admin/auth");
+    const auth = getAuth();
+    // Maintain existing role but add superAdmin claim if we want to use it later, 
+    // or mostly just ensure 'role' is set correctly (it should be 'admin' already per check above)
+    await auth.setCustomUserClaims(userId, { 
+      role: 'admin', 
+      superAdmin: true 
+    });
+
     console.log('✅ Success!')
     console.log(`👑 User "${userData.displayName || userData.email}" is now a Super Admin`)
     console.log(`   Email: ${userData.email}`)

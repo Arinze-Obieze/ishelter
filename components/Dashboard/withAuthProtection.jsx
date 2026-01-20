@@ -25,29 +25,21 @@ export default function withAuthProtection(WrappedComponent) {
         }
         
         try {
-          // Fetch user data from Firestore to check role
-          const userDoc = await getDoc(doc(db, "users", user.uid));
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const userRole = userData.role;
+          // OPTIMIZATION: Check custom claims instead of Firestore fetch
+          const idTokenResult = await user.getIdTokenResult();
+          const userRole = idTokenResult.claims.role;
             
-            // Check if user has a RESTRICTED role
-            if (RESTRICTED_ROLES.includes(userRole)) {
-              // User has a restricted role, redirect to unauthorized or dashboard
-              router.replace("/unauthorized");
-              return;
-            }
-            
-            // User doesn't have restricted role, allow access
-            setLoading(false);
-          } else {
-            // User document doesn't exist, redirect to login
-            console.error("User document not found");
-            router.replace("/login");
+          // Check if user has a RESTRICTED role
+          if (RESTRICTED_ROLES.includes(userRole)) {
+            // User has a restricted role, redirect to unauthorized or dashboard
+            router.replace("/unauthorized");
+            return;
           }
+            
+          // User doesn't have restricted role, allow access
+          setLoading(false);
         } catch (error) {
-          console.error("Error fetching user data:", error);
+          console.error("Error checking auth status:", error);
           router.replace("/login");
         }
       });

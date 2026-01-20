@@ -46,6 +46,14 @@ export async function POST(req) {
     // Update user in Firestore
     await adminDb.collection("users").doc(userId).update(cleanUpdates);
 
+    // FUTURE-PROOFING: Sync Custom Claims if role is updated
+    if (cleanUpdates.role) {
+      console.log(`[AUTH] Syncing custom claims for user ${userId} to role: ${cleanUpdates.role}`);
+      // Import adminAuth dynamically or ensure it's imported at top
+      const { adminAuth } = require("@/lib/firebaseAdmin"); 
+      await adminAuth.setCustomUserClaims(userId, { role: cleanUpdates.role });
+    }
+
     return NextResponse.json({
       success: true,
       message: "User updated successfully",

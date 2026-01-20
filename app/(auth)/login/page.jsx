@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { FaShieldAlt, FaSignInAlt, FaTimes } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
 import { doc, 
   getDoc,  
   collection, 
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -33,6 +35,9 @@ export default function LoginPage() {
     setLoading(true);
     
     try {
+      // Set persistence based on "Remember Me" checkbox: local (indefinite) or session (tab close)
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+      
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
@@ -238,7 +243,23 @@ export default function LoginPage() {
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
-                <div className="text-right mt-1">
+              </div>
+
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 cursor-pointer">
+                    Remember me
+                  </label>
+                </div>
+                
+                <div className="text-right">
                   <button
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
@@ -292,11 +313,14 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="hidden md:flex w-1/3 h-screen">
-        <img
+    <div className="hidden md:flex w-1/3 h-screen relative">
+        <Image
           src="/login-bg.png"
           alt="Login background"
-          className="object-cover w-full h-full"
+          fill
+          className="object-cover"
+          priority
+          sizes="33vw"
         />
       </div>
     </div>
