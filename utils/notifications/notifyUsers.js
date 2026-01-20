@@ -146,5 +146,35 @@ export async function notifyUsers({
     }
   }
   
+  // Send Push Notifications
+  try {
+    const pushRecipients = Array.from(notified)
+    if (pushRecipients.length > 0) {
+        // We use fetch purely to trigger the side effect, don't await strictly if we want speed,
+        // but here we can await to ensure it works.
+        // Note: Using absolute URL or relative if on client? notifyUsers is used on client and server (likely).
+        // If on server (e.g. API route), we need absolute URL. If client, relative is fine.
+        // Safe bet: usage appears to be mostly client-side right now, but better check.
+        // Actually, let's just use relative and let modern fetch handle it if client.
+        // If server, it might fail without base URL. 
+        // Let's assume client-side or Next.js environment where relative path works or fetch is polyfilled.
+        
+        // However, notifyUsers is often called from client.
+        // Let's fire and forget for performance transparency
+        fetch('/api/notifications/push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                body,
+                userIds: pushRecipients,
+                actionUrl
+            })
+        }).catch(e => console.error('Push trigger failed', e))
+    }
+  } catch (err) {
+      console.error('Failed to trigger push notifications', err)
+  }
+
   return { success: true, notifiedCount: notified.size }
 }

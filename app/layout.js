@@ -4,6 +4,7 @@ import { InvitationsProvider } from "@/components/InvitationsContext";
 import ToastProvider from "@/components/ui/ToastProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CsrfProvider } from "@/contexts/CsrfContext";
+import NotificationManager from "@/components/NotificationManager";
 
 const montserrat = Montserrat({
   subsets: ["latin"],   
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${montserrat.variable}`}>
         <AuthProvider>
+          <NotificationManager />
           <CsrfProvider>
             <ToastProvider position="top-right" />
             <InvitationsProvider>

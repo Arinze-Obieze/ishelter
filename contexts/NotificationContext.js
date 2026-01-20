@@ -11,6 +11,7 @@ import {
   doc,
   updateDoc,
   getDoc,
+  limit,
 } from 'firebase/firestore'
 import { db, auth } from '@/lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
@@ -68,6 +69,8 @@ export const NotificationProvider = ({ children }) => {
     return () => unsubscribe()
   }, [])
 
+  const [limitCount, setLimitCount] = useState(20)
+
   // Subscribe to notifications
   useEffect(() => {
     if (!currentUser || !currentUser.id) {
@@ -83,14 +86,19 @@ export const NotificationProvider = ({ children }) => {
 
     const unsubscribes = []
     const received = new Map()
+    
+    // Track which queries have initialized
+    const initializedDefaults = {
+      q1: false, // recipientId
+      q2: false, // recipientIds
+      q3: role ? false : true, // roles (if no role, treat as initialized)
+      q4: false, // global
+    }
+    
+    // We need a mutable reference to track initialization across callbacks without triggering re-renders
+    let initialized = { ...initializedDefaults }
 
-    const addSnapshot = (snap, queryName) => {
-      console.log(`📨 ${queryName} returned ${snap.docs.length} notifications`)
-      snap.docs.forEach((d) => {
-        const data = d.data()
-        received.set(d.id, { id: d.id, ...data })
-      })
-      
+    const updateNotifications = () => {
       // Convert map to array and sort by createdAt desc
       const arr = Array.from(received.values()).sort((a, b) => {
         const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0)
@@ -98,9 +106,28 @@ export const NotificationProvider = ({ children }) => {
         return tb - ta
       })
       
-      console.log(`📊 Total unique notifications: ${arr.length}`)
       setNotifications(arr)
-      setLoading(false)
+      
+      // Check if all queries are initialized
+      if (Object.values(initialized).every(v => v)) {
+        setLoading(false)
+      }
+    }
+
+    const addSnapshot = (snap, queryKey) => {
+      // Mark this query as initialized
+      initialized[queryKey] = true
+      
+      // Update local cache
+      snap.docChanges().forEach((change) => {
+        if (change.type === 'removed') {
+          received.delete(change.doc.id)
+        } else {
+          received.set(change.doc.id, { id: change.doc.id, ...change.doc.data() })
+        }
+      })
+      
+      updateNotifications()
     }
 
     try {
@@ -108,14 +135,15 @@ export const NotificationProvider = ({ children }) => {
       const q1 = query(
         collection(db, 'notifications'),
         where('recipientId', '==', uid),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
       )
       unsubscribes.push(
         onSnapshot(q1, 
-          (snap) => addSnapshot(snap, 'recipientId query'),
+          (snap) => addSnapshot(snap, 'q1'),
           (error) => {
             console.error('Error in recipientId query:', error)
-            setLoading(false)
+            initialized['q1'] = true; updateNotifications();
           }
         )
       )
@@ -124,13 +152,15 @@ export const NotificationProvider = ({ children }) => {
       const q2 = query(
         collection(db, 'notifications'),
         where('recipientIds', 'array-contains', uid),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
       )
       unsubscribes.push(
         onSnapshot(q2, 
-          (snap) => addSnapshot(snap, 'recipientIds array query'),
+          (snap) => addSnapshot(snap, 'q2'),
           (error) => {
             console.error('Error in recipientIds query:', error)
+            initialized['q2'] = true; updateNotifications();
           }
         )
       )
@@ -140,13 +170,15 @@ export const NotificationProvider = ({ children }) => {
         const q3 = query(
           collection(db, 'notifications'),
           where('roles', 'array-contains', role),
-          orderBy('createdAt', 'desc')
+          orderBy('createdAt', 'desc'),
+          limit(limitCount)
         )
         unsubscribes.push(
           onSnapshot(q3, 
-            (snap) => addSnapshot(snap, `roles query (${role})`),
+            (snap) => addSnapshot(snap, 'q3'),
             (error) => {
               console.error('Error in roles query:', error)
+              initialized['q3'] = true; updateNotifications();
             }
           )
         )
@@ -156,13 +188,15 @@ export const NotificationProvider = ({ children }) => {
       const q4 = query(
         collection(db, 'notifications'),
         where('isGlobal', '==', true),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
       )
       unsubscribes.push(
         onSnapshot(q4, 
-          (snap) => addSnapshot(snap, 'global notifications query'),
+          (snap) => addSnapshot(snap, 'q4'),
           (error) => {
             console.error('Error in global query:', error)
+            initialized['q4'] = true; updateNotifications();
           }
         )
       )
@@ -175,33 +209,10 @@ export const NotificationProvider = ({ children }) => {
       console.log('🔌 Unsubscribing from notifications')
       unsubscribes.forEach((u) => (typeof u === 'function' ? u() : u && u()))
     }
-  }, [currentUser])
+  }, [currentUser, limitCount])
 
-  // Deprecated: use notifyUsers utility instead for new notification creation
-  const createNotification = async (payload) => {
-    console.warn('createNotification is deprecated. Use notifyUsers utility instead.')
-    try {
-      const data = {
-        title: payload.title || '',
-        body: payload.body || payload.description || '',
-        type: payload.type || 'generic',
-        recipientId: payload.recipientId || null,
-        recipientIds: payload.recipientIds || null,
-        roles: payload.roles || null,
-        relatedId: payload.relatedId || null,
-        projectId: payload.projectId || null,
-        actionUrl: payload.actionUrl || null,
-        senderId: payload.senderId || null,
-        isGlobal: payload.isGlobal || false,
-        read: false,
-        createdAt: serverTimestamp(),
-      }
-      const ref = await addDoc(collection(db, 'notifications'), data)
-      return { id: ref.id }
-    } catch (err) {
-      console.error('Failed to create notification:', err)
-      throw err
-    }
+  const loadMore = () => {
+    setLimitCount(prev => prev + 20)
   }
 
   const markAsRead = async (notificationId) => {
@@ -216,25 +227,45 @@ export const NotificationProvider = ({ children }) => {
   const markAllAsRead = async () => {
     try {
       const unreadNotifications = notifications.filter((n) => !n.read)
-      for (const notification of unreadNotifications) {
-        const notificationRef = doc(db, 'notifications', notification.id)
-        await updateDoc(notificationRef, { read: true })
+      if (unreadNotifications.length === 0) return
+
+      // Batched writes (limit 500 per batch)
+      const batchSize = 500
+      const chunks = []
+      
+      for (let i = 0; i < unreadNotifications.length; i += batchSize) {
+        chunks.push(unreadNotifications.slice(i, i + batchSize))
       }
+
+      const { writeBatch } = await import('firebase/firestore')
+      
+      await Promise.all(chunks.map(async (chunk) => {
+        const batch = writeBatch(db)
+        chunk.forEach((notification) => {
+          const notificationRef = doc(db, 'notifications', notification.id)
+          batch.update(notificationRef, { read: true })
+        })
+        await batch.commit()
+      }))
+      
+      console.log(`✅ Marked ${unreadNotifications.length} notifications as read`)
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err)
     }
   }
 
   const unreadCount = notifications.filter((n) => !n.read).length
+  const hasMore = notifications.length >= limitCount
 
   const value = {
     notifications,
     loading,
     unreadCount,
-    createNotification,
     markAsRead,
     markAllAsRead,
-    currentUser, // Expose for debugging
+    currentUser,
+    loadMore,
+    hasMore
   }
 
   return (

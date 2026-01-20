@@ -26,7 +26,7 @@ const typeColors = {
 }
 
 export default function AdminNotificationsPage() {
-  const { notifications = [], loading, markAsRead, markAllAsRead, unreadCount } = useNotifications()
+  const { notifications = [], loading, markAsRead, markAllAsRead, unreadCount, loadMore, hasMore } = useNotifications()
   const [filter, setFilter] = useState('all')
   const [showDebug, setShowDebug] = useState(true) // Set to false after debugging
 
@@ -105,7 +105,6 @@ export default function AdminNotificationsPage() {
         )}
       </div>
 
-      {/* Notifications List */}
       <div className="space-y-3">
         {loading ? (
           <div className="text-center py-12">
@@ -120,11 +119,19 @@ export default function AdminNotificationsPage() {
             </p>
           </div>
         ) : (
-          filteredNotifications.map((notification) => (
-            <button
+          <>
+            {filteredNotifications.map((notification) => (
+            <div
               key={notification.id}
               onClick={() => handleNotificationClick(notification)}
-              className={`w-full text-left p-4 rounded-lg transition ${typeColors[notification.type] || typeColors.generic} hover:shadow-md`}
+              className={`w-full text-left p-4 rounded-lg transition ${typeColors[notification.type] || typeColors.generic} hover:shadow-md cursor-pointer`}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleNotificationClick(notification)
+                }
+              }}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -152,8 +159,20 @@ export default function AdminNotificationsPage() {
                   </div>
                 )}
               </div>
-            </button>
-          ))
+            </div>
+            ))}
+            
+            {hasMore && (
+              <div className="flex justify-center pt-4 pb-2">
+                <button
+                  onClick={loadMore}
+                  className="px-6 py-2 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium shadow-sm transition"
+                >
+                  Load More
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

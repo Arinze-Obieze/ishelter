@@ -77,4 +77,34 @@ self.addEventListener('fetch', (event) => {
           });
       })
   );
+
+});
+
+// Firebase Messaging Logic
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  // FIXME: Paste your full firebase config here from the console
+  // These are standard public keys, safe to include in SW
+  apiKey: "REPLACE_WITH_YOUR_API_KEY",
+  authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",
+  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
+  storageBucket: "REPLACE_WITH_YOUR_STORAGE_BUCKET",
+  messagingSenderId: "366883296065", // We know this one
+  appId: "REPLACE_WITH_YOUR_APP_ID"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  console.log('[sw.js] Received background message ', payload);
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/icon-192x192.png', // Use existing icon path
+    data: payload.data
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });
