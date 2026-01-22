@@ -1,23 +1,120 @@
 'use client'
-import React, { useState, useEffect } from 'react'
-import { FiUsers, FiUserPlus, FiTrash2, FiMail, FiLock, FiUser, FiAlertTriangle, FiCheck, FiX, FiShield, FiSearch } from 'react-icons/fi'
-import { collection, query, where, getDocs } from 'firebase/firestore'
-import { db, auth } from '@/lib/firebase'
+import React, { useState } from 'react'
+import { FiUsers, FiUserPlus, FiTrash2, FiMail, FiLock, FiUser, FiAlertTriangle, FiCheck, FiX, FiShield, FiSearch, FiLoader } from 'react-icons/fi'
+import { auth } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCsrf } from '@/contexts/CsrfContext'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { fetchAdminsPaginated } from '@/utils/queries/adminQueries'
 
 const AdminManagement = ({ currentUserProfile }) => {
   const { currentUser } = useAuth()
   const { getToken: getCsrfToken } = useCsrf()
-  const [admins, setAdmins] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedAdmin, setSelectedAdmin] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  const queryClient = useQueryClient()
+
+  // React Query for Admins
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error
+  } = useInfiniteQuery({
+    queryKey: ['admins'],
+    queryFn: ({ pageParam }) => fetchAdminsPaginated({ pageParam }),
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextCursor : undefined,
+  })
+
+  // Flatten the data pages into a single array
+  const admins = data?.pages.flatMap(page => page.admins) || []
+
+  // Create Admin Mutation
+  const createAdminMutation = useMutation({
+    mutationFn: async (formData) => {
+      const token = await auth.currentUser.getIdToken()
+      const csrfToken = getCsrfToken()
+
+      const response = await fetch('/api/admin/create-admin', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({
+          email: formData.email.toLowerCase().trim(),
+          displayName: formData.displayName.trim(),
+          password: formData.password,
+          createdBy: currentUser.uid
+        })
+      })
+
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Failed to create admin')
+      return { result, formData } // pass formData for email
+    },
+    onSuccess: async (data) => {
+      // Optimistically UI update
+      toast.success('Admin account created! Sending welcome email...')
+      setShowAddModal(false)
+      queryClient.invalidateQueries(['admins'])
+      
+      // Send email in background (Fire-and-Forget style for UI, but we await it here to ensure it sends)
+      try {
+        await sendWelcomeEmail(data.formData.email, data.formData.displayName, data.formData.password)
+      } catch (e) {
+        console.error("Welcome email failed", e)
+        toast.error("Account created, but welcome email failed.")
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to create admin account')
+    }
+  })
+
+  // Delete Admin Mutation
+  const deleteAdminMutation = useMutation({
+    mutationFn: async (adminId) => {
+      const token = await auth.currentUser.getIdToken()
+      const csrfToken = getCsrfToken()
+      
+      const response = await fetch('/api/admin/delete-admin', {
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({
+          adminId: adminId,
+          deletedBy: currentUser.uid
+        })
+      })
+
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Failed to delete admin')
+      return result
+    },
+    onSuccess: () => {
+      toast.success('Admin account deleted successfully')
+      setShowDeleteModal(false)
+      setSelectedAdmin(null)
+      queryClient.invalidateQueries(['admins'])
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to delete admin account')
+    }
+  })
 
   // Form state
   const [formData, setFormData] = useState({
@@ -26,36 +123,6 @@ const AdminManagement = ({ currentUserProfile }) => {
     password: '',
     confirmPassword: ''
   })
-
-  // Fetch all admins
-  const fetchAdmins = async () => {
-    setLoading(true)
-    try {
-      const q = query(collection(db, 'users'), where('role', '==', 'admin'))
-      const querySnapshot = await getDocs(q)
-      const adminList = []
-      querySnapshot.forEach((doc) => {
-        adminList.push({ id: doc.id, ...doc.data() })
-      })
-      setAdmins(adminList)
-    } catch (error) {
-      console.error('Error fetching admins:', error)
-      toast.error('Failed to load admins')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchAdmins()
-  }, [])
-
-  // Get auth token for API calls
-  const getAuthToken = async () => {
-    const user = auth.currentUser
-    if (!user) throw new Error('No authenticated user')
-    return await user.getIdToken()
-  }
 
   // Validate email format
   const validateEmail = (email) => {
@@ -109,60 +176,11 @@ const AdminManagement = ({ currentUserProfile }) => {
     e.preventDefault()
     
     if (!validateForm()) return
-
-    setIsSubmitting(true)
-    const loadingToast = toast.loading('Creating admin account...')
-
-    try {
-      const token = await getAuthToken()
-      const csrfToken = getCsrfToken()
-
-      const response = await fetch('/api/admin/create-admin', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'X-CSRF-Token': csrfToken
-        },
-        body: JSON.stringify({
-          email: formData.email.toLowerCase().trim(),
-          displayName: formData.displayName.trim(),
-          password: formData.password,
-          createdBy: currentUser.uid
-        })
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create admin')
-      }
-
-      // Send welcome email
-      await sendWelcomeEmail(formData.email, formData.displayName, formData.password)
-
-      toast.dismiss(loadingToast)
-      toast.success('Admin account created successfully! Welcome email sent.')
-      
-      // Reset form and close modal
-      setFormData({ email: '', displayName: '', password: '', confirmPassword: '' })
-      setShowAddModal(false)
-      
-      // Refresh admin list
-      fetchAdmins()
-
-    } catch (error) {
-      console.error('Error creating admin:', error)
-      toast.dismiss(loadingToast)
-      toast.error(error.message || 'Failed to create admin account')
-    } finally {
-      setIsSubmitting(false)
-    }
+    createAdminMutation.mutate(formData)
   }
 
   // Send welcome email
   const sendWelcomeEmail = async (email, name, tempPassword) => {
-    try {
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -201,10 +219,6 @@ const AdminManagement = ({ currentUserProfile }) => {
           `
         })
       })
-    } catch (error) {
-      console.error('Error sending welcome email:', error)
-      // Don't throw error - email failure shouldn't fail the admin creation
-    }
   }
 
   // Handle delete admin
@@ -218,48 +232,10 @@ const AdminManagement = ({ currentUserProfile }) => {
       return
     }
 
-    setIsSubmitting(true)
-    const loadingToast = toast.loading('Deleting admin account...')
-
-    try {
-      const token = await getAuthToken()
-      const csrfToken = getCsrfToken()
-
-      const response = await fetch('/api/admin/delete-admin', {
-        method: 'DELETE',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'X-CSRF-Token': csrfToken
-        },
-        body: JSON.stringify({
-          adminId: selectedAdmin.id,
-          deletedBy: currentUser.uid
-        })
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete admin')
-      }
-
-      toast.dismiss(loadingToast)
-      toast.success('Admin account deleted successfully')
-      setShowDeleteModal(false)
-      setSelectedAdmin(null)
-      fetchAdmins()
-
-    } catch (error) {
-      console.error('Error deleting admin:', error)
-      toast.dismiss(loadingToast)
-      toast.error(error.message || 'Failed to delete admin account')
-    } finally {
-      setIsSubmitting(false)
-    }
+    deleteAdminMutation.mutate(selectedAdmin.id)
   }
 
-  // Filter admins by search term
+  // Filter admins by search term (only works on loaded admins, ideal for UX but for full search you need server side search)
   const filteredAdmins = admins.filter(admin => 
     admin.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     admin.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -288,7 +264,7 @@ const AdminManagement = ({ currentUserProfile }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full">
       {/* Header Section */}
       <div className="bg-white rounded-lg p-6 border border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -325,10 +301,14 @@ const AdminManagement = ({ currentUserProfile }) => {
 
       {/* Admins List */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {loading ? (
+        {isLoading ? (
           <div className="p-8 text-center">
             <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-600">Loading admins...</p>
+          </div>
+        ) : isError ? (
+           <div className="p-8 text-center">
+            <p className="text-red-500">Error loading admins: {error.message}</p>
           </div>
         ) : filteredAdmins.length === 0 ? (
           <div className="p-8 text-center">
@@ -342,16 +322,16 @@ const AdminManagement = ({ currentUserProfile }) => {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Admin
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden md:table-cell">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
                     Created
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -359,7 +339,7 @@ const AdminManagement = ({ currentUserProfile }) => {
               <tbody className="divide-y divide-gray-200">
                 {filteredAdmins.map((admin) => (
                   <tr key={admin.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4">
                       <div className="flex items-center gap-3">
                         {admin.photoURL ? (
                           <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 flex-shrink-0">
@@ -389,13 +369,13 @@ const AdminManagement = ({ currentUserProfile }) => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 hidden md:table-cell">
-                      <p className="text-sm text-gray-900">{admin.email}</p>
+                    <td className="px-3 sm:px-6 py-4 hidden md:table-cell">
+                      <p className="text-sm text-gray-900 break-all max-w-xs">{admin.email}</p>
                     </td>
-                    <td className="px-6 py-4 hidden lg:table-cell">
+                    <td className="px-3 sm:px-6 py-4 hidden lg:table-cell">
                       <p className="text-sm text-gray-600">{formatDate(admin.createdAt)}</p>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-3 sm:px-6 py-4 text-right">
                       {admin.id !== currentUser.uid && (
                         <button
                           onClick={() => {
@@ -413,6 +393,26 @@ const AdminManagement = ({ currentUserProfile }) => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        
+        {/* Load More Button */}
+        {hasNextPage && !searchTerm && (
+          <div className="p-4 flex justify-center border-t border-gray-200">
+             <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="text-orange-600 font-medium hover:text-orange-700 flex items-center gap-2"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
+                  Loading more...
+                </>
+              ) : (
+                'Load More Admins'
+              )}
+            </button>
           </div>
         )}
       </div>
@@ -455,9 +455,9 @@ const AdminManagement = ({ currentUserProfile }) => {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Add New Admin</h3>
                 <button
-                  onClick={() => !isSubmitting && setShowAddModal(false)}
+                  onClick={() => !createAdminMutation.isPending && setShowAddModal(false)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
-                  disabled={isSubmitting}
+                  disabled={createAdminMutation.isPending}
                 >
                   <FiX className="w-6 h-6" />
                 </button>
@@ -476,7 +476,7 @@ const AdminManagement = ({ currentUserProfile }) => {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="admin@example.com"
-                      disabled={isSubmitting}
+                      disabled={createAdminMutation.isPending}
                       className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
                       required
                     />
@@ -495,7 +495,7 @@ const AdminManagement = ({ currentUserProfile }) => {
                       value={formData.displayName}
                       onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                       placeholder="John Doe"
-                      disabled={isSubmitting}
+                      disabled={createAdminMutation.isPending}
                       className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
                       required
                     />
@@ -514,7 +514,7 @@ const AdminManagement = ({ currentUserProfile }) => {
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       placeholder="Minimum 6 characters"
-                      disabled={isSubmitting}
+                      disabled={createAdminMutation.isPending}
                       className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
                       required
                     />
@@ -534,7 +534,7 @@ const AdminManagement = ({ currentUserProfile }) => {
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                       placeholder="Re-enter password"
-                      disabled={isSubmitting}
+                      disabled={createAdminMutation.isPending}
                       className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
                       required
                     />
@@ -553,17 +553,17 @@ const AdminManagement = ({ currentUserProfile }) => {
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
-                    disabled={isSubmitting}
+                    disabled={createAdminMutation.isPending}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={createAdminMutation.isPending}
                     className="flex-1 px-4 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {isSubmitting ? (
+                    {createAdminMutation.isPending ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         <span>Creating...</span>
@@ -627,17 +627,17 @@ const AdminManagement = ({ currentUserProfile }) => {
                     setShowDeleteModal(false)
                     setSelectedAdmin(null)
                   }}
-                  disabled={isSubmitting}
+                  disabled={deleteAdminMutation.isPending}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteAdmin}
-                  disabled={isSubmitting}
+                  disabled={deleteAdminMutation.isPending}
                   className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {isSubmitting ? (
+                  {deleteAdminMutation.isPending ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       <span>Deleting...</span>

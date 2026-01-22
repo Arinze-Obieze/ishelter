@@ -11,6 +11,8 @@
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@googlemaps/react-wrapper": "^1.2.0",
+    "@tanstack/react-query": "^5.90.19",
+    "@tanstack/react-query-devtools": "^5.91.2",
     "dotenv": "^17.2.3",
     "firebase": "^12.2.1",
     "firebase-admin": "^13.5.0",

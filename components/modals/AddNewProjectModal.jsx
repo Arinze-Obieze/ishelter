@@ -4,6 +4,8 @@ import { toast } from 'react-hot-toast'
 import { db } from '@/lib/firebase'
 import { collection, getDocs, query, where, doc } from 'firebase/firestore'
 import { addProjectToFirestore } from '@/utils/addProjectToFirestore'
+import { useQuery } from '@tanstack/react-query'
+import { fetchProjectManagers } from '@/utils/queries/userQueries'
 import StepIndicator from "../Admin/ProjectOverview/AddNewProject/StepIndicator"
 import ModalContainer from "./ModalContainer"
 import ModalHeader from "../Admin/ProjectOverview/AddNewProject/ModalHeader"
@@ -17,8 +19,6 @@ import ModalFooter from "../Admin/ProjectOverview/AddNewProject/ModalFooter"
 export default function AddNewProjectModal({ isOpen, onClose }) {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [projectManagers, setProjectManagers] = useState([])
-  const [loadingUsers, setLoadingUsers] = useState(false)
 
   const [formData, setFormData] = useState({
     projectName: "",
@@ -41,34 +41,12 @@ export default function AddNewProjectModal({ isOpen, onClose }) {
     { number: 3, label: "Confirmation", sublabel: "Confirmation" },
   ]
 
-  // Fetch users with project manager and success manager roles
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (!isOpen) return
-      
-      setLoadingUsers(true)
-      try {
-        const usersRef = collection(db, 'users')
-        
-        // Fetch project managers
-        const pmQuery = query(usersRef, where('role', '==', 'project manager'))
-        const pmSnapshot = await getDocs(pmQuery)
-        const pmList = pmSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }))
-        setProjectManagers(pmList)
-
-      } catch (error) {
-        console.error('Error fetching users:', error)
-        toast.error('Failed to load team members')
-      } finally {
-        setLoadingUsers(false)
-      }
-    }
-
-    fetchUsers()
-  }, [isOpen])
+  const { data: projectManagers = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ['projectManagers'],
+    queryFn: fetchProjectManagers,
+    enabled: isOpen, // Only fetch when modal is open
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  })
 
   const handleNext = () => {
     if (currentStep < 3) setCurrentStep(currentStep + 1)

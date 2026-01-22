@@ -2,6 +2,7 @@ import "./globals.css";
 import { Montserrat } from "next/font/google"
 import { InvitationsProvider } from "@/components/InvitationsContext";
 import ToastProvider from "@/components/ui/ToastProvider";
+import QueryProvider from "@/components/providers/QueryProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CsrfProvider } from "@/contexts/CsrfContext";
 import NotificationManager from "@/components/NotificationManager";
@@ -44,15 +45,17 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${montserrat.variable}`}>
-        <AuthProvider>
-          <NotificationManager />
-          <CsrfProvider>
-            <ToastProvider position="top-right" />
-            <InvitationsProvider>
-              {children}
-            </InvitationsProvider>
-          </CsrfProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <NotificationManager />
+            <CsrfProvider>
+              <ToastProvider position="top-right" />
+              <InvitationsProvider>
+                {children}
+              </InvitationsProvider>
+            </CsrfProvider>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );
